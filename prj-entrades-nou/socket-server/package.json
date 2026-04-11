@@ -1,0 +1,22 @@
+{
+  "name": "socket-server",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Socket.IO + Redis + QR (Speckit 001)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.3",
+    "qrcode": "1.5.4",
+    "redis": "^4.7.0",
+    "socket.io": "^4.7.5"
+  }
+}
