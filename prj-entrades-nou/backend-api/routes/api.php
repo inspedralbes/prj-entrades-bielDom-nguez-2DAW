@@ -23,5 +23,6 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
 Route::middleware('jwt.auth')->post('/orders', [OrderController::class, 'store']);
 Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment']);
+Route::middleware('jwt.auth')->get('/tickets', [TicketController::class, 'index']);
 Route::middleware('jwt.auth')->get('/tickets/{ticketId}/qr', [TicketController::class, 'showQr'])
     ->whereUuid('ticketId');
