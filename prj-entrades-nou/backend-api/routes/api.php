@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SeatmapController;
+use App\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'show']);
@@ -22,3 +23,5 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
 Route::middleware('jwt.auth')->post('/orders', [OrderController::class, 'store']);
 Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment']);
+Route::middleware('jwt.auth')->get('/tickets/{ticketId}/qr', [TicketController::class, 'showQr'])
+    ->whereUuid('ticketId');
