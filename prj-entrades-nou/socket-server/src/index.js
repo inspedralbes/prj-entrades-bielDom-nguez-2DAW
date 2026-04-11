@@ -167,13 +167,6 @@ privateNs.on('connection', (socket) => {
   }
   socket.emit('server:hello', { channel: 'private', at: new Date().toISOString() });
 
-  socket.on('ticket:validated', (payload) => {
-    const uid = payload && payload.userId ? String(payload.userId) : '';
-    if (uid !== '') {
-      io.to('user:' + uid).emit('ticket:validated', payload);
-    }
-  });
-
   socket.on('admin:metrics', (payload) => {
     privateNs.emit('admin:metrics', payload);
   });

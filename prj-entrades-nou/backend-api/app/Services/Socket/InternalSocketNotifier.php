@@ -20,6 +20,14 @@ class InternalSocketNotifier
         $this->emit('event:'.$eventId, $eventName, $payload);
     }
 
+    /**
+     * Room {@code user:{id}} — mateix patró que el namespace privat del socket-server (T031).
+     */
+    public function emitToUser (int|string $userId, string $eventName, array $payload): void
+    {
+        $this->emit('user:'.(string) $userId, $eventName, $payload);
+    }
+
     private function emit (string $room, string $eventName, array $payload): void
     {
         $base = Config::get('services.socket.internal_url');

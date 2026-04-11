@@ -15,13 +15,17 @@
         <p><strong>Seient</strong> {{ ticket.seat?.key || '—' }}</p>
         <p>
           <strong>Estat</strong>
-          <span class="ticket-detail__status" :data-status="ticket.status">{{ labelStatus(ticket.status) }}</span>
+          <span class="ticket-detail__status" :data-status="displayStatus">{{ labelStatus(displayStatus) }}</span>
         </p>
       </div>
 
-      <div v-if="ticket.status === 'venuda' && qrSvg" class="ticket-detail__qr" v-html="qrSvg" />
-      <p v-else-if="ticket.status === 'venuda' && qrError" class="ticket-detail__error">{{ qrError }}</p>
-      <p v-else-if="ticket.status === 'utilitzada'" class="ticket-detail__muted">
+      <div v-if="displayStatus === 'utilitzada'" class="ticket-detail__stamp-wrap" aria-hidden="true">
+        <span class="ticket-detail__stamp">✕</span>
+      </div>
+
+      <div v-if="displayStatus === 'venuda' && qrSvg" class="ticket-detail__qr" v-html="qrSvg" />
+      <p v-else-if="displayStatus === 'venuda' && qrError" class="ticket-detail__error">{{ qrError }}</p>
+      <p v-else-if="displayStatus === 'utilitzada'" class="ticket-detail__muted">
         Aquesta entrada ja s’ha utilitzat; el QR no és vàlid.
       </p>
     </template>
@@ -31,6 +35,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
+import { useTicketsStore } from '~/stores/tickets';
 
 definePageMeta({
   middleware: 'auth',
@@ -38,6 +44,8 @@ definePageMeta({
 
 const route = useRoute();
 const { getJson, getTicketQrSvg } = useAuthorizedApi();
+const ticketsStore = useTicketsStore();
+usePrivateTicketSocket();
 
 const loading = ref(true);
 const error = ref('');
@@ -46,6 +54,14 @@ const qrSvg = ref('');
 const qrError = ref('');
 
 const ticketId = computed(() => String(route.params.ticketId || ''));
+
+const displayStatus = computed(() => {
+  const t = ticket.value;
+  if (!t) {
+    return '';
+  }
+  return ticketsStore.effectiveStatus(t.id, t.status);
+});
 
 const startsAt = computed(() => {
   const iso = ticket.value?.event?.starts_at;
@@ -96,7 +112,7 @@ async function loadTicket () {
     }
     ticket.value = found;
 
-    if (found.status === 'venuda') {
+    if (ticketsStore.effectiveStatus(found.id, found.status) === 'venuda') {
       try {
         qrSvg.value = await getTicketQrSvg(id);
       } catch (e) {
@@ -121,6 +137,13 @@ async function loadTicket () {
 onMounted(loadTicket);
 watch(ticketId, () => {
   loadTicket();
+});
+
+watch(displayStatus, (s) => {
+  if (s === 'utilitzada') {
+    qrSvg.value = '';
+    qrError.value = '';
+  }
 });
 </script>
 
@@ -164,6 +187,24 @@ watch(ticketId, () => {
 }
 .ticket-detail__status[data-status='utilitzada'] {
   color: #888;
+}
+.ticket-detail__stamp-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.ticket-detail__stamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 4px solid #c0392b;
+  border-radius: 50%;
+  color: #c0392b;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
 }
 .ticket-detail__qr {
   margin-top: 1rem;

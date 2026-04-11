@@ -22,7 +22,10 @@
           <li v-for="t in block.items" :key="t.id" class="tickets-page__card">
             <div class="tickets-page__card-main">
               <span class="tickets-page__seat">Seient {{ t.seat?.key || '—' }}</span>
-              <span class="tickets-page__status" :data-status="t.status">{{ labelStatus(t.status) }}</span>
+              <span
+                class="tickets-page__status"
+                :data-status="t.displayStatus"
+              >{{ labelStatus(t.displayStatus) }}</span>
             </div>
             <NuxtLink
               :to="`/tickets/${t.id}`"
@@ -40,12 +43,16 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
+import { useTicketsStore } from '~/stores/tickets';
 
 definePageMeta({
   middleware: 'auth',
 });
 
 const { getJson } = useAuthorizedApi();
+const ticketsStore = useTicketsStore();
+usePrivateTicketSocket();
 
 const loading = ref(true);
 const error = ref('');
@@ -61,6 +68,10 @@ function labelStatus (s) {
   return s || '—';
 }
 
+function statusFor (t) {
+  return ticketsStore.effectiveStatus(t.id, t.status);
+}
+
 const grouped = computed(() => {
   const map = new Map();
   for (const t of tickets.value) {
@@ -74,7 +85,10 @@ const grouped = computed(() => {
         items: [],
       });
     }
-    map.get(key).items.push(t);
+    map.get(key).items.push({
+      ...t,
+      displayStatus: statusFor(t),
+    });
   }
   return [...map.values()];
 });
