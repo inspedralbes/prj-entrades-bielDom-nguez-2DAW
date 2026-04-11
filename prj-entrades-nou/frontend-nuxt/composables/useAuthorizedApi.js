@@ -42,6 +42,17 @@ export function useAuthorizedApi () {
     });
   }
 
+  async function patchJson (path, body) {
+    return await $fetch(`${base.value}${path}`, {
+      method: 'PATCH',
+      headers: authHeaders({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+      body,
+    });
+  }
+
   /**
    * @returns {Promise<string>} Marcatge SVG
    */
@@ -65,6 +76,7 @@ export function useAuthorizedApi () {
     getJson,
     postJson,
     deleteJson,
+    patchJson,
     getTicketQrSvg,
     authHeaders,
   };

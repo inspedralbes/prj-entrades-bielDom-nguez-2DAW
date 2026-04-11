@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SeatmapController;
 use App\Http\Controllers\Api\SocialController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TicketTransferController;
+use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\ValidationController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
+Route::middleware('jwt.auth')->get('/user/profile', [UserProfileController::class, 'show']);
+Route::middleware('jwt.auth')->patch('/user/profile', [UserProfileController::class, 'updateProfile']);
+Route::middleware('jwt.auth')->patch('/user/settings', [UserProfileController::class, 'updateSettings']);
 Route::middleware('jwt.auth')->get('/feed/for-you', [FeedController::class, 'forYou']);
 Route::middleware('jwt.auth')->get('/saved-events', [SavedEventsController::class, 'index']);
 Route::middleware('jwt.auth')->post('/saved-events', [SavedEventsController::class, 'store']);
