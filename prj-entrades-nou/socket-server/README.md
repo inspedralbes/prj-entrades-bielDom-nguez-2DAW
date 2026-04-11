@@ -11,4 +11,9 @@ El handshake amb JWT d’API i la validació de tokens de ticket han d’usar el
 
 Esdeveniments orientatius: `seat:contention`, `countdown:resync`, `ticket:validated`, `admin:metrics`.
 
+## HTTP intern (backend Laravel)
+
+- **`POST /internal/emit`** — igual que abans; cos JSON `{ room, event, payload }`; capçalera opcional `X-Internal-Secret` si `SOCKET_INTERNAL_SECRET` està definit.
+- **`POST /internal/qr-svg`** (T026) — cos JSON `{ "text": "<JWT o string per al QR>" }` o `{ "payload": "..." }`; opcionalment `width`, `margin`. Resposta **`image/svg+xml`**. Generació amb **`node-qrcode`** (`src/qr/generateTicketSvg.js`).
+
 No versionar secrets; només `.env.example` amb placeholders.
