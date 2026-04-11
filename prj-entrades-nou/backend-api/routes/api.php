@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'show']);
 
+Route::get('/feed/featured', [FeedController::class, 'featured']);
+
 Route::get('/events/{eventId}/seatmap', [SeatmapController::class, 'show']);
 
 Route::post('/events/{eventId}/holds', [HoldController::class, 'store']);
@@ -25,6 +28,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
+Route::middleware('jwt.auth')->get('/feed/for-you', [FeedController::class, 'forYou']);
 Route::middleware('jwt.auth')->post('/orders', [OrderController::class, 'store']);
 Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment']);
 Route::middleware('jwt.auth')->get('/tickets', [TicketController::class, 'index']);
