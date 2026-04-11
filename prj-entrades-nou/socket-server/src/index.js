@@ -130,6 +130,11 @@ io.on('connection', (socket) => {
   socket.on('countdown:resync', (payload) => {
     io.to('event:' + String(payload.eventId || '')).emit('countdown:resync', payload);
   });
+
+  /** Panell admin (T052): el client es subscriu per rebre `admin:metrics` emès al room `admin:dashboard`. */
+  socket.on('join:admin-dashboard', () => {
+    socket.join('admin:dashboard');
+  });
 });
 
 //================================ Namespace privat: JWT a handshake.auth.token (Bearer opcional)
