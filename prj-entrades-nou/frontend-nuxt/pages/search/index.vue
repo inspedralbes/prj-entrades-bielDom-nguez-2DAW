@@ -59,7 +59,6 @@ definePageMeta({
   layout: 'default',
 });
 
-const config = useRuntimeConfig();
 const auth = useAuthStore();
 const { fetchApi } = useApi();
 const { getJson, postJson, deleteJson } = useAuthorizedApi();
