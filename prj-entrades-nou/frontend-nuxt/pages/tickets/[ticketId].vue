@@ -39,6 +39,7 @@ import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
 import { useTicketsStore } from '~/stores/tickets';
 
 definePageMeta({
+  layout: 'default',
   middleware: 'auth',
 });
 

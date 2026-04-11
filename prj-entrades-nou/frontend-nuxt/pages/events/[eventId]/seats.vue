@@ -78,6 +78,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
+definePageMeta({
+  layout: 'default',
+});
+
 const route = useRoute();
 const config = useRuntimeConfig();
 const holdStore = useHoldStore();

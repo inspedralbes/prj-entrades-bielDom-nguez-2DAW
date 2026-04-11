@@ -1,9 +1,9 @@
 <template>
   <div class="page-prose">
-    <h1>Inici</h1>
-    <p>Destacats i recomanacions es carreguen des de l’API (T046).</p>
+    <h1>Cercar esdeveniments</h1>
+    <p>Llista amb filtres (T047). El mapa amb marcadors és a la vista mapa.</p>
     <p>
-      <NuxtLink to="/events/1/seats" class="link">Exemple mapa de seients</NuxtLink>
+      <NuxtLink to="/search/map" class="link">Obrir mapa</NuxtLink>
     </p>
   </div>
 </template>

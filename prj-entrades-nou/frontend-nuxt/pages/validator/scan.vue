@@ -46,6 +46,7 @@ import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useAuthStore } from '~/stores/auth';
 
 definePageMeta({
+  layout: false,
   middleware: ['auth', 'validator'],
 });
 
