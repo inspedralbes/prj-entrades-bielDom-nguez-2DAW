@@ -17,7 +17,7 @@ Enfocament tècnic: tota persistència i regles de negoci al **Laravel** + **Pos
 
 **Language/Version**: PHP 8.3 (Laravel 11), TypeScript/JavaScript (Node.js 20 LTS, Nuxt 3 / Vue 3.4+)  
 **Primary Dependencies**: Paquet **JWT d’API** a Laravel (p. ex. `tymon/jwt-auth` o equivalent acordat) com a **únic emissor** de tokens de sessió; Pinia (Nuxt) per `auth` global; Socket.IO 4.7 amb verificació JWT al `handshake`; **Google Maps JavaScript API** (vista mapa cerca, overlay); Google AI SDK (Gemini 1.5 Flash), node-qrcode 1.5, Ticketmaster **Discovery API** (llista/cerca sincronitzada), **Discovery Feed 2.0** (import admin), Top Picks client (HTTP); `spatie/laravel-permission` (o equivalent) per rols comprador / validador / administrador  
-**Storage**: PostgreSQL 16 + PostGIS 3.4 (domini, validacions, entrades); Redis 7.2 (holds, opcionalment rate limiting)  
+**Storage**: PostgreSQL 16 + PostGIS 3.4 (domini, validacions, entrades); esquema versionat en **`database/init.sql`** + **`database/inserts.sql`** (sense migracions Laravel per al DDL); Redis 7.2 (holds, opcionalment rate limiting); **Adminer 4.8.1** al compose dev (inspecció de taules, p. ex. port 8080)  
 **Testing**: PHPUnit / Pest (Laravel), Vitest (Nuxt), **Cypress** (E2E Nuxt + `cy.request` contra l’API Laravel; vegeu la secció **Inicialització de Cypress (monorepo)** més avall), proves de contracte sobre OpenAPI (`contracts/`)  
 **Target Platform**: Servidor Linux/containers (docker-compose); clients web (Nuxt SSR/SPA) i navegador validador  
 **Project Type**: Monorepo web: API REST + app Nuxt + servei Socket.IO  

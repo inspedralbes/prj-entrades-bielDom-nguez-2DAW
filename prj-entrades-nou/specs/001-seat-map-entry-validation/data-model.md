@@ -2,6 +2,8 @@
 
 Alineat amb [spec.md](./spec.md) (actualització checklist: Pending Payment, venuda/utilitzada, UUID QR, concurrència PostgreSQL + Redis, fallback Top Picks).
 
+L’**esquema físic** de PostgreSQL es manté als fitxers **`database/init.sql`** i **`database/inserts.sql`** (no migracions Laravel). Aquest document descriu el model lògic; en cas de divergència, actualitzar primer els SQL i després aquest fitxer.
+
 ## Entitats principals
 
 ### Event (Esdeveniment)
@@ -82,7 +84,7 @@ Estat principalment a **Redis**; opcionalment taula d’auditoria `hold_audit` a
 
 ### User (PostgreSQL / Laravel)
 
-Taula **`users`** (migració Laravel estàndard estesa): identificador estable, email únic, hash de contrasenya, timestamps; rols mitjançant **`spatie/laravel-permission`**: **Usuari** (per defecte), **Validador**, **Administrador**. L’**Assistent** és un rol conceptual (titular del bitllet); pot ser el mateix `user_id` que el comprador o un destinatari d’una **transferència**.
+Taula **`users`** (columnes alineades amb Laravel + camp **`username`** únic): identificador estable, email únic, hash de contrasenya, timestamps; rols mitjançant **`spatie/laravel-permission`**: **Usuari** (per defecte), **Validador**, **Administrador**. L’**Assistent** és un rol conceptual (titular del bitllet); pot ser el mateix `user_id` que el comprador o un destinatari d’una **transferència**.
 
 ### friend_invites (invitacions d’amistat)
 

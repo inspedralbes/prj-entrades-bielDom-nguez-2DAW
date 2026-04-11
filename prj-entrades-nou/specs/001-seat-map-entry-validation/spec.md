@@ -6,6 +6,12 @@
 **Estat**: Esborrany  
 **Entrada**: Mapa de Seients: integració de l’API Top Picks (Ticketmaster) per a imatge (`snapshotImageUrl`) i metadades de zones. Concurrència: bloqueig atòmic de fins a 6 seients (N=6) amb temps de reserva **per esdeveniment** dins del rang 3–5 minuts (vegeu clarificacions) via magatzem de bloquejos ràpid. Ticketing segur: credencials d’entrada signades pel servidor i codi escanejable en format vectorial. Validació: escaneig des de mòbil que marca l’entrada amb una «X» visual a l’app de l’usuari un cop validada pel servidor (Historial / pantalla 22).
 
+### Context del repositori (estat actual — dades i eines)
+
+- **Esquema PostgreSQL**: la font de veritat és SQL al monorepo: **`database/init.sql`** (DDL, PostGIS, domini, Spatie) i **`database/inserts.sql`** (dades inicials de desenvolupament). **No** s’usen migracions Laravel per definir taules; qualsevol canvi d’esquema ha anar reflectit en aquests fitxers i al [data-model.md](./data-model.md). Els tests PHPUnit carreguen **`database/testing/schema.sqlite.sql`** (paritat SQLite).
+- **Docker dev** (`docker/dev/docker-compose.yml`): Postgres amb healthcheck; l’API Laravel ha d’usar **`DB_HOST=postgres`** quan corre dins el compose (i `php artisan config:clear` si s’havia fet `config:cache` amb un altre host).
+- **Adminer** (**4.8.1**): servei web lleuger d’administració de bases de dades inclòs al compose (p. ex. port **8080** → sistema PostgreSQL, servidor **`postgres`**, credencials alineades amb el servei `postgres`). Per a futures funcionalitats: considerar Adminer com a eina de suport a desenvolupament, no com a dependència de runtime de l’app.
+
 ## Clarifications
 
 ### Session 2026-04-11

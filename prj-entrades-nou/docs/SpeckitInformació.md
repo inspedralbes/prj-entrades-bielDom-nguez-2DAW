@@ -6,6 +6,8 @@ Aquest fitxer resumeix **on és cada cosa** del Speckit en aquest repositori (`p
 **Branca base del repositori (Git Flow)**: **`dev`** — les branques de treball es creen des de `dev`; integració amb **pull request** cap a `dev` (detall al [tasks.md](../specs/001-seat-map-entry-validation/tasks.md)).  
 **Directori Speckit del feature**: [`specs/001-seat-map-entry-validation/`](../specs/001-seat-map-entry-validation/)
 
+**Base de dades (esquema)**: carpeta [`database/`](../database/) — **`init.sql`** + **`inserts.sql`** (PostgreSQL/PostGIS al Docker); **`testing/schema.sqlite.sql`** per a PHPUnit. **Adminer 4.8.1** al `docker/dev/docker-compose.yml` (p. ex. port 8080). Sense migracions Laravel per al DDL (`backend-api/database/migrations/README.md`).
+
 ---
 
 ## 1. Mapa de fitxers del feature (`specs/001-seat-map-entry-validation/`)
@@ -56,6 +58,8 @@ Servir per comandes tipus «speckit specify / plan / tasks / implement» segons 
 | Fitxer | Funció |
 |--------|--------|
 | [**ContextChat/Chat1.md**](ContextChat/Chat1.md) | Context exportat d’una conversa anterior (decisions **friend_invites**, Socket híbrid, Redis 4+2, guards Nuxt, T053, OpenAPI, workflow branca + Cypress). |
+| [**ContextChat/Chat2.md**](ContextChat/Chat2.md) | Implementació US1 (holds, orders, mapa seients, Docker/Nuxt). |
+| [**ContextChat/Chat3.md**](ContextChat/Chat3.md) | Tasques **T025–T029** (tickets JWT, QR SVG, API tickets, UI Nuxt), flux Git a **`3-Tr3`**, merge a **`dev`**. |
 | **SpeckitInformació.md** (aquest fitxer) | Índex i resum del Speckit del projecte. |
 | `tasks-mvp.md` | Tasques MVP (si existeix; pot complementar o precedir el detall del feature). |
 
@@ -83,7 +87,7 @@ La documentació SDD històrica (Constitution, Specify, Plan, TasksMvp) pot viur
 5. [`specs/001-seat-map-entry-validation/tasks.md`](../specs/001-seat-map-entry-validation/tasks.md)  
 6. [`specs/001-seat-map-entry-validation/contracts/openapi.yaml`](../specs/001-seat-map-entry-validation/contracts/openapi.yaml)  
 7. [`specs/001-seat-map-entry-validation/quickstart.md`](../specs/001-seat-map-entry-validation/quickstart.md)  
-8. Opcional: [`docs/ContextChat/Chat1.md`](ContextChat/Chat1.md) per decisions ja preses en conversa.
+8. Opcional: [`docs/ContextChat/Chat1.md`](ContextChat/Chat1.md), [`Chat2.md`](ContextChat/Chat2.md), [`Chat3.md`](ContextChat/Chat3.md) per decisions i implementació ja documentades.
 
 ---
 

@@ -33,6 +33,7 @@ Per desenvolupar la app s’usa el compose sota **`docker/dev/`** (no el de `doc
 
 ```env
 DB_CONNECTION=pgsql
+# Obligatori: postgres quan l’API corre dins el compose; 127.0.0.1 si l’API és al host amb Postgres exposat al 5432
 DB_HOST=postgres
 DB_PORT=5432
 DB_DATABASE=esdeveniments
@@ -63,10 +64,10 @@ JWT_SECRET=your_jwt_secret
 
 3. Construir imatges (si el compose usa `build` cap a `docker/dockerfiles/`):  
    `docker compose -f docker/dev/docker-compose.yml build`  
-4. Aplicar esquema: executar `database/init.sql` contra Postgres (servei definit al compose dev o `psql`).  
-5. `docker compose -f docker/dev/docker-compose.yml up`  
-6. Laravel: `php artisan migrate` dins del contenidor backend si useu migracions en lloc de només `init.sql`.  
-7. Obrir el Nuxt a la URL publicada (p. ex. `http://localhost:3000`).
+4. Esquema PostgreSQL: **`database/init.sql`** + **`database/inserts.sql`** s’apliquen automàticament en el **primer** arrencada de Postgres (volum de dades nou). Si cal recrear l’esquema: `docker compose -f docker/dev/docker-compose.yml down -v` i tornar a pujar (esborra dades).  
+5. `docker compose -f docker/dev/docker-compose.yml up` (inclou **Adminer** a `http://localhost:8080`: sistema PostgreSQL, servidor `postgres`, usuari/contrasenya com al `.env`).  
+6. Obrir el Nuxt a la URL publicada (p. ex. `http://localhost:3000`).  
+7. Opcional: `docker compose -f docker/dev/docker-compose.yml exec backend-api php artisan db:seed` per repetir seeds Laravel (rols addicionals, factories) si cal.
 
 ## Producció
 

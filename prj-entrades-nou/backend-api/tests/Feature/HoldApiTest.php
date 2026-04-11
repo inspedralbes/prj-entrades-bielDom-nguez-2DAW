@@ -5,13 +5,13 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\Zone;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
 class HoldApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
 
     protected function setUp (): void
     {

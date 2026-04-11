@@ -9,13 +9,13 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\Ticket\JwtTicketService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
 class OrderApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
 
     protected function setUp (): void
     {

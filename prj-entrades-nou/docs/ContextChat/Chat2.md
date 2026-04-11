@@ -10,6 +10,7 @@ Aquest document resumeix el **fil d’aquest agent** (converses amb l’assisten
 
 - Especificació: `specs/001-seat-map-entry-validation/` (`spec.md`, `plan.md`, `data-model.md`, **`tasks.md`**).
 - Codi principal: `backend-api/` (Laravel), `frontend-nuxt/` (Nuxt 3 + Pinia + JS), `socket-server/` (Socket.IO).
+- **Esquema de base de dades (font de veritat SQL):** carpeta **`database/`** — **`init.sql`** (DDL PostgreSQL/PostGIS, domini, Spatie, taules Laravel de sessió/cua/cache), **`inserts.sql`** (dades inicials de desenvolupament, p. ex. rols Spatie). **Sense migracions Laravel** per al DDL (`backend-api/database/migrations/README.md`). Tests PHPUnit: **`database/testing/schema.sqlite.sql`** + trait **`Tests\Concerns\RefreshDatabaseFromSql`**. Docker dev: scripts muntats a Postgres (`docker-entrypoint-initdb.d`), **Adminer** (p. ex. **4.8.1**) al port **8080**. Vegeu **`database/README.md`**.
 
 ---
 
@@ -36,11 +37,11 @@ Aquest document resumeix el **fil d’aquest agent** (converses amb l’assisten
 
 | Àrea | Fitxers / notes |
 |------|------------------|
-| Holds | `HoldController`, `SeatHoldService`, migració camps hold a `seats`, rutes `POST/DELETE/GET` holds |
-| Orders | `POST /api/orders` (JWT) `pending_payment`, `PendingPaymentOrderService`, columna `hold_uuid` a `orders` |
+| Holds | `HoldController`, `SeatHoldService`, camps hold a `seats` (definits a **`database/init.sql`** / **`schema.sqlite.sql`**), rutes `POST/DELETE/GET` holds |
+| Orders | `POST /api/orders` (JWT) `pending_payment`, `PendingPaymentOrderService`, columna `hold_uuid` a `orders` (mateix origen SQL) |
 | Confirmació T021 | `POST /api/orders/{order}/confirm-payment` → `paid` o error **«Seient ja no disponible»** + `Order::STATE_FAILED` + `forceReleaseHold` |
 | Seatmap + seients (T023) | `PostgresSeatmapFallbackService::seatsForEvent()`, resposta JSON amb **`seats`**: `{ id, zoneId, key, status }` |
-| Tests PHPUnit | `HoldApiTest`, `OrderApiTest`, `SeatmapApiTest` ampliat; `phpunit.xml` inclou `APP_KEY` per evitar `MissingAppKeyException` a `ExampleTest` |
+| Tests PHPUnit | `HoldApiTest`, `OrderApiTest`, `SeatmapApiTest` ampliat; **`RefreshDatabaseFromSql`** carrega l’esquema SQLite; `phpunit.xml` inclou `APP_KEY` per evitar `MissingAppKeyException` a `ExampleTest` |
 
 ---
 
@@ -86,13 +87,15 @@ docker compose -f docker/dev/docker-compose.yml build
 docker compose -f docker/dev/docker-compose.yml up
 ```
 
-Migracions (exemple):
+**Esquema Postgres:** s’apliquen **`database/init.sql`** i **`database/inserts.sql`** en crear el **volum de dades buit** del servei `postgres`. Si cal regenerar tot l’esquema (esborra dades): `docker compose -f docker/dev/docker-compose.yml down -v` i tornar a pujar. **No** cal `php artisan migrate` per al DDL.
 
-```bash
-docker compose -f docker/dev/docker-compose.yml exec backend-api php artisan migrate
-```
+**Connexió API dins el compose:** `DB_HOST=postgres` al **`backend-api/.env`** (no `127.0.0.1`). El servei `backend-api` executa **`php artisan config:clear`** abans de `serve` per evitar `DB_HOST` cachejat incorrecte.
 
-Ports habituals: Nuxt **3000**, API **8000**, Socket **3001**, Postgres **5432**, Redis **6379**.
+**Adminer:** http://localhost:**8080** — sistema PostgreSQL, servidor **`postgres`**, usuari/contrasenya alineats amb el servei `postgres` (p. ex. `esdeveniments`).
+
+Opcional: `docker compose -f docker/dev/docker-compose.yml exec backend-api php artisan db:seed` (seeders Laravel, no substitueixen `inserts.sql`).
+
+Ports habituals: Nuxt **3000**, API **8000**, Socket **3001**, Postgres **5432**, Redis **6379**, **Adminer 8080**.
 
 **JWT alineat amb socket (opcional):** el compose posa `JWT_SECRET` al `socket-server`; convé el mateix secret al `backend-api/.env` per proves amb namespace privat.
 

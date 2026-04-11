@@ -5,13 +5,13 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\Zone;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
 class SeatmapApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
 
     public function test_seatmap_fallback_from_postgres (): void
     {

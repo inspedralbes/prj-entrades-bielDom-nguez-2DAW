@@ -3,6 +3,11 @@ import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
+  // Evita error Vite "Failed to resolve import #app-manifest" (Nuxt 3.20+ / primer arranque sense .nuxt).
+  // Veure https://github.com/nuxt/nuxt/issues/33606 — es pot reactivar quan no calgui el workaround.
+  experimental: {
+    appManifest: false,
+  },
   devtools: { enabled: true },
   modules: ['@pinia/nuxt'],
   runtimeConfig: {

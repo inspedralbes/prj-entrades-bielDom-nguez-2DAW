@@ -2,11 +2,13 @@
 FROM php:8.3-cli-bookworm
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libpq-dev git unzip \
+  && apt-get install -y --no-install-recommends libpq-dev git unzip curl ca-certificates \
   && docker-php-ext-install pdo pdo_pgsql \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Composer sense imatge auxiliar (evita COPY --from=composer fallos de pull/cache a Windows/BuildKit).
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+  && composer --version
 
 WORKDIR /var/www/html
 

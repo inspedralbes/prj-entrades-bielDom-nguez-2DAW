@@ -21,6 +21,8 @@ Archivos de referencia habituales:
 
 Constitución global: `.specify/memory/constitution.md`.
 
+**Base de datos (convención actual del monorepo):** el **DDL** y los **inserts iniciales** de PostgreSQL no viven en migraciones Laravel; están en **`database/init.sql`** y **`database/inserts.sql`**. Docker monta estos scripts en `postgres:/docker-entrypoint-initdb.d/` (solo en el **primer** arranque con volumen vacío; para recrear esquema: `docker compose … down -v`). Tests PHPUnit usan **`database/testing/schema.sqlite.sql`** vía el trait **`Tests\Concerns\RefreshDatabaseFromSql`**. **Adminer** (p. ej. **4.8.1**, puerto **8080** en compose dev) para inspeccionar tablas. Detalle: `database/README.md`, `specs/…/spec.md` (bloque «Context del repositori»).
+
 ---
 
 ## 2. Decisiones de diseño acordadas (resumen técnico)
@@ -68,7 +70,7 @@ Constitución global: `.specify/memory/constitution.md`.
 
 ### 3.3 `tasks.md`
 
-- T007: migración incluye **`friend_invites`** y **`ticket_transfers`**.
+- T007: el esquema incluye **`friend_invites`** y **`ticket_transfers`** en **`database/init.sql`** (y paridad en **`database/testing/schema.sqlite.sql`**), no como migraciones PHP.
 - T013: texto explícito de Socket híbrido (lectura pública / API para hold-compra / `io.use()` en rooms privadas).
 - T017: **PEXPIRE +120 s**, TTL 240 → hasta 360 s.
 - T044: rutas explícitas de guards.

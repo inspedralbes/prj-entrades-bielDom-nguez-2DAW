@@ -6,14 +6,14 @@ use App\Models\Event;
 use App\Models\Seat;
 use App\Models\Ticket;
 use App\Models\Zone;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
 class TicketQrApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
 
     protected function setUp (): void
     {
