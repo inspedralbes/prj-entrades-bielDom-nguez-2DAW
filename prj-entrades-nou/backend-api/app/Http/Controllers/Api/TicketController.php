@@ -19,6 +19,56 @@ class TicketController extends Controller
     ) {}
 
     /**
+     * GET /api/tickets — historial d’entrades de l’usuari autenticat (T028).
+     */
+    public function index (Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $tickets = Ticket::query()
+            ->whereHas('orderLine.order', static function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->with([
+                'orderLine.order.event',
+                'orderLine.seat',
+            ])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $payload = $tickets->map(static function (Ticket $ticket) {
+            $line = $ticket->orderLine;
+            $order = $line?->order;
+            $event = $order?->event;
+            $seat = $line?->seat;
+
+            return [
+                'id' => $ticket->id,
+                'public_uuid' => $ticket->public_uuid,
+                'status' => $ticket->status,
+                'jwt_expires_at' => $ticket->jwt_expires_at?->toIso8601String(),
+                'used_at' => $ticket->used_at?->toIso8601String(),
+                'order_id' => $order?->id,
+                'event' => $event === null ? null : [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'starts_at' => $event->starts_at?->toIso8601String(),
+                ],
+                'seat' => $seat === null ? null : [
+                    'id' => $seat->id,
+                    'key' => $seat->external_seat_key,
+                ],
+                'created_at' => $ticket->created_at?->toIso8601String(),
+            ];
+        })->values()->all();
+
+        return response()->json(['tickets' => $payload]);
+    }
+
+    /**
      * GET /api/tickets/{ticketId}/qr — SVG del QR amb payload JWT de l’entrada (T027).
      */
     public function showQr (Request $request, string $ticketId): Response|JsonResponse
