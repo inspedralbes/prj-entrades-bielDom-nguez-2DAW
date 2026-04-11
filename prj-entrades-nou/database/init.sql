@@ -1,0 +1,5 @@
+-- Esquema d’aplicació: la font de veritat són les migracions Laravel (`backend-api/database/migrations/`).
+-- Després de crear la base Postgres buida:
+--   CREATE EXTENSION IF NOT EXISTS postgis;
+-- Aplicar esquema:
+--   cd backend-api && php artisan migrate --force

@@ -1,0 +1,449 @@
+openapi: 3.1.0
+info:
+  title: Entrades API (MVP seat-map / hold / tickets / validation)
+  version: 0.3.1
+  description: Esborrany alineat amb spec.md — auth JWT, holds, Social (transferències), Admin (Discovery Feed), Socket híbrid documentat al spec (no WebSocket dins OpenAPI)
+
+servers:
+  - url: https://api.example.com
+    description: Producció
+  - url: http://localhost:8000
+    description: Local backend-api
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Registre d’usuari (JWT resposta)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuari creat; token JWT (cos o cookie segons implementació)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          description: Validació fallida (email duplicat, etc.)
+
+  /api/auth/login:
+    post:
+      summary: Inici de sessió (JWT)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Token JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Credencials invàlides
+
+  /api/auth/me:
+    get:
+      summary: Perfil mínim de l’usuari autenticat
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dades bàsiques de perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /api/events/{eventId}/seatmap:
+    get:
+      summary: Mapa de seients (proxy Top Picks / dades fusionades)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Imatge snapshot URL + zones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatmapResponse'
+
+  /api/events/{eventId}/holds:
+    post:
+      summary: Crear hold atòmic (fins a 6 seients); pot ser anònim (sense Bearer)
+      description: |
+        Sense autenticació, el client envia (o rep via cookie) un identificador de sessió anònim per vincular el hold.
+        Amb Bearer, opcionalment s’associa el hold a l’usuari autenticat.
+      tags: [Holds]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seat_ids]
+              properties:
+                seat_ids:
+                  type: array
+                  maxItems: 6
+                  items:
+                    type: string
+                anonymous_session_id:
+                  type: string
+                  description: Opcional si ja existeix sessió anònima estable
+      responses:
+        '201':
+          description: Hold creat amb expires_at
+        '409':
+          description: Un o més seients no disponibles
+
+  /api/holds/{holdId}/login-grace:
+    post:
+      summary: Atorgar +120 s al TTL del hold (una vegada) en iniciar login des del checkout
+      tags: [Holds]
+      security: []
+      parameters:
+        - name: holdId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                anonymous_session_id:
+                  type: string
+                  description: Ha coincidir amb el hold creat en mode anònim
+      responses:
+        '200':
+          description: TTL estès; cos amb nou expires_at
+        '403':
+          description: Hold no vàlid o gràcia ja aplicada
+        '404':
+          description: Hold inexistent o expirat
+
+  /api/holds/{holdId}:
+    delete:
+      summary: Alliberar hold (expiració natural o cancel·lació)
+
+  /api/orders:
+    post:
+      summary: Confirmar comanda des d’un hold vàlid
+      security:
+        - bearerAuth: []
+
+  /api/tickets:
+    get:
+      summary: Llistar entrades de l’usuari (historial)
+      security:
+        - bearerAuth: []
+
+  /api/tickets/{ticketId}/qr:
+    get:
+      summary: Obtenir SVG QR (o redirecció a recurs generat)
+      security:
+        - bearerAuth: []
+
+  /api/validation/scan:
+    post:
+      summary: Validar entrada (rol Validador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT llegit del QR
+      responses:
+        '200':
+          description: Entrada marcada com a usada
+        '400':
+          description: Token invàlid o ja usat
+        '503':
+          description: Sense connexió / servidor (client ha de reintentar)
+
+  /api/social/friends:
+    get:
+      summary: Llista d’amics (Usuari autenticat)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Llista d’usuaris amics
+
+  /api/social/friend-invites:
+    get:
+      summary: Llistar invitacions (enviades i rebudes segons query)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [sent, received, all]
+            default: all
+      responses:
+        '200':
+          description: Llista d’invitacions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendInvite'
+    post:
+      summary: Crear invitació (usuari existent o correu de nou usuari)
+      description: |
+        Exactament un de `receiver_id` o `receiver_email` (no ambdós). Opcionalment `invite_token` per enllaç segur.
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendInviteCreateRequest'
+      responses:
+        '201':
+          description: Invitació creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendInvite'
+        '409':
+          description: Invitació duplicada o conflicte
+
+  /api/social/friend-invites/{inviteId}:
+    patch:
+      summary: Acceptar o rebutjar invitació rebuda
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendInvitePatchRequest'
+      responses:
+        '200':
+          description: Estat actualitzat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendInvite'
+        '403':
+          description: No autoritzat (no és el destinatari)
+        '409':
+          description: Estat incompatible (ja resolta)
+
+  /api/tickets/{ticketId}/transfer:
+    post:
+      summary: Transferir propietat del ticket a un altre Usuari (validat al servidor)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_user_id]
+              properties:
+                to_user_id:
+                  type: string
+                  description: ID de l’usuari destinatari
+      responses:
+        '200':
+          description: Transferència registrada; el servidor invalida el JWT/QR anterior i emet credencial nova (SVG) per al destinatari
+        '403':
+          description: No autoritzat o ticket no transferible
+
+  /api/admin/discovery/sync:
+    post:
+      summary: Disparar sincronització amb Ticketmaster Discovery Feed (Administrador)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '202':
+          description: Job d’importació acceptat
+        '403':
+          description: Rol Administrador requerit
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password, password_confirmation]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        password_confirmation:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          description: Segons fins expiració del JWT (si aplica)
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: string
+
+    SeatmapResponse:
+      type: object
+      properties:
+        snapshotImageUrl:
+          type: string
+          format: uri
+        zones:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+
+    FriendInvite:
+      type: object
+      required: [id, sender_id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        receiver_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Present si el destinatari ja és usuari registrat
+        receiver_email:
+          type: string
+          format: email
+          nullable: true
+          description: Present si es convida per correu (usuari nou o pendent)
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        invite_token:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FriendInviteCreateRequest:
+      type: object
+      properties:
+        receiver_id:
+          type: string
+          format: uuid
+        receiver_email:
+          type: string
+          format: email
+        invite_token:
+          type: string
+          description: Opcional; generat pel servidor si cal
+      oneOf:
+        - required: [receiver_id]
+        - required: [receiver_email]
+
+    FriendInvitePatchRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [accept, reject]
