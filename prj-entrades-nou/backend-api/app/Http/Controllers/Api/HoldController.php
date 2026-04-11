@@ -8,6 +8,7 @@ use App\Services\Auth\JwtTokenService;
 use App\Services\Hold\SeatHoldService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class HoldController extends Controller
@@ -43,6 +44,14 @@ class HoldController extends Controller
             $anon,
             $userId,
         );
+
+        if ($result['ok'] === true) {
+            Log::info('hold.created', [
+                'event_id' => (int) $event->id,
+                'hold_id' => $result['hold_id'],
+                'seat_count' => count($result['seat_ids'] ?? []),
+            ]);
+        }
 
         if ($result['ok'] === false) {
             if ($result['reason'] === 'seats_not_found') {

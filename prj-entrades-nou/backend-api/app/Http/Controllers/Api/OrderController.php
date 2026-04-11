@@ -9,6 +9,7 @@ use App\Services\Order\OrderPaymentConfirmationService;
 use App\Services\Order\PendingPaymentOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -55,6 +56,11 @@ class OrderController extends Controller
         $order = $result['order'];
         $payment = $result['payment'];
 
+        Log::info('order.pending_payment', [
+            'order_id' => $order->id,
+            'event_id' => $order->event_id,
+        ]);
+
         return response()->json([
             'order_id' => $order->id,
             'state' => $order->state,
@@ -92,6 +98,11 @@ class OrderController extends Controller
         }
 
         $o = $result['order'];
+
+        Log::info('order.paid', [
+            'order_id' => $o->id,
+            'event_id' => $o->event_id,
+        ]);
 
         return response()->json([
             'order_id' => $o->id,

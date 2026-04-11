@@ -1,14 +1,23 @@
 openapi: 3.1.0
 info:
   title: Entrades API (MVP seat-map / hold / tickets / validation)
-  version: 0.3.1
-  description: Esborrany alineat amb spec.md — auth JWT, holds, Social (transferències), Admin (Discovery Feed), Socket híbrid documentat al spec (no WebSocket dins OpenAPI)
+  version: 0.4.0
+  description: |
+    Esborrany alineat amb spec.md i implementació backend (fase 6): auth JWT (`token` al cos),
+    holds anònims, comandes `pending_payment`, errors de seient, social (friend_invites, transfer),
+    admin stub, validació. Socket híbrid documentat al spec (no WebSocket dins OpenAPI).
 
 servers:
   - url: https://api.example.com
     description: Producció
   - url: http://localhost:8000
     description: Local backend-api
+
+tags:
+  - name: Auth
+  - name: Holds
+  - name: Social
+  - name: Admin
 
 paths:
   /api/auth/register:
@@ -146,9 +155,33 @@ paths:
 
   /api/orders:
     post:
-      summary: Confirmar comanda des d’un hold vàlid
+      summary: Confirmar comanda des d’un hold vàlid (estat pending_payment)
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hold_id, anonymous_session_id]
+              properties:
+                hold_id:
+                  type: string
+                  format: uuid
+                anonymous_session_id:
+                  type: string
+      responses:
+        '201':
+          description: Comanda creada en pending_payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCreatedResponse'
+        '403':
+          description: Sessió/hold no coincideix
+        '409':
+          description: Hold caducat, seients no reservats o comanda duplicada
 
   /api/tickets:
     get:
@@ -193,6 +226,15 @@ paths:
       responses:
         '200':
           description: Llista d’usuaris amics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friends:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendProfile'
 
   /api/social/friend-invites:
     get:
@@ -215,7 +257,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
+                  invites:
                     type: array
                     items:
                       $ref: '#/components/schemas/FriendInvite'
@@ -294,13 +336,31 @@ paths:
               required: [to_user_id]
               properties:
                 to_user_id:
-                  type: string
+                  type: integer
                   description: ID de l’usuari destinatari
       responses:
         '200':
           description: Transferència registrada; el servidor invalida el JWT/QR anterior i emet credencial nova (SVG) per al destinatari
         '403':
           description: No autoritzat o ticket no transferible
+        '409':
+          description: Comanda amb més d’una entrada o entrada no vàlida
+
+  /api/admin/summary:
+    get:
+      summary: Resum esborrany per panell admin (mètriques + emit Socket intern opcional)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dades agregades mínimes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSummaryResponse'
+        '403':
+          description: Rol Administrador requerit
 
   /api/admin/discovery/sync:
     post:
@@ -324,9 +384,11 @@ components:
   schemas:
     RegisterRequest:
       type: object
-      required: [name, email, password, password_confirmation]
+      required: [name, username, email, password, password_confirmation]
       properties:
         name:
+          type: string
+        username:
           type: string
         email:
           type: string
@@ -351,21 +413,30 @@ components:
     AuthTokenResponse:
       type: object
       properties:
-        access_token:
+        token:
           type: string
+          description: JWT d’API (implementació actual Laravel)
         token_type:
           type: string
-          example: bearer
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/UserProfile'
+        access_token:
+          type: string
+          deprecated: true
+          description: No usar; veure `token`
         expires_in:
           type: integer
-          description: Segons fins expiració del JWT (si aplica)
+          description: Segons fins expiració del JWT (si s’exposa)
 
     UserProfile:
       type: object
       properties:
         id:
-          type: string
+          type: integer
         name:
+          type: string
+        username:
           type: string
         email:
           type: string
@@ -374,6 +445,48 @@ components:
           type: array
           items:
             type: string
+
+    FriendProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+
+    OrderCreatedResponse:
+      type: object
+      properties:
+        order_id:
+          type: integer
+        state:
+          type: string
+        event_id:
+          type: integer
+        hold_id:
+          type: string
+        currency:
+          type: string
+        total_amount:
+          type: string
+        payment:
+          type: object
+        lines:
+          type: array
+          items:
+            type: object
+
+    AdminSummaryResponse:
+      type: object
+      properties:
+        stub:
+          type: boolean
+        events_total:
+          type: integer
+        orders_paid:
+          type: integer
 
     SeatmapResponse:
       type: object
@@ -400,12 +513,11 @@ components:
           format: uuid
         sender_id:
           type: string
-          format: uuid
+          description: ID numèric d’usuari (string per compatibilitat JSON)
         receiver_id:
           type: string
-          format: uuid
           nullable: true
-          description: Present si el destinatari ja és usuari registrat
+          description: ID numèric del destinatari registrat (string al JSON)
         receiver_email:
           type: string
           format: email
@@ -428,8 +540,7 @@ components:
       type: object
       properties:
         receiver_id:
-          type: string
-          format: uuid
+          type: integer
         receiver_email:
           type: string
           format: email

@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TicketScanValidationService
 {
@@ -72,6 +73,12 @@ class TicketScanValidationService
         });
 
         $ticket = Ticket::query()->with(['orderLine.order'])->findOrFail($ticketId);
+
+        Log::info('ticket.validated', [
+            'ticket_id' => $ticketId,
+            'validator_id' => $validator->id,
+            'owner_user_id' => $ownerUserId,
+        ]);
 
         $this->socketNotifier->emitToUser($ownerUserId, 'ticket:validated', [
             'ticketId' => (string) $ticket->id,

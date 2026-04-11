@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Auth\JwtTokenService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateJwt
@@ -41,6 +42,9 @@ class AuthenticateJwt
         $request->setUserResolver(static function () use ($user) {
             return $user;
         });
+
+        // Spatie role middleware usa Auth::guard(); alineem amb JWT (rols user/validator/admin).
+        Auth::guard('web')->setUser($user);
 
         return $next($request);
     }

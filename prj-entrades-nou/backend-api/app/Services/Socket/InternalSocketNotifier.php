@@ -28,6 +28,14 @@ class InternalSocketNotifier
         $this->emit('user:'.(string) $userId, $eventName, $payload);
     }
 
+    /**
+     * Esborrany T035: notificació mètriques cap a clients que escoltin el room (p. ex. panell admin T052).
+     */
+    public function emitMetricsStub (array $payload): void
+    {
+        $this->emit('admin:dashboard', 'admin:metrics', $payload);
+    }
+
     private function emit (string $room, string $eventName, array $payload): void
     {
         $base = Config::get('services.socket.internal_url');

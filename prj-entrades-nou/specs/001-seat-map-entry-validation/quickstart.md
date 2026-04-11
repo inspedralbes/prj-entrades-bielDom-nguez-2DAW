@@ -24,7 +24,13 @@ La branca d’**integració** del codi és **`dev`**; les branques de treball (f
 
 ## Arrencada amb Docker (carpeta `docker/dev/`)
 
-Per desenvolupar la app s’usa el compose sota **`docker/dev/`** (no el de `docker/prod/`). Des de l’arrel del monorepo:
+Per desenvolupar la app s’usa el compose sota **`docker/dev/`** (no el de `docker/prod/`).
+
+**Repositori amb carpeta `prj-entrades-nou/`** (monorepo): prefixa les rutes, p. ex.:
+
+`docker compose -f prj-entrades-nou/docker/dev/docker-compose.yml up`
+
+Des de l’arrel del monorepo quan el `docker-compose.yml` és directament a `docker/dev/`:
 
 1. Copiar variables: `cp backend-api/.env.example backend-api/.env`, etc.  
 2. Omplir com a mínim:
@@ -44,7 +50,11 @@ REDIS_PORT=6379
 TICKETMASTER_API_KEY=your_key
 GEMINI_API_KEY=your_key
 JWT_SECRET=your_jwt_secret
+SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001
+SOCKET_INTERNAL_SECRET=your_internal_secret
 ```
+
+El mateix **`JWT_SECRET`** ha de coincidir entre `backend-api`, `socket-server` i (per Socket privat) el client Nuxt si es prova validació / tickets en temps real. Si `SOCKET_SERVER_INTERNAL_URL` està buit, l’API no notificarà al socket (esborrany acceptable en dev).
 
 **frontend-nuxt/.env**
 
@@ -82,6 +92,12 @@ Mantenir **Constitution.md**, **Specify.md**, **Plan.md**, **TasksMvp.md** aline
 - Health API: `GET /api/health` (afegir al backend).  
 - Connexió Redis: `redis-cli PING` al contenidor.  
 - PostGIS: `SELECT PostGIS_Version();` a Postgres.
+- Rols Spatie (`user`, `validator`, `admin`): `php artisan db:seed --class=RoleSeeder` al contenidor `backend-api` si cal.
+- Proves de càrrega complementàries del socket: vegeu `load/README.md` (T053).
+
+## Verificació documentada (T038)
+
+Stack aixecat amb `docker compose ... up`, variables `.env` omplies (almenys `JWT_SECRET`, `DB_*`, `REDIS_*`, URLs internes del socket) i `GET /api/health` retornant 200 des del host o des de `docker compose exec backend-api curl -s http://localhost:8000/api/health` segons exposició de ports del compose.
 
 ## Cypress (proves E2E)
 

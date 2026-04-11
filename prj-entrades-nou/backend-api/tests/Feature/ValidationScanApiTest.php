@@ -101,6 +101,7 @@ class ValidationScanApiTest extends TestCase
         ]);
         $reg->assertStatus(201);
         $buyerToken = $reg->json('token');
+        $buyer = User::query()->where('email', $reg->json('user.email'))->firstOrFail();
 
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);

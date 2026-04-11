@@ -123,6 +123,15 @@ Verificar contra `.specify/memory/constitution.md` (projecte Entrades / ticketin
 
 **Estat post-disseny (fase 1)**: Sense violacions; tres paquets (`backend-api`, `frontend-nuxt`, `socket-server`) estan justificats per separació de responsabilitats (SoT API vs UI vs QR/temps real).
 
+### Revisió constitucional (T040 — fase 6)
+
+Després de **T035–T039** i artefactes associats:
+
+- **SoT Laravel + PostgreSQL**: holds, comandes, tickets, transferències i amistats es persisteixen i validen només a l’API; el client no redefineix estat crític.
+- **Redis**: TTL de holds i claus segueixen el disseny existent; sense canvi de rol respecte la constitució.
+- **Socket.IO**: subordinat a l’API (notificacions `admin:metrics`, validació, etc.); els fluxos nous no fan del socket font de veritat per a negoci.
+- **Excepcions ja documentades**: vegeu *Complexity Tracking* (p. ex. Laravel 13 vs «11» al text de constitució, `firebase/php-jwt`); no s’afegeixen noves excepcions per aquesta fase.
+
 ## Project Structure
 
 ### Documentació (aquesta funcionalitat Speckit)
