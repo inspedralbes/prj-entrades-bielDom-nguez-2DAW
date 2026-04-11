@@ -34,16 +34,23 @@ class SearchEventsController extends Controller
         $events = $q->orderBy('starts_at')->limit(60)->get();
 
         return response()->json([
-            'events' => $events->map(fn (Event $e) => [
-                'id' => $e->id,
-                'name' => $e->name,
-                'starts_at' => $e->starts_at?->toIso8601String(),
-                'category' => $e->category,
-                'venue' => $e->venue ? [
-                    'id' => $e->venue->id,
-                    'name' => $e->venue->name,
-                ] : null,
-            ])->values()->all(),
+            'events' => $events->map(function (Event $e) {
+                $id = (int) $e->id;
+
+                return [
+                    'id' => $e->id,
+                    'name' => $e->name,
+                    'starts_at' => $e->starts_at?->toIso8601String(),
+                    'category' => $e->category,
+                    'venue' => $e->venue ? [
+                        'id' => $e->venue->id,
+                        'name' => $e->venue->name,
+                    ] : null,
+                    /* Stub mapa (T048): quan hi hagi coordenades reals al venue, substituir. */
+                    'map_lat' => 41.3874 + (($id % 20) * 0.0012),
+                    'map_lng' => 2.1686 + (($id % 15) * 0.0012),
+                ];
+            })->values()->all(),
         ]);
     }
 }
