@@ -35,6 +35,13 @@ export function useAuthorizedApi () {
     });
   }
 
+  async function deleteJson (path) {
+    return await $fetch(`${base.value}${path}`, {
+      method: 'DELETE',
+      headers: authHeaders({ Accept: 'application/json' }),
+    });
+  }
+
   /**
    * @returns {Promise<string>} Marcatge SVG
    */
@@ -57,6 +64,7 @@ export function useAuthorizedApi () {
     base,
     getJson,
     postJson,
+    deleteJson,
     getTicketQrSvg,
     authHeaders,
   };

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\SavedEventsController;
+use App\Http\Controllers\Api\SearchEventsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
@@ -17,6 +19,8 @@ Route::get('/health', [HealthController::class, 'show']);
 
 Route::get('/feed/featured', [FeedController::class, 'featured']);
 
+Route::get('/search/events', [SearchEventsController::class, 'index']);
+
 Route::get('/events/{eventId}/seatmap', [SeatmapController::class, 'show']);
 
 Route::post('/events/{eventId}/holds', [HoldController::class, 'store']);
@@ -29,6 +33,9 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
 Route::middleware('jwt.auth')->get('/feed/for-you', [FeedController::class, 'forYou']);
+Route::middleware('jwt.auth')->get('/saved-events', [SavedEventsController::class, 'index']);
+Route::middleware('jwt.auth')->post('/saved-events', [SavedEventsController::class, 'store']);
+Route::middleware('jwt.auth')->delete('/saved-events/{eventId}', [SavedEventsController::class, 'destroy']);
 Route::middleware('jwt.auth')->post('/orders', [OrderController::class, 'store']);
 Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment']);
 Route::middleware('jwt.auth')->get('/tickets', [TicketController::class, 'index']);
