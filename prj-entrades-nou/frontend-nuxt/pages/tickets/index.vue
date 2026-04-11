@@ -27,16 +27,65 @@
                 :data-status="t.displayStatus"
               >{{ labelStatus(t.displayStatus) }}</span>
             </div>
-            <NuxtLink
-              :to="`/tickets/${t.id}`"
-              class="tickets-page__link"
-            >
-              Veure QR
-            </NuxtLink>
+            <div class="tickets-page__actions">
+              <NuxtLink
+                :to="`/tickets/${t.id}`"
+                class="tickets-page__link"
+              >
+                Veure QR
+              </NuxtLink>
+              <button
+                v-if="t.displayStatus === 'venuda'"
+                type="button"
+                class="tickets-page__send"
+                @click="openTransfer(t)"
+              >
+                Enviar entrada
+              </button>
+            </div>
           </li>
         </ul>
       </section>
     </template>
+
+    <div
+      v-if="transferOpen"
+      class="tickets-page__modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      @click.self="closeTransfer"
+    >
+      <div class="tickets-page__modal">
+        <h2 class="tickets-page__modal-title">Enviar entrada</h2>
+        <p class="tickets-page__muted">
+          Només a un amic amb invitació acceptada. Indica l’ID d’usuari destinatari.
+        </p>
+        <label class="tickets-page__label">
+          ID usuari
+          <input
+            v-model.number="transferUserId"
+            type="number"
+            min="1"
+            class="tickets-page__input"
+          >
+        </label>
+        <p v-if="transferErr" class="tickets-page__error">{{ transferErr }}</p>
+        <p v-if="transferOk" class="tickets-page__ok">{{ transferOk }}</p>
+        <div class="tickets-page__modal-actions">
+          <button type="button" class="tickets-page__btn-sec" @click="closeTransfer">
+            Cancel·lar
+          </button>
+          <button
+            type="button"
+            class="tickets-page__link tickets-page__link--btn"
+            :disabled="transferLoading"
+            @click="submitTransfer"
+          >
+            {{ transferLoading ? 'Enviant…' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -51,13 +100,56 @@ definePageMeta({
   middleware: 'auth',
 });
 
-const { getJson } = useAuthorizedApi();
+const { getJson, postJson } = useAuthorizedApi();
 const ticketsStore = useTicketsStore();
 usePrivateTicketSocket();
 
 const loading = ref(true);
 const error = ref('');
 const tickets = ref([]);
+
+const transferOpen = ref(false);
+const transferTicket = ref(null);
+const transferUserId = ref(null);
+const transferLoading = ref(false);
+const transferErr = ref('');
+const transferOk = ref('');
+
+function openTransfer (t) {
+  transferTicket.value = t;
+  transferUserId.value = null;
+  transferErr.value = '';
+  transferOk.value = '';
+  transferOpen.value = true;
+}
+
+function closeTransfer () {
+  transferOpen.value = false;
+  transferTicket.value = null;
+}
+
+async function submitTransfer () {
+  if (!transferTicket.value || !transferUserId.value) {
+    transferErr.value = 'Indica un usuari vàlid.';
+    return;
+  }
+  transferLoading.value = true;
+  transferErr.value = '';
+  transferOk.value = '';
+  try {
+    await postJson(`/api/tickets/${transferTicket.value.id}/transfer`, {
+      to_user_id: transferUserId.value,
+    });
+    transferOk.value = 'Entrada enviada. El QR anterior deixa de ser vàlid.';
+    const data = await getJson('/api/tickets');
+    tickets.value = data.tickets || [];
+    setTimeout(() => closeTransfer(), 1200);
+  } catch (e) {
+    transferErr.value = e?.data?.message || e?.message || 'No s’ha pogut transferir.';
+  } finally {
+    transferLoading.value = false;
+  }
+}
 
 function labelStatus (s) {
   if (s === 'venuda') {
@@ -210,5 +302,85 @@ onMounted(async () => {
 }
 .tickets-page__link:hover {
   filter: brightness(1.1);
+}
+.tickets-page__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+.tickets-page__send {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.tickets-page__send:hover {
+  border-color: #ff0055;
+  color: #fff;
+}
+.tickets-page__modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.tickets-page__modal {
+  background: #141414;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1.25rem;
+  max-width: 22rem;
+  width: 100%;
+}
+.tickets-page__modal-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #ff0055;
+}
+.tickets-page__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-top: 0.75rem;
+}
+.tickets-page__input {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #0a0a0a;
+  color: #fff;
+}
+.tickets-page__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.tickets-page__btn-sec {
+  background: #333;
+  border: none;
+  color: #fff;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tickets-page__link--btn {
+  border: none;
+  cursor: pointer;
+}
+.tickets-page__ok {
+  color: #7bed9f;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
 }
 </style>
