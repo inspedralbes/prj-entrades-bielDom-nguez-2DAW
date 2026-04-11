@@ -5,8 +5,36 @@ import 'dotenv/config';
 import { createServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
+import { generateTicketSvg } from './qr/generateTicketSvg.js';
 
 const jwtSecret = process.env.JWT_SECRET || process.env.APP_KEY || '';
+
+function internalSecretOk (req) {
+  const expected = process.env.SOCKET_INTERNAL_SECRET || '';
+  const got = req.headers['x-internal-secret'] || '';
+  if (expected !== '' && got !== expected) {
+    return false;
+  }
+  return true;
+}
+
+function readJsonBody (req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (c) => {
+      chunks.push(c);
+    });
+    req.on('end', () => {
+      try {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        resolve(JSON.parse(raw));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
 
 const httpServer = createServer();
 
@@ -18,7 +46,7 @@ const io = new Server(httpServer, {
   },
 });
 
-//================================ HTTP: health + emissió interna des del backend (T018)
+//================================ HTTP: health + emissió interna + QR SVG (T026)
 httpServer.on('request', (req, res) => {
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -26,21 +54,13 @@ httpServer.on('request', (req, res) => {
     return;
   }
   if (req.url === '/internal/emit' && req.method === 'POST') {
-    const expected = process.env.SOCKET_INTERNAL_SECRET || '';
-    const got = req.headers['x-internal-secret'] || '';
-    if (expected !== '' && got !== expected) {
+    if (!internalSecretOk(req)) {
       res.writeHead(403);
       res.end();
       return;
     }
-    const chunks = [];
-    req.on('data', (c) => {
-      chunks.push(c);
-    });
-    req.on('end', () => {
-      try {
-        const raw = Buffer.concat(chunks).toString('utf8');
-        const body = JSON.parse(raw);
+    readJsonBody(req)
+      .then((body) => {
         const room = String(body.room || '');
         const evt = String(body.event || '');
         const payload = body.payload;
@@ -49,11 +69,37 @@ httpServer.on('request', (req, res) => {
         }
         res.writeHead(204);
         res.end();
-      } catch (e) {
+      })
+      .catch(() => {
         res.writeHead(400);
         res.end();
-      }
-    });
+      });
+    return;
+  }
+  if (req.url === '/internal/qr-svg' && req.method === 'POST') {
+    if (!internalSecretOk(req)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    readJsonBody(req)
+      .then(async (body) => {
+        const text = String(body.text || body.payload || '');
+        if (text === '') {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'text or payload requerit' }));
+          return;
+        }
+        const width = body.width !== undefined ? Number(body.width) : undefined;
+        const margin = body.margin !== undefined ? Number(body.margin) : undefined;
+        const svg = await generateTicketSvg(text, { width, margin });
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+        res.end(svg);
+      })
+      .catch(() => {
+        res.writeHead(400);
+        res.end();
+      });
     return;
   }
   res.writeHead(404);
