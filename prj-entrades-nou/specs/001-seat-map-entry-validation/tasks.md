@@ -122,11 +122,11 @@ description: "Task list for seat map, holds, secure tickets, validation (001-sea
 
 **Independent Test**: Escanejar QR vàlid com a Validador i veure ticket utilitzada a PostgreSQL; segon escaneig rebutjat; app Assistent mostra marca visual
 
-- [ ] T030 [US3] Implementar `POST /api/validation/scan` a `backend-api/app/Http/Controllers/Api/ValidationController.php` amb policy només `validator`, validar JWT, idempotència `jti`/`ticket_id`, actualitzar `tickets` a **utilitzada** en transacció — **Branca:** `001-seat-map-t030-validation-scan` · **Cypress:** **API** — 200 primer cop, 400 segon cop
-- [ ] T031 [US3] Després de validació OK, emetre `ticket:validated` des de `socket-server/` cap al room de l’usuari Assistent (`userId` del titular del ticket) — **Branca:** `001-seat-map-t031-socket-validated` · **Cypress:** client titular rep event (amb JWT room)
-- [ ] T032 [P] [US3] Vista `frontend-nuxt/pages/validator/scan.vue` (o ruta protegida amb rol) per llegir QR i cridar API de validació — **Branca:** `001-seat-map-t032-validator-ui` · **Cypress:** **FE** — flux validador + **API** scan
-- [ ] T033 [US3] Actualitzar `frontend-nuxt/stores/tickets.ts` (o Pinia) en rebre Socket: mostrar estat usat / «X» sobre el bitllet i historial alineat amb [spec.md](./spec.md) referència [22, Historial] — **Branca:** `001-seat-map-t033-ticket-used-ui` · **Cypress:** **FE** — overlay X després d’event simulat o E2E complet
-- [ ] T034 [US3] Gestionar resposta d’error de xarxa al validador (sense canvi d’estat «usat») als components de validació — **Branca:** `001-seat-map-t034-validator-offline` · **Cypress:** intercept network failure + assert UI
+- [X] T030 [US3] Implementar `POST /api/validation/scan` a `backend-api/app/Http/Controllers/Api/ValidationController.php` amb policy només `validator`, validar JWT, idempotència `jti`/`ticket_id`, actualitzar `tickets` a **utilitzada** en transacció — **Branca:** `001-seat-map-t030-validation-scan` · **Cypress:** **API** — 200 primer cop, 400 segon cop
+- [X] T031 [US3] Després de validació OK, emetre `ticket:validated` des de `socket-server/` cap al room de l’usuari Assistent (`userId` del titular del ticket) — **Branca:** `001-seat-map-t031-socket-validated` · **Cypress:** client titular rep event (amb JWT room)
+- [X] T032 [P] [US3] Vista `frontend-nuxt/pages/validator/scan.vue` (o ruta protegida amb rol) per llegir QR i cridar API de validació — **Branca:** `001-seat-map-t032-validator-ui` · **Cypress:** **FE** — flux validador + **API** scan
+- [X] T033 [US3] Actualitzar `frontend-nuxt/stores/tickets.ts` (o Pinia) en rebre Socket: mostrar estat usat / «X» sobre el bitllet i historial alineat amb [spec.md](./spec.md) referència [22, Historial] — **Branca:** `001-seat-map-t033-ticket-used-ui` · **Cypress:** **FE** — overlay X després d’event simulat o E2E complet
+- [X] T034 [US3] Gestionar resposta d’error de xarxa al validador (sense canvi d’estat «usat») als components de validació — **Branca:** `001-seat-map-t034-validator-offline` · **Cypress:** intercept network failure + assert UI
 
 **Checkpoint**: Flux complet compra → entrada → validació → UI Assistent
 

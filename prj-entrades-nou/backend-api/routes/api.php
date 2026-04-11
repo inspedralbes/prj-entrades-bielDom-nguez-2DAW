@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\HoldController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SeatmapController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\ValidationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'show']);
@@ -26,3 +27,4 @@ Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderCon
 Route::middleware('jwt.auth')->get('/tickets', [TicketController::class, 'index']);
 Route::middleware('jwt.auth')->get('/tickets/{ticketId}/qr', [TicketController::class, 'showQr'])
     ->whereUuid('ticketId');
+Route::middleware('jwt.auth')->post('/validation/scan', [ValidationController::class, 'scan']);
