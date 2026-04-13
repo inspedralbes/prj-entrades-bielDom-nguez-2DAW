@@ -24,6 +24,7 @@ class EventFactory extends Factory
             'hidden_at' => null,
             'category' => 'música',
             'seat_layout' => null,
+            'tm_sync_paused' => false,
         ];
     }
 }

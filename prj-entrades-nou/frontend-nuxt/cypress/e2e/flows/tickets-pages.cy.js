@@ -1,89 +1,154 @@
 /**
- * T029 — UI entrades: llista, detall i QR SVG (intercept API, sessió localStorage).
+ * US2: E2E tickets -> QR (T029 + ampliació)
  */
-describe('Pàgines entrades (T029)', () => {
-  const TID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+describe('Entrades (US2)', () => {
+  const TICKET_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+  const USED_TICKET_ID = 'b1ffccaa-0c1a-5ag9-ca77-7cc0ce491b22'
 
-  function seedAuth (win) {
-    win.localStorage.setItem(
-      'speckit_auth_token',
-      'cypress-fake-jwt-token-for-ui',
-    );
-    win.localStorage.setItem(
-      'speckit_auth_user',
-      JSON.stringify({ id: 1, name: 'Usuari Cypress', email: 'cy@example.com' }),
-    );
+  function seedAuth(win) {
+    const token = 'cypress-fake-jwt-token'
+    // Cal coincidir amb middleware (cookie `auth_token`); localStorage sol no és vàlid.
+    win.document.cookie = `auth_token=${encodeURIComponent(token)}; path=/`
+    win.localStorage.setItem('speckit_auth_token', token)
+    win.localStorage.setItem('speckit_auth_user', JSON.stringify({ id: 1, name: 'Test', email: 'test@example.com' }))
   }
 
-  it('llista mostra esdeveniment, seient i enllaç al detall', () => {
-    cy.intercept('GET', '**/api/tickets', {
-      statusCode: 200,
-      body: {
-        tickets: [
-          {
-            id: TID,
-            public_uuid: 'pub-uuid-1',
-            status: 'venuda',
-            jwt_expires_at: null,
-            used_at: null,
-            order_id: 1,
-            event: {
-              id: 10,
-              name: 'Concert interceptat',
-              starts_at: '2026-12-01T20:00:00.000000Z',
+  describe('Llista de tickets', () => {
+    it('mostra tickets del usuari', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: {
+          tickets: [
+            {
+              id: TICKET_ID,
+              public_uuid: 'pub-uuid-1',
+              status: 'venuda',
+              used_at: null,
+              event: { id: 1, name: 'Concert Test', starts_at: '2026-12-01T20:00:00Z' },
+              seat: { id: 1, key: 'A-1' },
             },
-            seat: { id: 5, key: 'B-4' },
-            created_at: '2026-01-01T12:00:00.000000Z',
-          },
-        ],
-      },
-    }).as('tickets');
+          ],
+        },
+      }).as('tickets')
 
-    cy.visit('/tickets', { onBeforeLoad: seedAuth });
-    cy.wait('@tickets');
-    cy.contains('Concert interceptat');
-    cy.contains('Seient B-4');
-    cy.contains('Vàlida');
-    cy.contains('a', 'Veure QR')
-      .should('have.attr', 'href')
-      .and('include', `/tickets/${TID}`);
-  });
+      cy.visit('/tickets', { onBeforeLoad: seedAuth })
+      cy.wait('@tickets')
+      cy.contains('Concert Test')
+      cy.contains('A-1')
+    })
 
-  it('detall mostra QR SVG', () => {
-    cy.intercept('GET', '**/api/tickets', {
-      statusCode: 200,
-      body: {
-        tickets: [
-          {
-            id: TID,
-            public_uuid: 'pub-uuid-1',
-            status: 'venuda',
-            jwt_expires_at: null,
-            used_at: null,
-            order_id: 1,
-            event: {
-              id: 10,
-              name: 'Concert interceptat',
-              starts_at: null,
+    it('mostra missatge quan no hi ha tickets', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: { tickets: [] },
+      })
+
+      cy.visit('/tickets', { onBeforeLoad: seedAuth })
+      cy.contains('No tens entrades')
+    })
+  })
+
+  describe('Detall de ticket', () => {
+    it('mostra QR quan ticket vàlid', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: {
+          tickets: [
+            {
+              id: TICKET_ID,
+              status: 'venuda',
+              used_at: null,
+              event: { name: 'Concert Test' },
+              seat: { key: 'A-1' },
             },
-            seat: { id: 5, key: 'B-4' },
-            created_at: null,
-          },
-        ],
-      },
-    }).as('tickets');
+          ],
+        },
+      })
 
-    cy.intercept('GET', `**/api/tickets/${TID}/qr`, {
-      statusCode: 200,
-      headers: { 'content-type': 'image/svg+xml; charset=utf-8' },
-      body: '<svg xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#000"/></svg>',
-    }).as('qr');
+      cy.intercept('GET', `**/api/tickets/${TICKET_ID}/qr`, {
+        statusCode: 200,
+        headers: { 'content-type': 'image/svg+xml' },
+        body: '<svg><rect width="80" height="80"/></svg>',
+      }).as('qr')
 
-    cy.visit(`/tickets/${TID}`, { onBeforeLoad: seedAuth });
-    cy.wait('@tickets');
-    cy.wait('@qr');
-    cy.contains('Concert interceptat');
-    cy.contains('Seient B-4');
-    cy.get('.ticket-detail__qr svg').should('exist');
-  });
-});
+      cy.visit(`/tickets/${TICKET_ID}`, { onBeforeLoad: seedAuth })
+      cy.wait('@qr')
+      cy.get('svg').should('exist')
+    })
+
+    it('mostra overlay quan ticket utilitzat', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: {
+          tickets: [
+            {
+              id: USED_TICKET_ID,
+              status: 'utilitzada',
+              used_at: '2026-01-15T18:00:00Z',
+              event: { name: 'Concert Test' },
+              seat: { key: 'A-2' },
+            },
+          ],
+        },
+      })
+
+      cy.visit(`/tickets/${USED_TICKET_ID}`, { onBeforeLoad: seedAuth })
+      cy.contains('Utilitzada')
+      cy.get('[data-testid="used-overlay"]').should('exist')
+      cy.contains('X').should('exist')
+    })
+
+    it('mostra error quan QR no disponible', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: {
+          tickets: [
+            {
+              id: TICKET_ID,
+              status: 'venuda',
+              event: { name: 'Concert Test' },
+              seat: { key: 'A-1' },
+            },
+          ],
+        },
+      })
+
+      cy.intercept('GET', `**/api/tickets/${TICKET_ID}/qr`, {
+        statusCode: 500,
+        body: { error: 'QR generation failed' },
+      }).as('qrFail')
+
+      cy.visit(`/tickets/${TICKET_ID}`, { onBeforeLoad: seedAuth })
+      cy.wait('@qrFail')
+      cy.contains('Error').or('error')
+    })
+  })
+
+  describe('Navegació', () => {
+    it('navega de llista a detall', () => {
+      cy.intercept('GET', '**/api/tickets', {
+        statusCode: 200,
+        body: {
+          tickets: [
+            {
+              id: TICKET_ID,
+              status: 'venuda',
+              event: { name: 'Concert Test', starts_at: '2026-12-01T20:00:00Z' },
+              seat: { key: 'A-1' },
+            },
+          ],
+        },
+      })
+
+      cy.intercept('GET', `**/api/tickets/${TICKET_ID}/qr`, {
+        statusCode: 200,
+        headers: { 'content-type': 'image/svg+xml' },
+        body: '<svg><rect width="80" height="80"/></svg>',
+      })
+
+      cy.visit('/tickets', { onBeforeLoad: seedAuth })
+      cy.contains('Concert Test').click()
+      cy.url().should('include', `/tickets/${TICKET_ID}`)
+    })
+  })
+})

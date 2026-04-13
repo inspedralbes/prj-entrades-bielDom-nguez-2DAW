@@ -8,12 +8,15 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\InternalSeatHoldController;
 use App\Http\Controllers\Api\SeatmapController;
 use App\Http\Controllers\Api\SocialController;
+use App\Http\Controllers\Api\SocialUserController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TicketTransferController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\ValidationController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'show']);
@@ -22,7 +25,15 @@ Route::get('/feed/featured', [FeedController::class, 'featured']);
 
 Route::get('/search/events', [SearchEventsController::class, 'index']);
 
+Route::get('/events/nearby', [SearchEventsController::class, 'nearby']);
+Route::get('/cities/search', [SearchEventsController::class, 'searchCities']);
+Route::get('/events/{eventId}', [SearchEventsController::class, 'show']);
+Route::get('/events/{eventId}/price', [SearchEventsController::class, 'eventPrice']);
+
 Route::get('/events/{eventId}/seatmap', [SeatmapController::class, 'show']);
+
+Route::middleware('internal.socket')->post('/internal/seat-holds/release-user', [InternalSeatHoldController::class, 'releaseUser']);
+Route::middleware('internal.socket')->post('/internal/seat-holds/release-user-event', [InternalSeatHoldController::class, 'releaseUserEvent']);
 
 Route::post('/events/{eventId}/holds', [HoldController::class, 'store']);
 Route::post('/holds/{holdId}/login-grace', [HoldController::class, 'loginGrace']);
@@ -35,12 +46,17 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
 Route::middleware('jwt.auth')->get('/user/profile', [UserProfileController::class, 'show']);
 Route::middleware('jwt.auth')->patch('/user/profile', [UserProfileController::class, 'updateProfile']);
-Route::middleware('jwt.auth')->patch('/user/settings', [UserProfileController::class, 'updateSettings']);
 Route::middleware('jwt.auth')->get('/feed/for-you', [FeedController::class, 'forYou']);
 Route::middleware('jwt.auth')->get('/saved-events', [SavedEventsController::class, 'index']);
 Route::middleware('jwt.auth')->post('/saved-events', [SavedEventsController::class, 'store']);
 Route::middleware('jwt.auth')->delete('/saved-events/{eventId}', [SavedEventsController::class, 'destroy']);
+Route::middleware('jwt.auth')->post('/events/{eventId}/seat-holds', [SeatmapController::class, 'holdSeat']);
+Route::middleware('jwt.auth')->post('/events/{eventId}/seat-holds/release', [SeatmapController::class, 'releaseSeat']);
+Route::middleware('jwt.auth')->post('/events/{eventId}/seat-holds/release-all', [SeatmapController::class, 'releaseAllMyHolds']);
+
 Route::middleware('jwt.auth')->post('/orders', [OrderController::class, 'store']);
+Route::middleware('jwt.auth')->post('/orders/quantity', [OrderController::class, 'storeQuantity']);
+Route::middleware('jwt.auth')->post('/orders/cinema-seats', [OrderController::class, 'storeCinemaSeats']);
 Route::middleware('jwt.auth')->post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment']);
 Route::middleware('jwt.auth')->get('/tickets', [TicketController::class, 'index']);
 Route::middleware('jwt.auth')->get('/tickets/{ticketId}/qr', [TicketController::class, 'showQr'])
@@ -48,7 +64,13 @@ Route::middleware('jwt.auth')->get('/tickets/{ticketId}/qr', [TicketController::
 Route::middleware('jwt.auth')->post('/tickets/{ticketId}/transfer', [TicketTransferController::class, 'store'])
     ->whereUuid('ticketId');
 
+Route::middleware('jwt.auth')->get('/notifications', [NotificationController::class, 'index']);
+Route::middleware('jwt.auth')->patch('/notifications/{id}', [NotificationController::class, 'update'])->whereNumber('id');
+
 Route::middleware('jwt.auth')->get('/social/friends', [SocialController::class, 'friends']);
+Route::middleware('jwt.auth')->get('/social/discover/search', [SocialUserController::class, 'search']);
+Route::middleware('jwt.auth')->get('/social/users/{userId}', [SocialUserController::class, 'publicProfile']);
+Route::middleware('jwt.auth')->post('/social/share-event', [SocialController::class, 'shareEvent']);
 Route::middleware('jwt.auth')->get('/social/friend-invites', [SocialController::class, 'invitesIndex']);
 Route::middleware('jwt.auth')->post('/social/friend-invites', [SocialController::class, 'invitesStore']);
 Route::middleware('jwt.auth')->patch('/social/friend-invites/{inviteId}', [SocialController::class, 'invitesPatch']);
@@ -56,6 +78,10 @@ Route::middleware('jwt.auth')->patch('/social/friend-invites/{inviteId}', [Socia
 Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/summary', [AdminController::class, 'summary']);
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
+    Route::get('/events', [AdminController::class, 'index']);
+    Route::post('/events', [AdminController::class, 'store']);
+    Route::patch('/events/{eventId}', [AdminController::class, 'updateEvent'])->whereNumber('eventId');
+    Route::delete('/events/{eventId}', [AdminController::class, 'destroy'])->whereNumber('eventId');
 });
 
 Route::middleware('jwt.auth')->post('/validation/scan', [ValidationController::class, 'scan']);

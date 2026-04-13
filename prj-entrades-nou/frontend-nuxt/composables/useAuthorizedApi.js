@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
 
 /**
  * Crides a l’API amb Bearer (T029) + text SVG del QR.
@@ -8,7 +9,7 @@ export function useAuthorizedApi () {
   const config = useRuntimeConfig();
   const auth = useAuthStore();
 
-  const base = computed(() => (config.public.apiUrl || '').replace(/\/$/, ''));
+  const base = computed(() => resolvePublicApiBaseUrl(config.public.apiUrl));
 
   function authHeaders (extra = {}) {
     const h = { ...extra };
@@ -18,10 +19,19 @@ export function useAuthorizedApi () {
     return h;
   }
 
-  async function getJson (path) {
-    return await $fetch(`${base.value}${path}`, {
+  /**
+   * @param {string} path
+   * @param {{ noCache?: boolean }} [options] noCache: evita resposta antiga (seatmap / holds Redis)
+   */
+  async function getJson (path, options) {
+    const fetchOpts = {
       headers: authHeaders({ Accept: 'application/json' }),
-    });
+      timeout: 20000,
+    };
+    if (options !== undefined && options !== null && options.noCache === true) {
+      fetchOpts.cache = 'no-store';
+    }
+    return await $fetch(`${base.value}${path}`, fetchOpts);
   }
 
   async function postJson (path, body) {
@@ -32,6 +42,7 @@ export function useAuthorizedApi () {
         'Content-Type': 'application/json',
       }),
       body,
+      timeout: 20000,
     });
   }
 
@@ -39,6 +50,7 @@ export function useAuthorizedApi () {
     return await $fetch(`${base.value}${path}`, {
       method: 'DELETE',
       headers: authHeaders({ Accept: 'application/json' }),
+      timeout: 20000,
     });
   }
 
@@ -50,6 +62,7 @@ export function useAuthorizedApi () {
         'Content-Type': 'application/json',
       }),
       body,
+      timeout: 20000,
     });
   }
 

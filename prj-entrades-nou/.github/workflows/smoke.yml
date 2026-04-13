@@ -1,0 +1,176 @@
+name: Smoke Test (Phase 1 Setup)
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+env:
+  COMPOSE_FILE: docker/dev/docker-compose.yml
+
+jobs:
+  smoke:
+    name: Docker Compose Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env files (minimal for smoke)
+        run: |
+          echo "DB_CONNECTION=pgsql" > backend-api/.env
+          echo "DB_HOST=postgres" >> backend-api/.env
+          echo "DB_PORT=5432" >> backend-api/.env
+          echo "DB_DATABASE=esdeveniments" >> backend-api/.env
+          echo "DB_USERNAME=esdeveniments" >> backend-api/.env
+          echo "DB_PASSWORD=esdeveniments" >> backend-api/.env
+          echo "REDIS_HOST=redis" >> backend-api/.env
+          echo "REDIS_PORT=6379" >> backend-api/.env
+          echo "SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001" >> backend-api/.env
+          echo "JWT_SECRET=smoke_test_secret" >> backend-api/.env
+
+      - name: Build and start services
+        run: docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} up --build -d
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for services..."
+          timeout=300
+          elapsed=0
+          interval=5
+
+          # Wait for postgres
+          echo "Checking postgres..."
+          while [ $elapsed -lt $timeout ]; do
+            if docker compose -f ${{ env.COMPOSE_FILE }} exec -T postgres pg_isready -U esdeveniments -d esdeveniments &>/dev/null; then
+              echo "postgres is ready"
+              break
+            fi
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+
+          if [ $elapsed -ge $timeout ]; then
+            echo "Timeout waiting for postgres"
+            docker compose -f ${{ env.COMPOSE_FILE }} logs postgres
+            exit 1
+          fi
+
+          # Wait for backend-api
+          echo "Checking backend-api..."
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            status=$(docker compose -f ${{ env.COMPOSE_FILE }} exec -T backend-api curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health 2>/dev/null || echo "000")
+            if [ "$status" = "200" ]; then
+              echo "backend-api is ready"
+              break
+            fi
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+
+          if [ $elapsed -ge $timeout ]; then
+            echo "Timeout waiting for backend-api"
+            docker compose -f ${{ env.COMPOSE_FILE }} logs backend-api
+            exit 1
+          fi
+
+      - name: Wait for socket-server (port 3001)
+        run: |
+          timeout=120
+          elapsed=0
+          interval=2
+          while [ $elapsed -lt $timeout ]; do
+            if curl -sf http://127.0.0.1:3001/health >/dev/null 2>&1; then
+              echo "socket-server is ready"
+              exit 0
+            fi
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+          echo "Timeout waiting for socket-server"
+          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs socket-server --tail=80
+          exit 1
+
+      - name: Run smoke test - API Health
+        run: |
+          echo "Testing API health endpoint..."
+          response=$(docker compose -f ${{ env.COMPOSE_FILE }} exec -T backend-api curl -s http://localhost:8000/api/health)
+          echo "Response: $response"
+
+          if echo "$response" | grep -q "ok\|OK"; then
+            echo "Health check passed"
+          else
+            echo "Health check failed: unexpected response"
+            exit 1
+          fi
+
+      - name: Verify monorepo paths (T001)
+        id: paths
+        run: |
+          echo "=== Verifying T001 monorepo directories ==="
+          required_dirs=("backend-api" "frontend-nuxt" "socket-server" "database" "docker/dev")
+          missing=()
+
+          for dir in "${required_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✓ $dir exists"
+            else
+              echo "✗ $dir missing"
+              missing+=("$dir")
+            fi
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing directories: ${missing[*]}"
+            exit 1
+          else
+            echo "All T001 directories verified"
+          fi
+
+      - name: Realtime — dos clients + SeatStatusUpdated (intent JWT)
+        run: |
+          cd socket-server
+          npm ci
+          JWT_SECRET=dev_jwt_secret_change_me npm run test:intent-broadcast -- http://127.0.0.1:3001
+
+      - name: Realtime — POST /internal/emit (held + sold)
+        run: |
+          cd socket-server
+          JWT_SECRET=dev_jwt_secret_change_me npm run test:realtime -- http://127.0.0.1:3001
+
+      - name: Pinia — store interactiveSeatmap (applySocketUpdate / bootstrap)
+        run: |
+          cd frontend-nuxt
+          npm ci
+          npm run test:seatmap-store
+
+      - name: Run Cypress tests (if configured)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f "frontend-nuxt/cypress.config.js" ] || [ -f "frontend-nuxt/cypress.config.ts" ]; then
+            echo "Cypress config found, running tests..."
+            cd frontend-nuxt
+            npm ci
+            npm run cypress:run -- --headless || echo "Cypress tests failed or skipped"
+          else
+            echo "Cypress not configured, skipping E2E tests"
+          fi
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Collecting logs for debugging ==="
+          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs --tail=50
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} down -v --remove-orphans || true

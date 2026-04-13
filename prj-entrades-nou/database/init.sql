@@ -96,11 +96,16 @@ CREATE TABLE failed_jobs (
 CREATE TABLE venues (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    address VARCHAR(500),
+    city VARCHAR(255),
+    external_tm_id VARCHAR(255),
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
 
 ALTER TABLE venues ADD COLUMN location geography (POINT, 4326);
+
+CREATE UNIQUE INDEX venues_external_tm_id_unique ON venues (external_tm_id) WHERE external_tm_id IS NOT NULL;
 
 CREATE TABLE events (
     id BIGSERIAL PRIMARY KEY,
@@ -112,6 +117,10 @@ CREATE TABLE events (
     hidden_at TIMESTAMP WITH TIME ZONE,
     category VARCHAR(255),
     seat_layout JSONB,
+    tm_sync_paused BOOLEAN NOT NULL DEFAULT FALSE,
+    tm_url VARCHAR(1024),
+    price DECIMAL(10, 2),
+    image_url VARCHAR(1024),
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
@@ -161,7 +170,8 @@ CREATE INDEX orders_state_index ON orders (state);
 CREATE TABLE order_lines (
     id BIGSERIAL PRIMARY KEY,
     order_id BIGINT NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
-    seat_id BIGINT NOT NULL REFERENCES seats (id) ON DELETE CASCADE,
+    seat_id BIGINT REFERENCES seats (id) ON DELETE CASCADE,
+    seat_key VARCHAR(255),
     unit_price DECIMAL(12, 2) NOT NULL,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE,
@@ -194,7 +204,6 @@ CREATE TABLE saved_events (
 
 CREATE TABLE user_settings (
     user_id BIGINT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
-    gemini_personalization_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
@@ -223,6 +232,20 @@ CREATE TABLE ticket_transfers (
 );
 
 CREATE INDEX ticket_transfers_status_index ON ticket_transfers (status);
+
+-- Notificacions socials (feed G/H): esdeveniments i entrades compartides; nom social_notifications per evitar col·lisió amb Notifiable de Laravel.
+CREATE TABLE social_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    actor_user_id BIGINT REFERENCES users (id) ON DELETE SET NULL,
+    type VARCHAR(64) NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}',
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE
+);
+
+CREATE INDEX social_notifications_user_created_index ON social_notifications (user_id, created_at DESC);
 
 CREATE TABLE tm_discovery_sync (
     id BIGSERIAL PRIMARY KEY,

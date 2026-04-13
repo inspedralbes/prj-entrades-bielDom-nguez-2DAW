@@ -13,20 +13,22 @@
     <p v-if="selected" class="map-page__panel">
       <strong>{{ selected.name }}</strong><br>
       <button type="button" class="map-page__btn" @click="openDirections">Com arribar</button>
-      <NuxtLink :to="`/events/${selected.id}/seats`" class="map-page__link">Detall</NuxtLink>
+      <NuxtLink :to="`/events/${selected.id}`" class="map-page__link">Detall</NuxtLink>
     </p>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useApi } from '~/composables/useApi';
 import { useGoogleMapsLoader } from '~/composables/useGoogleMapsLoader';
+import { useRoute } from 'vue-router';
 
 definePageMeta({
   layout: 'default',
 });
 
+const route = useRoute();
 const config = useRuntimeConfig();
 const { fetchApi } = useApi();
 const { load } = useGoogleMapsLoader();
@@ -38,17 +40,39 @@ const events = ref([]);
 const selected = ref(null);
 
 let map;
-let markers = [];
+const markers = [];
+
+let infoWindow = null;
 
 function clearMarkers () {
-  for (const m of markers) {
-    m.setMap(null);
+  for (let i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
   }
-  markers = [];
+  markers.length = 0;
+}
+
+function buildSearchEventsUrl () {
+  const params = new URLSearchParams();
+  const q = route.query;
+  if (q.q) {
+    params.set('q', String(q.q));
+  }
+  if (q.category) {
+    params.set('category', String(q.category));
+  }
+  if (q.date_from) {
+    params.set('date_from', String(q.date_from));
+  }
+  const qs = params.toString();
+  if (qs === '') {
+    return '/api/search/events';
+  }
+  return `/api/search/events?${qs}`;
 }
 
 async function loadEvents () {
-  const data = await fetchApi('/api/search/events');
+  const url = buildSearchEventsUrl();
+  const data = await fetchApi(url);
   events.value = data.events || [];
 }
 
@@ -56,9 +80,110 @@ function openDirections () {
   if (!selected.value) {
     return;
   }
-  const { map_lat: lat, map_lng: lng } = selected.value;
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const lat = selected.value.map_lat;
+  const lng = selected.value.map_lng;
+  if (lat == null || lng == null) {
+    return;
+  }
+  const la = Number(lat);
+  const ln = Number(lng);
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${la},${ln}`;
   window.open(url, '_blank', 'noopener');
+}
+
+function fitMapToMarkers () {
+  if (!map) {
+    return;
+  }
+  if (markers.length === 0) {
+    return;
+  }
+
+  const latQ = route.query.lat;
+  const lngQ = route.query.lng;
+  if (latQ && lngQ) {
+    const la = parseFloat(String(latQ));
+    const ln = parseFloat(String(lngQ));
+    if (!isNaN(la) && !isNaN(ln)) {
+      map.setCenter({ lat: la, lng: ln });
+      map.setZoom(12);
+      return;
+    }
+  }
+
+  const bounds = new window.google.maps.LatLngBounds();
+  for (let i = 0; i < markers.length; i++) {
+    bounds.extend(markers[i].getPosition());
+  }
+  if (bounds.isEmpty()) {
+    return;
+  }
+  map.fitBounds(bounds, 48);
+}
+
+async function renderMarkers () {
+  clearMarkers();
+
+  for (let i = 0; i < events.value.length; i++) {
+    const ev = events.value[i];
+    const rawLat = ev.map_lat;
+    const rawLng = ev.map_lng;
+    if (rawLat == null || rawLng == null) {
+      continue;
+    }
+    const lat = Number(rawLat);
+    const lng = Number(rawLng);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      continue;
+    }
+    const pos = { lat, lng };
+    const marker = new window.google.maps.Marker({
+      position: pos,
+      map,
+      title: ev.name,
+    });
+    marker.addListener('click', () => {
+      selected.value = ev;
+      const venueName = ev.venue && ev.venue.name ? ev.venue.name : '';
+      infoWindow.setContent(`
+        <div style="padding:8px;max-width:200px;">
+          <strong style="font-size:14px;">${ev.name}</strong>
+          <p style="margin:4px 0;font-size:12px;color:#666;">${venueName}</p>
+          <a href="/events/${ev.id}" style="color:#ff0055;">Veure</a>
+        </div>
+      `);
+      infoWindow.setPosition(pos);
+      infoWindow.open(map);
+      map.panTo(pos);
+    });
+    markers.push(marker);
+  }
+
+  fitMapToMarkers();
+}
+
+async function initMap () {
+  const key = config.public.googleMapsKey;
+  await load(key);
+
+  const latParam = parseFloat(String(route.query.lat || ''));
+  const lngParam = parseFloat(String(route.query.lng || ''));
+  let center = { lat: 40.4168, lng: -3.7038 };
+  let zoom = 6;
+  if (!isNaN(latParam) && !isNaN(lngParam)) {
+    center = { lat: latParam, lng: lngParam };
+    zoom = 12;
+  }
+
+  map = new window.google.maps.Map(mapEl.value, {
+    center,
+    zoom,
+    mapId: undefined,
+  });
+
+  infoWindow = new window.google.maps.InfoWindow();
+
+  await renderMarkers();
 }
 
 onMounted(async () => {
@@ -67,44 +192,42 @@ onMounted(async () => {
   selected.value = null;
   try {
     await loadEvents();
-    const key = config.public.googleMapsKey;
-    await load(key);
-    const center = { lat: 41.3874, lng: 2.1686 };
-    map = new window.google.maps.Map(mapEl.value, {
-      center,
-      zoom: 13,
-      mapId: undefined,
-    });
-    clearMarkers();
-    for (const ev of events.value) {
-      if (ev.map_lat == null || ev.map_lng == null) {
-        continue;
-      }
-      const pos = { lat: ev.map_lat, lng: ev.map_lng };
-      const marker = new window.google.maps.Marker({
-        position: pos,
-        map,
-        title: ev.name,
-      });
-      marker.addListener('click', () => {
-        selected.value = ev;
-        map.panTo(pos);
-      });
-      markers.push(marker);
-    }
-    if (events.value.length && events.value[0].map_lat != null) {
-      map.setCenter({ lat: events.value[0].map_lat, lng: events.value[0].map_lng });
-    }
+    await initMap();
   } catch (e) {
-    mapError.value = e?.message || 'No s’ha pogut inicialitzar el mapa (revisa la clau Maps).';
+    mapError.value = e?.message || 'No s\'ha pogut inicialitzar el mapa (revisa la clau Maps).';
     console.error(e);
   } finally {
     loading.value = false;
   }
 });
 
+watch(
+  () => route.query,
+  async () => {
+    if (!map) {
+      return;
+    }
+    loading.value = true;
+    mapError.value = '';
+    try {
+      await loadEvents();
+      selected.value = null;
+      await renderMarkers();
+    } catch (e) {
+      mapError.value = e?.message || 'Error en recarregar esdeveniments.';
+      console.error(e);
+    } finally {
+      loading.value = false;
+    }
+  },
+  { deep: true },
+);
+
 onUnmounted(() => {
   clearMarkers();
+  if (infoWindow) {
+    infoWindow.close();
+  }
   map = null;
 });
 </script>

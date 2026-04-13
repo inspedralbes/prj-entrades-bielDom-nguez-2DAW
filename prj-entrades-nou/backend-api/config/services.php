@@ -36,6 +36,12 @@ return [
         'key' => env('TICKETMASTER_API_KEY'),
         'base_url' => env('TICKETMASTER_DISCOVERY_BASE_URL', 'https://app.ticketmaster.com/discovery/v2'),
         'disabled' => env('TICKETMASTER_DISABLED', false),
+        'sync_country' => env('TICKETMASTER_SYNC_COUNTRY', 'ES'),
+        'sync_page_size' => (int) env('TICKETMASTER_SYNC_PAGE_SIZE', 100),
+        'sync_max_pages' => (int) env('TICKETMASTER_SYNC_MAX_PAGES', 20),
+        'sync_daily_at' => env('TICKETMASTER_SYNC_DAILY_AT', '04:15'),
+        'allowed_categories' => explode(',', env('TICKETMASTER_ALLOWED_CATEGORIES', 'Party,DJ,Social,Comedy,Film,Theatre,Art,Sport,Talk,Concert')),
+        'min_capacity' => (int) env('TICKETMASTER_MIN_CAPACITY', 500),
     ],
 
     'socket' => [
@@ -45,6 +51,7 @@ return [
 
     'order' => [
         'stub_unit_price' => (float) env('ORDER_STUB_UNIT_PRICE', 25.0),
+        'fixed_event_price_eur' => (float) env('ORDER_FIXED_EVENT_PRICE_EUR', 20.0),
     ],
 
 ];

@@ -9,10 +9,13 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "test:seatmap-store": "node tests/verify-interactive-seatmap-store.mjs"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.5.5",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "html5-qrcode": "^2.3.8",
     "nuxt": "^3.14.159",
     "pinia": "^2.2.6",

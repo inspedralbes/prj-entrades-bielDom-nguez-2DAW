@@ -21,12 +21,14 @@ class Order extends Model
         'state',
         'currency',
         'total_amount',
+        'quantity',
     ];
 
     protected function casts (): array
     {
         return [
             'total_amount' => 'decimal:2',
+            'quantity' => 'integer',
         ];
     }
 

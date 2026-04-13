@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\AuthenticateJwt::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'internal.socket' => \App\Http\Middleware\VerifyInternalSocketSecret::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -4,6 +4,7 @@ namespace App\Services\Socket;
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Notifica el socket-server (HTTP intern) per retransmetre esdeveniments a rooms (T018).
@@ -36,10 +37,29 @@ class InternalSocketNotifier
         $this->emit('admin:dashboard', 'admin:metrics', $payload);
     }
 
+    /**
+     * Emit low stock warning for an event.
+     */
+    public function emitLowStock (int $eventId, int $remainingTickets): void
+    {
+        $this->emit('event:'.$eventId, 'event:low_stock', [
+            'event_id' => $eventId,
+            'remaining_tickets' => $remainingTickets,
+            'threshold' => 10,
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    }
+
     private function emit (string $room, string $eventName, array $payload): void
     {
         $base = Config::get('services.socket.internal_url');
         if ($base === null || $base === '') {
+            Log::warning('socket.internal_emit_skipped_no_url', [
+                'room' => $room,
+                'event' => $eventName,
+                'hint' => 'Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)',
+            ]);
+
             return;
         }
 
@@ -55,13 +75,27 @@ class InternalSocketNotifier
                 $headers['X-Internal-Secret'] = $secret;
             }
 
-            Http::timeout(3)->withHeaders($headers)->post($url, [
+            // Cal enviar JSON: el socket-server fa JSON.parse del cos; sense asJson() Laravel envia form-urlencoded i /internal/emit retorna 400.
+            $response = Http::timeout(3)->withHeaders($headers)->asJson()->post($url, [
                 'room' => $room,
                 'event' => $eventName,
                 'payload' => $payload,
             ]);
+
+            if ($response->failed()) {
+                Log::warning('socket.internal_emit_http_error', [
+                    'room' => $room,
+                    'event' => $eventName,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
         } catch (\Throwable $e) {
-            // No bloquejar el flux de negoci si el worker Socket no està actiu.
+            Log::warning('socket.internal_emit_failed', [
+                'room' => $room,
+                'event' => $eventName,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 }

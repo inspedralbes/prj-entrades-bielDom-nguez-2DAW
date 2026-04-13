@@ -9,6 +9,8 @@ Font de veritat de l’**esquema relacional** per a PostgreSQL:
 
 **Docker (`docker/dev/docker-compose.yml`)**: els scripts es muntan a `postgres:/docker-entrypoint-initdb.d/` i s’executen **només en crear el volum de dades buit**. Si cal regenerar l’esquema des de zero: `docker compose -f docker/dev/docker-compose.yml down -v` (esborra dades) i tornar a aixecar el servei.
 
+**Bases ja existents (sense recrear volum)**: si s’afegeixen columnes noves, vegeu `upgrade-*.sql` a l’arrel de `database/` (p. ex. sincronització Ticketmaster).
+
 **Laravel**: no s’usen migracions PHP per a l’esquema (`backend-api/database/migrations/` buit, vegeu el README d’allà). El model Eloquent continua alineat amb aquestes taules.
 
 **Tests PHPUnit (SQLite)**: paritat d’esquema a `database/testing/schema.sqlite.sql`; el trait `Tests\Concerns\RefreshDatabaseFromSql` la carrega automàticament.

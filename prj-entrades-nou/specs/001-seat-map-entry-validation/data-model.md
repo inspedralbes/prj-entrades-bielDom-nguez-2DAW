@@ -11,7 +11,8 @@ L’**esquema físic** de PostgreSQL es manté als fitxers **`database/init.sql`
 | Camp | Tipus | Notes |
 |------|--------|--------|
 | id | UUID / bigserial | PK |
-| external_tm_id | string nullable | ID Ticketmaster si aplica |
+| external_tm_id | string nullable | ID Ticketmaster si aplica; clau per a ingesta des de Discovery (vegeu **spec.md**, «Catàleg Ticketmaster Discovery i administració»: job diari només **INSERT** de nous IDs; files existents no es sobreescriuen des de TM) |
+| tm_sync_paused | bool (default false) | Si és cert, el job de sincronització TM **no** ha d’actualitzar/insertar aquesta fila segons política d’implementació (admin) |
 | name | string | |
 | hold_ttl_seconds | int | Entre **180 i 300** (3–5 min); **línia base de producte 240** (4 min) per defecte dins del rang |
 | venue_id | FK → Venue | |
@@ -25,6 +26,7 @@ L’**esquema físic** de PostgreSQL es manté als fitxers **`database/init.sql`
 | Camp | Tipus | Notes |
 |------|--------|--------|
 | id | PK | |
+| external_tm_id | string nullable | Identificador de recinte TM quan vingui d’ingesta Discovery (vegeu **spec.md**, «Catàleg Ticketmaster Discovery i administració») |
 | name | string | |
 | location | geography(Point,4326) nullable | Per **marcadors** al mapa de cerca i **distància** PostGIS |
 | postgis metadata | opcional | Fallback de mapa: consultes per **proximitat** quan Top Picks no està disponible |
@@ -110,7 +112,7 @@ Taula **`ticket_transfers`** (o columnes a `tickets`): vinculació `ticket_id`, 
 
 | Entitat | Camps (idea) | Notes |
 |---------|----------------|-------|
-| **user_settings** | `user_id`, `gemini_personalization_enabled` (bool, default true) | **FR-024**: opt-out recomanacions IA |
+| **user_settings** | `user_id`, `proximity_personalization_enabled` (bool, default false) | Opt-in recomanacions per proximitat |
 | **saved_events** (o `event_favorites`) | `user_id`, `event_id`, `created_at` | **Guardats** / icona cor al buscador (**FR-023**) |
 
 ### Sincronització Ticketmaster (admin)

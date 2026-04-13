@@ -11,6 +11,7 @@ class OrderLine extends Model
     protected $fillable = [
         'order_id',
         'seat_id',
+        'seat_key',
         'unit_price',
     ];
 

@@ -75,7 +75,7 @@ JWT_SECRET=your_jwt_secret
 3. Construir imatges (si el compose usa `build` cap a `docker/dockerfiles/`):  
    `docker compose -f docker/dev/docker-compose.yml build`  
 4. Esquema PostgreSQL: **`database/init.sql`** + **`database/inserts.sql`** s’apliquen automàticament en el **primer** arrencada de Postgres (volum de dades nou). Si cal recrear l’esquema: `docker compose -f docker/dev/docker-compose.yml down -v` i tornar a pujar (esborra dades).  
-5. `docker compose -f docker/dev/docker-compose.yml up` (inclou **Adminer** a `http://localhost:8080`: sistema PostgreSQL, servidor `postgres`, usuari/contrasenya com al `.env`).  
+5. `docker compose -f docker/dev/docker-compose.yml up`. **Adminer** (opcional, perfil `tools`): `docker compose --profile tools -f docker/dev/docker-compose.yml up` — després `http://localhost:8080` (PostgreSQL, servidor `postgres`, usuari/contrasenya com al compose).  
 6. Obrir el Nuxt a la URL publicada (p. ex. `http://localhost:3000`).  
 7. Opcional: `docker compose -f docker/dev/docker-compose.yml exec backend-api php artisan db:seed` per repetir seeds Laravel (rols addicionals, factories) si cal.
 
@@ -98,6 +98,22 @@ Mantenir **Constitution.md**, **Specify.md**, **Plan.md**, **TasksMvp.md** aline
 ## Verificació documentada (T038)
 
 Stack aixecat amb `docker compose ... up`, variables `.env` omplies (almenys `JWT_SECRET`, `DB_*`, `REDIS_*`, URLs internes del socket) i `GET /api/health` retornant 200 des del host o des de `docker compose exec backend-api curl -s http://localhost:8000/api/health` segons exposició de ports del compose.
+
+---
+
+## T038 Sign-off (2026-04-11)
+
+| Component | Versió | Estat |
+|-----------|--------|-------|
+| Docker Compose | 2.x | ✓ |
+| Laravel | 13.x | ✓ |
+| Nuxt | 3.x | ✓ |
+| Socket.IO | 4.x | ✓ |
+| Postgres (PostGIS) | 16-3.4 | ✓ |
+| Redis | 7.2 | ✓ |
+| Smoke API | OK | ✓ |
+
+**Verificat:** 2026-04-11
 
 ## Cypress (proves E2E)
 

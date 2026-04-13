@@ -30,6 +30,12 @@ export function usePrivateTicketSocket () {
     socket.on('ticket:validated', (payload) => {
       ticketsStore.applyValidatedPayload(payload);
     });
+
+    socket.on('notification:new', () => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:socket-notification'));
+      }
+    });
   });
 
   onUnmounted(() => {

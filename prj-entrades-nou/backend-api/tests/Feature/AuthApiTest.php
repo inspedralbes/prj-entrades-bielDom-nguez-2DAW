@@ -20,7 +20,6 @@ class AuthApiTest extends TestCase
     {
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Prova',
-            'username' => 'provauser',
             'email' => 'prova@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
@@ -36,7 +35,7 @@ class AuthApiTest extends TestCase
 
         $me->assertOk();
         $me->assertJsonPath('email', 'prova@example.com');
-        $me->assertJsonPath('username', 'provauser');
+        $this->assertNotEmpty($me->json('username'));
     }
 
     public function test_health_endpoint(): void

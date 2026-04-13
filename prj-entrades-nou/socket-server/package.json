@@ -7,7 +7,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test:realtime": "node scripts/verify-internal-emit.mjs",
+    "test:intent-broadcast": "node scripts/verify-seat-intent-broadcast.mjs"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -18,5 +20,8 @@
     "qrcode": "1.5.4",
     "redis": "^4.7.0",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
   }
 }

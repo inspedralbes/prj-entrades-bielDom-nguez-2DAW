@@ -4,17 +4,35 @@ const TOKEN_KEY = 'speckit_auth_token';
 const USER_KEY = 'speckit_auth_user';
 
 /**
- * Persistència mínima token + usuari (T029) per a middleware i proves Cypress.
+ * Persistència token + usuari per a proves E2E i UX.
+ * Important: no crear sessió només des de localStorage; cal cookie `auth_token`
+ * (alineada amb middleware SSR). Abans setSession() des de localStorage
+ * escrivia la cookie i saltava l’autenticació real.
  */
 export default defineNuxtPlugin(() => {
   const auth = useAuthStore();
+  const tokenCookie = useCookie('auth_token');
 
-  const rawT = localStorage.getItem(TOKEN_KEY);
-  const rawU = localStorage.getItem(USER_KEY);
-  if (rawT && rawU) {
-    try {
-      auth.setSession({ token: rawT, user: JSON.parse(rawU) });
-    } catch {
+  auth.init();
+
+  const fromCookie =
+    typeof tokenCookie.value === 'string'
+      ? tokenCookie.value.trim()
+      : tokenCookie.value;
+
+  if (!fromCookie) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  } else {
+    const rawT = localStorage.getItem(TOKEN_KEY);
+    const rawU = localStorage.getItem(USER_KEY);
+    if (rawT === fromCookie && rawU) {
+      try {
+        auth.user = JSON.parse(rawU);
+      } catch {
+        localStorage.removeItem(USER_KEY);
+      }
+    } else if (rawT && rawT !== fromCookie) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
     }

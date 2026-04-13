@@ -13,13 +13,13 @@ class UserSetting extends Model
 
     protected $fillable = [
         'user_id',
-        'gemini_personalization_enabled',
+        'proximity_personalization_enabled',
     ];
 
     protected function casts (): array
     {
         return [
-            'gemini_personalization_enabled' => 'boolean',
+            'proximity_personalization_enabled' => 'boolean',
         ];
     }
 

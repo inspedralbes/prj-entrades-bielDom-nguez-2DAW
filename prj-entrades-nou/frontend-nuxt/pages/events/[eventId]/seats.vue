@@ -1,74 +1,49 @@
 <template>
-  <main class="seats-page">
+  <main class="seats-page" data-seatmap-route="interactive-v2">
     <header class="seats-header">
-      <NuxtLink to="/" class="back-link">← Inici</NuxtLink>
-      <h1 class="title">Selecció de seients</h1>
-      <p class="sub">Esdeveniment #{{ eventId }}</p>
+      <NuxtLink :to="`/events/${eventId}`" class="back-link">← Enrere</NuxtLink>
+      <h1 class="title">Selecciona els teus seients</h1>
     </header>
 
-    <p v-if="pending" class="muted">Carregant mapa…</p>
-    <p v-else-if="error" class="err">No s’ha pogut carregar el mapa.</p>
-
-    <template v-else-if="seatmap">
-      <section v-if="seatmap.snapshotImageUrl" class="snapshot-wrap">
-        <img
-          :src="seatmap.snapshotImageUrl"
-          alt="Mapa de la sala"
-          class="snapshot-img"
-        >
-      </section>
-      <p v-else class="muted">
-        Sense imatge de mapa (fallback només zones / llista de seients).
-      </p>
-
-      <div v-if="holdStore.contentionMessage" class="banner banner-warn" role="alert">
-        {{ holdStore.contentionMessage }}
-        <button type="button" class="banner-close" @click="holdStore.clearContention(); refresh()">
-          Tancar
-        </button>
+    <div v-if="pending" class="loading">Carregant mapa…</div>
+    <div v-else-if="error" class="error">{{ error }}</div>
+    <template v-else-if="event">
+      <div class="event-info-bar">
+        <h2 class="event-name">{{ event.name }}</h2>
+        <p class="event-meta">{{ formatDate(event.starts_at) }} · {{ event.venue?.name }}</p>
       </div>
 
-      <div v-if="holdError" class="banner banner-err">
-        {{ holdError }}
-      </div>
+      <!-- Mapa D3: només client (evita desalineació SSR/hidratació). -->
+      <ClientOnly>
+        <InteractiveSeatMap :event-id="eventId" @seat-click="onSeatClick" />
+        <template #fallback>
+          <p class="loading">Preparant mapa de seients…</p>
+        </template>
+      </ClientOnly>
 
-      <div v-if="holdStore.hasActiveHold" class="hold-bar">
-        <span class="hold-label">Reserva activa</span>
-        <span class="hold-time">{{ remainingLabel || '—' }}</span>
-      </div>
+      <p v-if="holdMessage" class="seats-toast">{{ holdMessage }}</p>
 
-      <section
-        v-for="block in zonesWithSeats"
-        :key="block.id"
-        class="zone-block"
-      >
-        <h2 class="zone-title">{{ block.label }}</h2>
-        <ul class="seat-grid">
-          <li v-for="seat in block.seats" :key="seat.id">
-            <button
-              type="button"
-              class="seat-btn"
-              :class="seatClass(seat)"
-              :disabled="seatDisabled(seat)"
-              @click="onSeatClick(seat)"
-            >
-              {{ seat.key }}
-            </button>
-          </li>
-        </ul>
-      </section>
-
-      <footer class="actions">
-        <p class="hint">
-          Seleccionats: {{ holdStore.selectionCount }} / 6
-        </p>
+      <footer v-if="event" class="ticket-footer" aria-label="Resum de compra">
+        <div class="ticket-footer__left">
+          <p v-if="unitPrice > 0" class="ticket-footer__muted">
+            Preu per entrada: €{{ unitPrice.toFixed(2) }}
+          </p>
+          <p class="ticket-footer__count">
+            {{ selectedCount }} {{ selectedCount === 1 ? 'entrada' : 'entrades' }}
+            <span v-if="selectedCount > 0" class="ticket-footer__hint"> (màx. {{ maxSeats }} per persona)</span>
+          </p>
+          <p class="ticket-footer__total">
+            Total: €{{ totalPrice.toFixed(2) }}
+          </p>
+        </div>
         <button
           type="button"
-          class="btn-primary"
-          :disabled="holdStore.selectionCount < 1 || holdLoading || holdStore.hasActiveHold"
-          @click="createHold"
+          class="ticket-footer__cta"
+          :disabled="selectedCount === 0 || pendingSeatSyncCount > 0 || checkoutPending"
+          @click="goToCheckout"
         >
-          Reservar seients
+          <span v-if="checkoutPending">Preparant compra…</span>
+          <span v-else>Comprar · €{{ totalPrice.toFixed(2) }}</span>
         </button>
       </footer>
     </template>
@@ -77,386 +52,433 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import InteractiveSeatMap from '~/components/InteractiveSeatMap.vue';
+import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { usePrivateSeatmapSocket } from '~/composables/usePrivateSeatmapSocket';
+import { useAuthStore } from '~/stores/auth';
+import { useInteractiveSeatmapStore } from '~/stores/interactiveSeatmap';
 
 definePageMeta({
   layout: 'default',
+  middleware: 'auth',
 });
 
 const route = useRoute();
-const config = useRuntimeConfig();
-const holdStore = useHoldStore();
-const { fetchApi } = useApi();
+const router = useRouter();
+const { getJson, postJson } = useAuthorizedApi();
+const auth = useAuthStore();
+const seatmapStore = useInteractiveSeatmapStore();
 
-const eventId = computed(() => String(route.params.eventId || ''));
-
-const { data: seatmap, pending, error, refresh } = await useAsyncData(
-  () => `seatmap-${route.params.eventId}`,
-  () => {
-    const base = (config.public.apiUrl || '').replace(/\/$/, '');
-    return $fetch(`${base}/api/events/${route.params.eventId}/seatmap`);
-  },
-  { watch: [() => route.params.eventId] },
+const { emitSeatHoldIntent, emitSeatHoldRollback } = usePrivateSeatmapSocket(
+  computed(() => route.params.eventId),
 );
 
-const holdLoading = ref(false);
-const holdError = ref(null);
-
-const availableIds = computed(() => {
-  const seats = seatmap.value?.seats || [];
-  const set = new Set();
-  for (const s of seats) {
-    if (s.status === 'available') {
-      set.add(Number(s.id));
-    }
+const eventId = computed(() => {
+  const rawId = route.params.eventId;
+  if (Array.isArray(rawId)) {
+    return rawId[0];
   }
-  return set;
+  return rawId;
 });
 
-const zonesWithSeats = computed(() => {
-  const m = seatmap.value;
-  if (!m?.zones) {
-    return [];
-  }
-  const seats = m.seats || [];
-  return m.zones.map((z) => ({
-    id: z.id,
-    label: z.label,
-    seats: seats.filter((s) => String(s.zoneId) === String(z.id)),
-  }));
-});
+/** Esdeveniment del mapa (fix per onUnmounted: route.params ja pot ser la ruta nova). */
+const releaseTargetEventId = ref('');
 
-function seatClass (seat) {
-  const sel = holdStore.selectedSeatIds.includes(Number(seat.id));
-  return {
-    'is-selected': sel,
-    'is-sold': seat.status === 'sold',
-    'is-held': seat.status === 'held',
-    'is-blocked': seat.status === 'blocked',
-  };
-}
-
-function seatDisabled (seat) {
-  if (holdStore.hasActiveHold) {
-    return true;
-  }
-  if (seat.status !== 'available') {
-    return true;
-  }
-  const id = Number(seat.id);
-  const sel = holdStore.selectedSeatIds.includes(id);
-  if (sel) {
-    return false;
-  }
-  return holdStore.selectionCount >= 6;
-}
-
-function onSeatClick (seat) {
-  if (holdStore.hasActiveHold) {
-    return;
-  }
-  holdStore.toggleSeatId(seat.id, { availableIds: availableIds.value });
-}
-
-const nowTick = ref(Date.now());
-let clockId = null;
-
-onMounted(() => {
-  holdStore.ensureAnonymousSession();
-  clockId = setInterval(() => {
-    nowTick.value = Date.now();
-  }, 1000);
-});
-
-const remainingLabel = computed(() => {
-  if (!holdStore.holdExpiresAt) {
-    return null;
-  }
-  const end = new Date(holdStore.holdExpiresAt).getTime();
-  const ms = Math.max(0, end - nowTick.value);
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-});
-
-let pollId = null;
 watch(
-  () => holdStore.holdId,
-  (id) => {
-    if (pollId) {
-      clearInterval(pollId);
-      pollId = null;
+  () => eventId.value,
+  (v) => {
+    if (v !== undefined && v !== null && String(v).trim() !== '') {
+      releaseTargetEventId.value = String(v);
     }
-    if (!id) {
-      return;
-    }
-    pollId = setInterval(async () => {
-      try {
-        const res = await fetchApi(`/api/holds/${id}/time`);
-        if (res?.expires_at) {
-          holdStore.applyResync({ expiresAt: res.expires_at });
-        }
-      } catch {
-        holdStore.clearHoldTimerOnly();
-        refresh();
-      }
-    }, 12000);
   },
   { immediate: true },
 );
 
-onUnmounted(() => {
-  if (clockId) {
-    clearInterval(clockId);
-  }
-  if (pollId) {
-    clearInterval(pollId);
-  }
-});
+const pending = ref(true);
+const error = ref('');
+const event = ref(null);
+const holdMessage = ref('');
+const checkoutPending = ref(false);
+/** Seients amb POST pendent (evita doble clic i bloqueja compra fins sincronitzar). */
+const pendingSeatSync = ref({});
+const maxSeats = 6;
 
-useEventSeatSocket(eventId, {
-  onContention: (payload) => {
-    const msg = payload?.message;
-    holdStore.setContention(typeof msg === 'string' ? msg : null);
-    refresh();
-  },
-  onResync: (payload) => {
-    const ex = payload?.expiresAt;
-    if (typeof ex === 'string') {
-      holdStore.applyResync({ expiresAt: ex });
+const pendingSeatSyncCount = computed(() => {
+  const o = pendingSeatSync.value;
+  const keys = Object.keys(o);
+  let n = 0;
+  for (let i = 0; i < keys.length; i++) {
+    if (o[keys[i]] === true) {
+      n += 1;
     }
-  },
+  }
+  return n;
 });
 
-async function createHold () {
-  holdError.value = null;
-  holdLoading.value = true;
+const selectedCount = computed(() => {
+  return seatmapStore.selectedSeatIds.length;
+});
+
+const unitPrice = computed(() => {
+  if (!event.value || !event.value.price) {
+    return 0;
+  }
+  return parseFloat(event.value.price);
+});
+
+const totalPrice = computed(() => {
+  return unitPrice.value * selectedCount.value;
+});
+
+function formatDate (iso) {
+  if (!iso) {
+    return '';
+  }
   try {
-    const res = await fetchApi(`/api/events/${eventId.value}/holds`, {
-      method: 'POST',
-      body: {
-        seat_ids: holdStore.selectedSeatIds,
-        anonymous_session_id: holdStore.anonymousSessionId,
-      },
+    return new Date(iso).toLocaleString('ca-ES', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
     });
-    holdStore.setHoldResult({
-      holdId: res.hold_id,
-      expiresAt: res.expires_at,
-      eventId: eventId.value,
-    });
-    await refresh();
-  } catch (e) {
-    const msg = e?.data?.message || e?.message || 'No s’ha pogut reservar';
-    holdError.value = msg;
-  } finally {
-    holdLoading.value = false;
+  } catch {
+    return iso;
   }
 }
+
+/**
+ * Carrega esdeveniment + seatmap (SoT: PG + holds Redis).
+ * silent: sense spinner (tornada a la pestanya / keep-alive) per no amagar el mapa ja pintat.
+ */
+async function fetchData (opts) {
+  let silent = false;
+  if (opts !== undefined && opts !== null && opts.silent === true) {
+    silent = true;
+  }
+  const id = eventId.value;
+  if (id === undefined || id === null || id === '') {
+    return;
+  }
+  if (!silent) {
+    pending.value = true;
+  }
+  error.value = '';
+  try {
+    auth.init();
+    const ev = await getJson(`/api/events/${id}`);
+    event.value = ev;
+
+    const sm = await getJson(`/api/events/${id}/seatmap`, { noCache: true });
+    seatmapStore.bootstrapFromApi(sm, id);
+
+    const uid = auth.user && auth.user.id !== undefined ? auth.user.id : null;
+    seatmapStore.setCurrentUserId(uid);
+  } catch (e) {
+    if (!silent) {
+      error.value = 'No s\'ha pogut carregar el mapa.';
+    }
+    console.error(e);
+  } finally {
+    if (!silent) {
+      pending.value = false;
+    }
+  }
+}
+
+function onVisibilityChange () {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  if (document.visibilityState !== 'visible') {
+    return;
+  }
+  const id = eventId.value;
+  if (id === undefined || id === null || id === '') {
+    return;
+  }
+  /* Qualsevol reserva mentre la pestanya estava en segon pla: tornem a llegir Redis+PG */
+  fetchData({ silent: true });
+}
+
+/**
+ * Navegador “enrere/avant” (bfcache): la pàgina es restaura sense tornar a executar setup;
+ * cal tornar a llegir el seatmap o els holds d’altres usuaris no apareixen.
+ */
+function onPageShow (e) {
+  if (!e || !e.persisted) {
+    return;
+  }
+  const id = eventId.value;
+  if (id === undefined || id === null || id === '') {
+    return;
+  }
+  fetchData({ silent: true });
+}
+
+function setPendingSeat (seatId, v) {
+  const next = {};
+  const keys = Object.keys(pendingSeatSync.value);
+  for (let i = 0; i < keys.length; i++) {
+    next[keys[i]] = pendingSeatSync.value[keys[i]];
+  }
+  if (v) {
+    next[seatId] = true;
+  } else {
+    delete next[seatId];
+  }
+  pendingSeatSync.value = next;
+}
+
+async function onSeatClick ({ seatId }) {
+  holdMessage.value = '';
+  if (pendingSeatSync.value[seatId]) {
+    return;
+  }
+  if (seatmapStore.soldBySeatId[seatId]) {
+    return;
+  }
+
+  const uid = auth.user && auth.user.id !== undefined ? String(auth.user.id) : '';
+
+  if (seatmapStore.selectedSeatIds.indexOf(seatId) >= 0) {
+    setPendingSeat(seatId, true);
+    seatmapStore.optimisticRelease(seatId);
+    try {
+      await postJson(`/api/events/${eventId.value}/seat-holds/release`, { seat_id: seatId });
+    } catch (err) {
+      seatmapStore.restoreAfterFailedRelease(seatId, uid);
+      const msg = err && err.data && err.data.message;
+      holdMessage.value = msg || 'No s\'ha pogut alliberar el seient.';
+    } finally {
+      setPendingSeat(seatId, false);
+    }
+    return;
+  }
+
+  if (seatmapStore.selectedSeatIds.length >= maxSeats) {
+    holdMessage.value = `Màxim ${maxSeats} entrades per persona.`;
+    return;
+  }
+
+  const held = seatmapStore.heldBySeatId[seatId];
+  if (held !== undefined && held !== '' && held !== uid) {
+    holdMessage.value = 'Aquest seient està reservat per un altre usuari.';
+    return;
+  }
+
+  setPendingSeat(seatId, true);
+  seatmapStore.optimisticReserve(seatId, uid);
+  emitSeatHoldIntent(seatId);
+  try {
+    await postJson(`/api/events/${eventId.value}/seat-holds`, { seat_id: seatId });
+  } catch (err) {
+    emitSeatHoldRollback(seatId);
+    seatmapStore.revertOptimisticReserve(seatId);
+    const msg = err && err.data && err.data.message;
+    holdMessage.value = msg || 'No s\'ha pogut reservar el seient.';
+  } finally {
+    setPendingSeat(seatId, false);
+  }
+}
+
+async function goToCheckout () {
+  if (seatmapStore.selectedSeatIds.length === 0) {
+    return;
+  }
+  if (checkoutPending.value) {
+    return;
+  }
+  holdMessage.value = '';
+  checkoutPending.value = true;
+  const keys = [];
+  const sel = seatmapStore.selectedSeatIds;
+  for (let i = 0; i < sel.length; i++) {
+    keys.push(sel[i]);
+  }
+  try {
+    const evNum = parseInt(String(eventId.value), 10);
+    if (Number.isNaN(evNum)) {
+      holdMessage.value = 'Esdeveniment invàlid.';
+      return;
+    }
+    const created = await postJson('/api/orders/cinema-seats', {
+      event_id: evNum,
+      seat_keys: keys,
+    });
+    await postJson(`/api/orders/${created.order_id}/confirm-payment`, {});
+    await router.push({
+      path: '/checkout',
+      query: {
+        eventId: String(eventId.value),
+        orderId: String(created.order_id),
+      },
+    });
+  } catch (err) {
+    let msg = 'No s\'ha pogut iniciar la compra.';
+    if (err && err.data && err.data.message) {
+      msg = err.data.message;
+    }
+    holdMessage.value = msg;
+  } finally {
+    checkoutPending.value = false;
+  }
+}
+
+/* fullPath: tornar a aquesta URL (mateix eventId) torna a sincronitzar; només eventId no disparava si ja era el mateix */
+watch(
+  () => route.fullPath,
+  () => {
+    fetchData();
+  },
+  { immediate: true },
+);
+
+/**
+ * Allibera tots els holds Redis d’aquest esdeveniment (mateix usuari).
+ * Cridat en sortir del mapa: més fiable que només el socket-server → Laravel intern
+ * (el fetch des del contenidor Node pot fallar sense que el client ho vegi).
+ */
+function releaseAllHoldsForThisEvent () {
+  if (!import.meta.client) {
+    return;
+  }
+  const idStr = releaseTargetEventId.value;
+  if (idStr === '') {
+    return;
+  }
+  postJson(`/api/events/${idStr}/seat-holds/release-all`, {}).catch(() => {});
+}
+
+onMounted(() => {
+  if (import.meta.client && typeof window !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pageshow', onPageShow);
+  }
+});
+
+onUnmounted(() => {
+  releaseAllHoldsForThisEvent();
+  if (import.meta.client && typeof window !== 'undefined') {
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    window.removeEventListener('pageshow', onPageShow);
+  }
+});
 </script>
 
 <style scoped>
 .seats-page {
+  padding: 1rem;
+  padding-bottom: 120px;
   min-height: 100vh;
-  background: #0a0a0c;
-  color: #f2f2f2;
-  padding: 1.25rem 1rem 5rem;
-  font-family: system-ui, sans-serif;
+  background: #0a0a0a;
 }
-
 .seats-header {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
-
 .back-link {
-  color: #ff6b9d;
+  color: #ff0055;
   text-decoration: none;
-  font-size: 0.9rem;
-}
-
-.back-link:hover {
-  text-decoration: underline;
-}
-
-.title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  margin: 0.5rem 0 0.15rem;
-  color: #fff;
-}
-
-.sub {
-  margin: 0;
-  color: #888;
-  font-size: 0.85rem;
-}
-
-.muted {
-  color: #777;
-}
-
-.err {
-  color: #f66;
-}
-
-.snapshot-wrap {
-  margin-bottom: 1.25rem;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #222;
-}
-
-.snapshot-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 280px;
-  object-fit: contain;
-  background: #111;
-}
-
-.banner {
-  padding: 0.65rem 0.85rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.banner-warn {
-  background: #3d2a12;
-  border: 1px solid #a66;
-  color: #ffd6bf;
-}
-
-.banner-err {
-  background: #3a1212;
-  border: 1px solid #c44;
-  color: #fcc;
-}
-
-.banner-close {
-  flex-shrink: 0;
-  background: transparent;
-  border: 1px solid #888;
-  color: #fff;
-  border-radius: 4px;
-  padding: 0.2rem 0.5rem;
-  cursor: pointer;
-}
-
-.hold-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 0.85rem;
-  margin-bottom: 1rem;
-  background: #14221a;
-  border: 1px solid #2a5;
-  border-radius: 6px;
-}
-
-.hold-label {
-  font-weight: 600;
-  color: #8f8;
-}
-
-.hold-time {
-  font-variant-numeric: tabular-nums;
-  font-size: 1.25rem;
-  letter-spacing: 0.05em;
-}
-
-.zone-block {
-  margin-bottom: 1.5rem;
-}
-
-.zone-title {
   font-size: 1rem;
-  font-weight: 600;
-  color: #ccc;
-  margin: 0 0 0.5rem;
 }
-
-.seat-grid {
-  list-style: none;
+.title {
+  font-size: 1.1rem;
+  color: #f5f5f5;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
 }
-
-.seat-btn {
-  min-width: 2.75rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #1e1e22;
-  color: #eee;
+.loading,
+.error {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+}
+.error {
+  color: #ff6b6b;
+}
+.event-info-bar {
+  background: #1a1a1a;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.event-name {
+  font-size: 1rem;
+  color: #f5f5f5;
+  margin: 0 0 0.25rem;
+}
+.event-meta {
   font-size: 0.8rem;
-  cursor: pointer;
+  color: #888;
+  margin: 0;
 }
-
-.seat-btn:hover:not(:disabled) {
-  border-color: #ff6b9d;
-  color: #fff;
+.seats-toast {
+  color: #ffb020;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
 }
-
-.seat-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.seat-btn.is-selected {
-  background: #6b1f3d;
-  border-color: #ff6b9d;
-  color: #fff;
-}
-
-.seat-btn.is-sold,
-.seat-btn.is-held,
-.seat-btn.is-blocked {
-  background: #2a2a2e;
-  color: #666;
-}
-
-.actions {
+.ticket-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, #0a0a0c 30%);
-  border-top: 1px solid #222;
-}
-
-.hint {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: #999;
-}
-
-.btn-primary {
-  width: 100%;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 6px;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: #0d0d0d;
+  border-top: 1px solid #333;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
+}
+.ticket-footer__left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+}
+.ticket-footer__muted {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #888;
+}
+.ticket-footer__count {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #e5e5e5;
+}
+.ticket-footer__hint {
+  font-size: 0.75rem;
+  color: #666;
+}
+.ticket-footer__total {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+.ticket-footer__cta {
+  align-self: center;
+  flex-shrink: 0;
+  padding: 0.85rem 1.25rem;
   background: #ff0055;
   color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-weight: 700;
-  font-size: 1rem;
   cursor: pointer;
+  white-space: nowrap;
 }
-
-.btn-primary:disabled {
-  opacity: 0.45;
+.ticket-footer__cta:disabled {
+  background: #444;
   cursor: not-allowed;
 }
-
-.btn-primary:not(:disabled):hover {
-  filter: brightness(1.08);
+.ticket-footer__cta:not(:disabled):hover {
+  background: #ff3377;
 }
 </style>

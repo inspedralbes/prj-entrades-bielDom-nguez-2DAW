@@ -9,8 +9,18 @@ export default defineNuxtConfig({
   experimental: {
     appManifest: false,
   },
-  devtools: { enabled: true },
+  // DevTools: en Windows alguns projectes mostren "Unable to add filesystem: <illegal path>"
+  devtools: { enabled: false },
   modules: ['@pinia/nuxt'],
+  // Docker Desktop (Windows): el bind mount sovint no notifica canvis; el polling evita servir codi antic.
+  vite: {
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 400,
+      },
+    },
+  },
   runtimeConfig: {
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000',

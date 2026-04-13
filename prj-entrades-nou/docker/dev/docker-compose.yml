@@ -1,6 +1,9 @@
-# Entorn de desenvolupament — Postgres 16 + PostGIS, Redis 7.2, API Laravel, Nuxt, Socket.IO, Adminer
+# Entorn de desenvolupament — Postgres 16 + PostGIS, Redis 7.2, API Laravel, Nuxt, Socket.IO, Adminer (opcional)
 # Context de build: arrel del monorepo (../../)
 # Esquema SQL: ../../database/init.sql + ../../database/inserts.sql (només en crear el volum buit de dades).
+#
+# Adminer va al perfil "tools" per defecte: `docker compose up` no el descarrega (evita fallides de pull CDN).
+# Per arrencar Adminer: docker compose --profile tools -f docker/dev/docker-compose.yml up
 services:
   postgres:
     image: postgis/postgis:16-3.4
@@ -21,6 +24,7 @@ services:
       retries: 5
 
   adminer:
+    profiles: [tools]
     image: adminer:4.8.1
     restart: unless-stopped
     ports:
@@ -31,8 +35,10 @@ services:
       postgres:
         condition: service_healthy
 
+  # Espeig oficial a AWS Public ECR (mateixa imatge library/redis que Docker Hub, altres capes/CDN).
+  # Si el pull des de docker.io falla (timeout a cloudflarestorage.com / R2), aquest mirror sol respondre millor.
   redis:
-    image: redis:7.2-alpine
+    image: public.ecr.aws/docker/library/redis:7.2
     ports:
       - '6379:6379'
 
@@ -43,6 +49,8 @@ services:
     working_dir: /var/www/html
     volumes:
       - ../../backend-api:/var/www/html
+      - ../../database:/var/www/database:ro
+      - ./entrypoint-api.sh:/entrypoint-api.sh:ro
     ports:
       - '8000:8000'
     environment:
@@ -56,7 +64,16 @@ services:
       DB_PASSWORD: esdeveniments
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # Buit: les claus de holds del mapa (event:{id}:seat:…) han de coincidir amb KEYS/GET; el prefix per defecte de Laravel trenca getHoldsForEvent.
+      REDIS_PREFIX: ""
+      # Ha de coincidir amb JWT_SECRET del servei socket-server (només namespace /private: alliberar holds al tancar).
+      # SeatStatusUpdated (mapa públic) ve de POST /internal/emit; no depèn del JWT del navegador.
+      JWT_SECRET: dev_jwt_secret_change_me
+      # Només Laravel (HTTP server→server dins Docker). NO és la URL del navegador: dins del contenidor
+      # backend-api, localhost:3001 apunta al propi contenidor i /internal/emit falla. Cal el nom del servei compose.
       SOCKET_SERVER_INTERNAL_URL: http://socket-server:3001
+      # Buit explícit: evita 403 a /internal/emit si el .env del host té un secret diferent al del socket-server.
+      SOCKET_INTERNAL_SECRET: ""
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,8 +81,7 @@ services:
         condition: service_started
       socket-server:
         condition: service_started
-    # config:clear evita servir DB_HOST cachejat (127.0.0.1) si s’ha fet config:cache fora del contenidor.
-    command: sh -c "php artisan config:clear && php artisan serve --host=0.0.0.0 --port=8000"
+    entrypoint: [/bin/sh, /entrypoint-api.sh]
 
   frontend-nuxt:
     build:
@@ -81,6 +97,7 @@ services:
       NUXT_HOST: 0.0.0.0
       NUXT_PORT: 3000
       NUXT_PUBLIC_API_URL: http://localhost:8000
+      # Navegador del teu PC → port publicat; correcte (no usar socket-server aquí).
       NUXT_PUBLIC_SOCKET_URL: http://localhost:3001
     depends_on:
       - backend-api
@@ -101,6 +118,8 @@ services:
       PORT: 3001
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev_jwt_secret_change_me
+      LARAVEL_INTERNAL_API_URL: http://backend-api:8000
+      SOCKET_INTERNAL_SECRET: ""
     depends_on:
       - redis
     command: npm run dev

@@ -8,6 +8,7 @@ use App\Services\Auth\JwtTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -20,14 +21,23 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'username' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        $usernameInput = $validated['username'] ?? '';
+        if (! is_string($usernameInput)) {
+            $usernameInput = '';
+        }
+        $usernameTrim = trim($usernameInput);
+        if ($usernameTrim === '') {
+            $usernameTrim = $this->generateUniqueUsername($validated['name']);
+        }
+
         $user = User::query()->create([
             'name' => $validated['name'],
-            'username' => $validated['username'],
+            'username' => $usernameTrim,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
@@ -92,5 +102,32 @@ class AuthController extends Controller
             'email' => $user->email,
             'roles' => $roles,
         ];
+    }
+
+    /**
+     * Nom d’usuari intern (BD) quan el registre només envia el nom visible.
+     */
+    private function generateUniqueUsername (string $name): string
+    {
+        $base = Str::slug($name);
+        if ($base === '') {
+            $base = 'usuari';
+        }
+        if (strlen($base) > 200) {
+            $base = substr($base, 0, 200);
+        }
+        $suffix = '';
+        $n = 0;
+        while (true) {
+            $candidate = $base.$suffix;
+            if (strlen($candidate) > 255) {
+                $candidate = substr($candidate, 0, 255);
+            }
+            if (! User::query()->where('username', $candidate)->exists()) {
+                return $candidate;
+            }
+            $n = $n + 1;
+            $suffix = '_'.(string) $n;
+        }
     }
 }

@@ -86,10 +86,13 @@ CREATE TABLE failed_jobs (
 CREATE TABLE venues (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) NOT NULL,
+    external_tm_id VARCHAR(255),
     location TEXT,
     created_at VARCHAR(255),
     updated_at VARCHAR(255)
 );
+
+CREATE UNIQUE INDEX venues_external_tm_id_unique ON venues (external_tm_id) WHERE external_tm_id IS NOT NULL;
 
 CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -101,6 +104,12 @@ CREATE TABLE events (
     hidden_at VARCHAR(255),
     category VARCHAR(255),
     seat_layout TEXT,
+    tm_sync_paused INTEGER NOT NULL DEFAULT 0,
+    image_url VARCHAR(1024),
+    price NUMERIC,
+    tm_url VARCHAR(1024),
+    tm_category VARCHAR(100),
+    is_large_event INTEGER NOT NULL DEFAULT 0,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),
     FOREIGN KEY (venue_id) REFERENCES venues (id) ON DELETE CASCADE
@@ -145,6 +154,7 @@ CREATE TABLE orders (
     state VARCHAR(255) NOT NULL,
     currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
     total_amount NUMERIC,
+    quantity INTEGER,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),
     UNIQUE (hold_uuid),
@@ -196,7 +206,6 @@ CREATE TABLE saved_events (
 
 CREATE TABLE user_settings (
     user_id INTEGER PRIMARY KEY NOT NULL,
-    gemini_personalization_enabled INTEGER NOT NULL DEFAULT 1,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -232,6 +241,21 @@ CREATE TABLE ticket_transfers (
 );
 
 CREATE INDEX ticket_transfers_status_index ON ticket_transfers (status);
+
+CREATE TABLE social_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER NOT NULL,
+    actor_user_id INTEGER,
+    type VARCHAR(64) NOT NULL,
+    payload TEXT NOT NULL DEFAULT '{}',
+    read_at VARCHAR(255),
+    created_at VARCHAR(255),
+    updated_at VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_user_id) REFERENCES users (id) ON DELETE SET NULL
+);
+
+CREATE INDEX social_notifications_user_created_index ON social_notifications (user_id, created_at DESC);
 
 CREATE TABLE tm_discovery_sync (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -1,4 +1,5 @@
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
 
 /**
  * Només rols amb «admin» (Spatie) poden accedir a /admin/*.
@@ -12,10 +13,11 @@ export default defineNuxtRouteMiddleware(async () => {
     return navigateTo('/login');
   }
   const config = useRuntimeConfig();
-  const base = (config.public.apiUrl || '').replace(/\/$/, '');
+  const base = resolvePublicApiBaseUrl(config.public.apiUrl);
   try {
     const me = await $fetch(`${base}/api/auth/me`, {
       headers: { Authorization: `Bearer ${auth.token}` },
+      timeout: 20000,
     });
     const roles = me.roles || [];
     if (!roles.includes('admin')) {

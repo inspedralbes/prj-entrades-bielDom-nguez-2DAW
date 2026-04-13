@@ -21,6 +21,12 @@ class Event extends Model
         'hidden_at',
         'category',
         'seat_layout',
+        'tm_sync_paused',
+        'tm_url',
+        'price',
+        'tm_category',
+        'is_large_event',
+        'image_url',
     ];
 
     protected function casts (): array
@@ -29,6 +35,8 @@ class Event extends Model
             'starts_at' => 'datetime',
             'hidden_at' => 'datetime',
             'seat_layout' => 'array',
+            'tm_sync_paused' => 'boolean',
+            'price' => 'decimal:2',
         ];
     }
 

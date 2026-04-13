@@ -65,4 +65,36 @@ class FriendshipQuery
             ->values()
             ->all();
     }
+
+    /**
+     * Mateix que {@see friendProfilesFor} amb filtre opcional per substring a username o name (FR-041).
+     *
+     * @return array<int, array{id: int, username: string, name: string}>
+     */
+    public function friendProfilesForSearch (User $user, ?string $q): array
+    {
+        $profiles = $this->friendProfilesFor($user);
+        if ($q === null) {
+            return $profiles;
+        }
+
+        $trimmed = trim($q);
+        if ($trimmed === '') {
+            return $profiles;
+        }
+
+        $needle = mb_strtolower($trimmed);
+        $out = [];
+        foreach ($profiles as $p) {
+            $u = mb_strtolower($p['username']);
+            $n = mb_strtolower($p['name']);
+            $matchUsername = str_contains($u, $needle);
+            $matchName = str_contains($n, $needle);
+            if ($matchUsername || $matchName) {
+                $out[] = $p;
+            }
+        }
+
+        return $out;
+    }
 }

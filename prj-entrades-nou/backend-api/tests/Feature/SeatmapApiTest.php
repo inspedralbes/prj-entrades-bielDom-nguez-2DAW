@@ -17,9 +17,8 @@ class SeatmapApiTest extends TestCase
     {
         $event = Event::factory()->create([
             'external_tm_id' => null,
-            'seat_layout' => [
-                'snapshotImageUrl' => 'https://example.org/map.png',
-            ],
+            'seat_layout' => [],
+            'image_url' => 'https://example.org/map.png',
         ]);
         $zone = Zone::factory()->create([
             'event_id' => $event->id,

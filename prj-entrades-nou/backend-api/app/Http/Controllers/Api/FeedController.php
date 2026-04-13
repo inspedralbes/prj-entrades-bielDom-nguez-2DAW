@@ -5,22 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\UserSetting;
-use App\Services\Recommend\GeminiHomeRecommendService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FeedController extends Controller
 {
-    public function __construct (
-        private readonly GeminiHomeRecommendService $geminiHomeRecommendService
-    ) {}
-
     public function featured (): JsonResponse
     {
         $events = Event::query()
             ->whereNull('hidden_at')
-            ->with('venue')
+            ->with($this->venueEagerLoad())
             ->orderBy('starts_at')
             ->limit(24)
             ->get();
@@ -39,28 +34,26 @@ class FeedController extends Controller
         }
 
         $settings = UserSetting::query()->find($user->id);
-        $geminiOn = $settings?->gemini_personalization_enabled ?? true;
+        $proximityOn = $settings?->proximity_personalization_enabled ?? false;
 
         $lat = $request->query('lat');
         $lng = $request->query('lng');
 
         $baseQuery = Event::query()
             ->whereNull('hidden_at')
-            ->with('venue');
+            ->with($this->venueEagerLoad());
 
-        if ($geminiOn) {
-            $candidates = (clone $baseQuery)->orderBy('starts_at')->limit(40)->pluck('id')->all();
-            $orderedIds = $this->geminiHomeRecommendService->rankEventIds($candidates, $user);
-            $events = $this->eventsByIdsPreservingOrder($orderedIds);
-        } elseif ($this->canUsePostgisProximity($lat, $lng)) {
+        if ($proximityOn && $this->canUsePostgisProximity($lat, $lng)) {
             $events = $this->eventsByProximity((float) $lat, (float) $lng);
+            $source = 'proximity';
         } else {
             $events = (clone $baseQuery)->orderBy('starts_at')->limit(16)->get();
+            $source = 'chronological';
         }
 
         return response()->json([
             'section' => 'for_you',
-            'source' => $geminiOn ? 'gemini_stub' : 'proximity_or_chronological',
+            'source' => $source,
             'events' => $events->map(fn (Event $e) => $this->eventPayload($e))->values()->all(),
         ]);
     }
@@ -73,7 +66,7 @@ class FeedController extends Controller
         if ($ids === []) {
             return collect();
         }
-        $events = Event::query()->whereIn('id', $ids)->with('venue')->get()->keyBy('id');
+        $events = Event::query()->whereIn('id', $ids)->with($this->venueEagerLoad())->get()->keyBy('id');
         $ordered = collect();
         foreach ($ids as $id) {
             if ($events->has($id)) {
@@ -82,6 +75,20 @@ class FeedController extends Controller
         }
 
         return $ordered;
+    }
+
+    /**
+     * Només id + nom del recinte; evita carregar geography `location` (PostGIS) al feed.
+     *
+     * @return array<string, \Closure>
+     */
+    private function venueEagerLoad (): array
+    {
+        return [
+            'venue' => static function ($q) {
+                $q->select('venues.id', 'venues.name');
+            },
+        ];
     }
 
     /**
@@ -124,6 +131,8 @@ class FeedController extends Controller
             'name' => $e->name,
             'starts_at' => $e->starts_at?->toIso8601String(),
             'category' => $e->category,
+            'image_url' => $e->image_url,
+            'tm_url' => $e->tm_url,
             'venue' => $e->venue ? [
                 'id' => $e->venue->id,
                 'name' => $e->venue->name,

@@ -27,6 +27,8 @@ class SavedEventsController extends Controller
                 'name' => $e->name,
                 'starts_at' => $e->starts_at?->toIso8601String(),
                 'category' => $e->category,
+                'image_url' => $e->image_url,
+                'tm_url' => $e->tm_url,
                 'venue' => $e->venue ? [
                     'id' => $e->venue->id,
                     'name' => $e->venue->name,

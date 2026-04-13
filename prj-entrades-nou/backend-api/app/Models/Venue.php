@@ -13,6 +13,9 @@ class Venue extends Model
 
     protected $fillable = [
         'name',
+        'address',
+        'city',
+        'external_tm_id',
     ];
 
     public function events (): HasMany

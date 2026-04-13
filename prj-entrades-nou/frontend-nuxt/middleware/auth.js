@@ -1,11 +1,5 @@
-import { useAuthStore } from '~/stores/auth';
+import { enforceAuthCookie } from '~/utils/authGate';
 
-export default defineNuxtRouteMiddleware((to, from) => {
-  if (import.meta.server) {
-    return;
-  }
-  const auth = useAuthStore();
-  if (!auth.token) {
-    return navigateTo('/login');
-  }
+export default defineNuxtRouteMiddleware((to) => {
+  return enforceAuthCookie(to);
 });

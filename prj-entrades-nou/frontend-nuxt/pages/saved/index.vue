@@ -5,7 +5,7 @@
     <p v-else-if="loading" class="saved__muted">Carregant…</p>
     <ul v-else-if="events.length" class="saved__list">
       <li v-for="ev in events" :key="ev.id" class="saved__item">
-        <NuxtLink :to="`/events/${ev.id}/seats`" class="saved__link">{{ ev.name }}</NuxtLink>
+        <NuxtLink :to="`/events/${ev.id}`" class="saved__link">{{ ev.name }}</NuxtLink>
         <p class="saved__meta">{{ formatDate(ev.starts_at) }} · {{ ev.venue?.name || '—' }}</p>
       </li>
     </ul>
@@ -45,7 +45,11 @@ onMounted(async () => {
     const data = await getJson('/api/saved-events');
     events.value = data.events || [];
   } catch (e) {
-    error.value = 'No s’han pogut carregar els guardats.';
+    if (e?.status === 401) {
+      navigateTo('/login');
+      return;
+    }
+    error.value = 'No s\'han pogut carregar els guardats.';
     console.error(e);
   } finally {
     loading.value = false;
