@@ -1,0 +1,58 @@
+# Desplegament al servidor (SSH + git pull + Docker)
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST     — IP o domini del servidor (ex. 89.167.124.133)
+#   DEPLOY_USER     — usuari SSH (ex. ubuntu, deploy)
+#   DEPLOY_SSH_KEY  — clau privada completa (PEM/OpenSSH)
+# Opcionals:
+#   DEPLOY_PATH     — camí absolut al monorepo al servidor (ex. /opt/entrades/prj-entrades-nou). Per defecte: ~/prj-entrades-nou
+#   DEPLOY_PORT     — port SSH si no és 22
+#
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branca a desplegar'
+        required: true
+        default: 'main'
+        type: string
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: SSH deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Desplegar per SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script_stop: true
+          script: |
+            set -e
+            BRANCH='${{ github.event.inputs.branch }}'
+            if [ -z "$BRANCH" ]; then
+              BRANCH='${{ github.ref_name }}'
+            fi
+            DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}'
+            if [ -z "$DEPLOY_PATH" ]; then
+              DEPLOY_PATH="${HOME}/prj-entrades-nou"
+            fi
+            echo "Branca: $BRANCH — directori: $DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+            git fetch origin
+            git checkout "$BRANCH"
+            git pull origin "$BRANCH"
+            docker compose -f docker/dev/docker-compose.yml build
+            docker compose -f docker/dev/docker-compose.yml up -d
+            docker compose -f docker/dev/docker-compose.yml ps
