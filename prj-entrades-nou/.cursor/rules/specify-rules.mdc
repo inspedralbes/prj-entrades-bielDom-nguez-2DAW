@@ -1,0 +1,37 @@
+﻿---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+# prj-entrades-nou Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-04-11
+
+## Active Technologies
+
+- PHP 8.3 (Laravel 11), **JavaScript** (Node.js 20 LTS, Nuxt 3 / Vue 3.4+; **sense TypeScript** al codi de l’app — vegeu `.cursor/rules/agents-stack.mdc`) + Laravel Sanctum o Passport (JWT d’API), Pinia (Nuxt), Socket.IO 4.7, Google AI SDK (Gemini 1.5 Flash), node-qrcode 1.5, Ticketmaster Discovery/Top Picks client (HTTP) (001-seat-map-entry-validation)
+
+## Project Structure
+
+```text
+backend/
+frontend/
+tests/
+```
+
+## Commands
+
+npm test; npm run lint
+
+## Code Style
+
+PHP 8.3 (Laravel 11), JavaScript (Node.js 20 LTS, Nuxt 3 / Vue 3.4+; sense TS): seguir `.cursor/rules/agents-stack.mdc` i convencions del projecte
+
+## Recent Changes
+
+- 001-seat-map-entry-validation: PHP 8.3 (Laravel 11), JavaScript (Nuxt/Node; sense TypeScript) + JWT API, Pinia, Socket.IO 4.7, Gemini, node-qrcode, Ticketmaster client (HTTP)
+
+<!-- MANUAL ADDITIONS START -->
+<!-- Directrius per tecnologia (TR3): vegeu `.cursor/rules/agents-stack.mdc` i la carpeta `Agents/`. -->
+<!-- Git: branca base `dev`; branques de treball des de `dev`; PR cap a `dev` (Git Flow) — vegeu `specs/001-seat-map-entry-validation/tasks.md`. -->
+<!-- MANUAL ADDITIONS END -->

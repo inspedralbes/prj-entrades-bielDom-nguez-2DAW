@@ -1,0 +1,66 @@
+#!/bin/sh
+set -e
+
+cd /var/www/html
+
+# El volum munta `backend-api/.env` del host (normalment DB_HOST=127.0.0.1). Dins del contenidor,
+# 127.0.0.1 és el propi contenidor, no Postgres/Redis. Els noms de servei del compose han de prevaldre.
+export DB_HOST=postgres
+export REDIS_HOST=redis
+# Laravel (dins Docker) crida el socket per HTTP intern; ha de ser el nom DNS del servei, no localhost.
+export SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001
+
+# Volums Postgres buits (sense init d’entrada): carregar init.sql + inserts del repo.
+# Si falta `events` però ja hi ha altres taules, cal esborrar el volum (`docker compose down -v`).
+export PGPASSWORD="${DB_PASSWORD:-esdeveniments}"
+
+run_psql () {
+  psql -v ON_ERROR_STOP=1 -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-esdeveniments}" -d "${DB_DATABASE:-esdeveniments}" "$@"
+}
+
+TABLE_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'" 2>/dev/null || echo "0")
+EVENTS_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'events'" 2>/dev/null || echo "0")
+
+if [ "$EVENTS_COUNT" != "1" ]; then
+  if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
+    if [ -f /var/www/database/init.sql ]; then
+      echo "Base de dades buida: executant /var/www/database/init.sql ..."
+      run_psql -f /var/www/database/init.sql
+    fi
+    if [ -f /var/www/database/inserts.sql ]; then
+      echo "Executant /var/www/database/inserts.sql ..."
+      run_psql -f /var/www/database/inserts.sql
+    fi
+  else
+    echo "ERROR: la taula public.events no existeix però la BD no està buida."
+    echo "Solució: atura els serveis i esborra el volum de Postgres, després torna a aixecar:"
+    echo "  docker compose -f docker/dev/docker-compose.yml down -v"
+    echo "  docker compose -f docker/dev/docker-compose.yml up --build"
+    exit 1
+  fi
+fi
+
+php artisan config:clear
+
+# Volums Postgres antics: els scripts initdb només corren el primer cop; això alinea admin@example.com
+# amb inserts.sql (hash Admin1234) i el rol admin sense caler esborrar pgdata.
+if [ "${APP_ENV:-local}" = "local" ] && [ -f /var/www/database/docker-dev-ensure-admin.sql ]; then
+  echo "Sincronitzant usuari admin de desenvolupament (docker-dev-ensure-admin.sql) ..."
+  run_psql -f /var/www/database/docker-dev-ensure-admin.sql
+fi
+
+# Volums Postgres antics: no tornen a executar init.sql; columnes TM poden faltar.
+php artisan db:patch-ticketmaster-schema
+
+if [ "$APP_ENV" != "testing" ]; then
+    echo "Running Ticketmaster initial sync..."
+    php artisan ticketmaster:sync-events --pages=2 || true
+fi
+
+# Nginx + PHP-FPM (més ràpid i concurrent que el servidor integrat de `artisan serve`).
+# FPM executa com a www-data: cal escriptura a storage i bootstrap/cache (abans sovint root amb `artisan serve`).
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+
+php-fpm -D
+exec nginx -g "daemon off;"

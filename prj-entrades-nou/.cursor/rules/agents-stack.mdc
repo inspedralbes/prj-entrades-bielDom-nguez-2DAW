@@ -1,0 +1,216 @@
+---
+description: Directrius stack TR3 (Agents/) — Laravel, Node, Postgres, Redis, Socket.IO, Nuxt, Pinia, JavaScript (sense TS), Tailwind; alineació amb Speckit
+globs:
+  - backend-api/**/*
+  - frontend-nuxt/**/*
+  - socket-server/**/*
+  - database/**/*
+  - Agents/**/*
+alwaysApply: true
+---
+
+# Directrius `Agents/` + alineació Speckit
+
+Els fitxers complets viuen a **`Agents/backend/`** i **`Agents/frontend/`**. Aquesta regla **resumeix** el que cal aplicar en codi; per detall literal, obrir el fitxer `Agent*.md` corresponent.
+
+## Prioritat quan hi ha conflicte
+
+1. **`.specify/memory/constitution.md`** (stack i principis).
+2. **`specs/001-seat-map-entry-validation/`** (spec, plan, tasks, data-model, `contracts/openapi.yaml`).
+3. **`Agents/**/*.md`** (estil, patrons, nomenclatura TR3).
+
+**Versions**: Els documents `Agents/` citen (ex.) Laravel 13, PostgreSQL 18, Redis 8.6, Node 24, Nuxt 4, Socket.IO 4.8. En **aquest** repositori, respectar la constitució i el pla Speckit: **Laravel 11**, **PHP 8.3**, **PostgreSQL 16 + PostGIS 3.4**, **Redis 7.2**, **Node 20**, **Nuxt 3 (Vue 3.4+)**, **Socket.IO 4.7**, etc. Els patrons d’`Agents/` (capa, flux, estil) es mantenen canviant només els números de versió on escaigui.
+
+**Esquema de BD**: `Agents` fixa DDL només a `db/init.sql` i **prohibeix migracions**. En Speckit d’aquest projecte **`tasks.md` T007** permet **migracions Laravel** i/o **`database/init.sql`**: seguir el que digui el pla implementat (no bloquejar migracions si el repositori ja les usa).
+
+---
+
+## Principis transversals (estructura, comentaris, estil)
+
+### Modularitat (no fitxers gegants)
+
+- **Evitar fitxers monolítics** de centenars de línies: la lògica s’ha de **dividir** en fitxers petits amb **una responsabilitat clara** (fàcil d’expandir i d’entendre).
+- **Extreure** a classes/serveis/composables/helpers quan un fitxer creix: controladors prims; negoci a `app/Services/{Domini}/`; al Node, `services/` + `handlers/` per esdeveniment; al Nuxt, components i composables en lloc de tot dins una sola `page`.
+- **Profunditat de carpetes**: agrupar per domini o funcionalitat (p. ex. `Services/Ticket/`, `components/seat-map/`, `sockets/handlers/`) en comptes d’un sol directori ple de fitxers sense criteri.
+
+### Comentaris (tots els llenguatges)
+
+- **Idioma**: **català** per comentaris que expliquin decisió, precondicions i passos de negoci.
+- **Què comentar**: el **per què** i el flux (A/B/C), no paràfrasis del codi evident.
+- **Capçaleres de fitxer**: reservar blocs estàndard definits a cada secció tecnològica (imports, propietats, mètodes, lògica privada, etc.).
+
+### JavaScript únicament (**prohibit TypeScript**)
+
+- **Tot el codi** als paquets **`frontend-nuxt/`** i **`socket-server/`** (i qualsevol altre codi **Node** del monorepo) ha d’estar escrit en **JavaScript** (ESM o CJS segons el projecte).
+- **Prohibit**: fitxers **`.ts`**, **`.tsx`**, **`lang="ts"`** o **`lang="tsx"`** en components **`.vue`**; anotacions de tipus TypeScript (`: Type`, `as Type`, `interface`, `type`, `enum` TS, etc.).
+- **Obligatori**: extensió **`.js`** per a composables, stores, plugins, middleware, utilitats i servidor Node; **`nuxt.config.js`** (no `nuxt.config.ts`). **Cypress** (si s’usa): **`cypress.config.js`** i specs **`*.cy.js`** (no configuració ni proves en TS).
+- **Components Vue**: només **`<script setup>`** sense `lang` o amb **`lang="js"`** explícit si cal.
+- **Excepció**: dependències de `node_modules` o eines de build; si una eina **obliga** un fitxer TS (rare), documentar-ho al PR i minimitzar al màxim la superfície TS.
+
+### Nomenclatura de codi
+
+- **Variables, funcions i mètodes (JavaScript)**: **`camelCase`**.
+- **PHP**: **`camelCase`** per variables i mètodes d’instància; **PascalCase** per noms de classes; coherència amb PSR i Laravel.
+- **SQL / BD**: **`snake_case`** taules i columnes (vege PostgreSQL).
+- **Constants**: `SCREAMING_SNAKE_CASE` o convenció única del llenguatge.
+
+### Prohibicions estrictes: `.map` / `.filter` i ternaris
+
+Aquests límits s’apliquen a **PHP**, **JavaScript** i **Vue (`<script setup>` en JS)** i **Node** (incloent `socket-server` i `frontend-nuxt`). **No** s’usa TypeScript al codi de l’app (vege *JavaScript únicament*).
+
+- **Prohibit** usar els mètodes d’array **`.map()`**, **`.filter()`**, **`.forEach()`** i **`.reduce()`** per recorrer o transformar col·leccions — usar **`for`**, **`for...of`**, **`while`** o, a **PHP**, **`foreach`** i bucles clàssics.
+- **Prohibit** a **PHP** usar **`Collection::map()`**, **`->map()`**, **`->each()`** com a substitut de bucles quan la lògica es pugui escriure amb **`foreach`** o bucles explícits.
+- **Prohibit** l’**operador ternari** (`condició ? valorSi : valorNo`) en qualsevol forma — usar sempre **`if` / `else`** (o diversos `if` amb `return` anticipat). A **Vue**, a les plantilles preferir **`v-if` / `v-else`** (o `computed` amb `if` intern) en lloc de ternaris dins `{{ }}`.
+
+---
+
+## Backend — Laravel (`Agents/backend/AgentLaravel.md`)
+
+- **Rol**: única font de veritat per a persistència i negoci; API REST consumida pel Nuxt.
+- **Organització**: `app/Http/Controllers/` (entrada API), `app/Services/` (negoci complex, publicació Redis quan toqui), `app/Models/` (Eloquent), `routes/api.php`.
+- **Fitxers i noms (PHP)**:
+  - Classes amb **PascalCase** i nom de fitxer **idèntic** a la classe (`SeatHoldService.php` → `class SeatHoldService`).
+  - Un **Controlador** no ha de contenir tot el negoci: moure a **Service** / **Action** / **DTO** quan superi ~100–150 línies de lògica o tingui diversos casos d’ús.
+  - **Policies**, **Form Requests** i **Resources** en fitxers separats segons convenció Laravel.
+- **Rutes API**: identificadors al **path** (`GET /api/events/{id}/...`), evitar query strings per IDs on es pugui (`/api/seats?event_id=` com a anti-patró per a recursos principals).
+- **Autenticació**: JWT emès i validat al Laravel (Sanctum / `tymon/jwt-auth` o el que fixi el projecte).
+- **Estil PHP (Agents)**:
+  - **`if/else`**, **`foreach`**, bucles clàssics; **prohibit operador ternari** (`?:`) i **prohibit** `Collection::map` / `->map()` / `->each()` quan es pugui reemplaçar per bucles explícits (vege secció *Prohibicions estrictes*).
+  - Comentaris i docs de classe en **català**; seccions de fitxer: `//================================ NAMESPACES`, `PROPIETATS`, `MÈTODES`, `LÒGICA PRIVADA`.
+  - Dins de mètodes, desglossar amb `// A. …`, `// B. …`, `// C. …` (validació, BD, Redis/resposta JSON).
+- **Flux temps real**: Laravel persisteix → publica a **Redis** → Node/Socket retransmet; no invertir la font de veritat.
+- Consultar mentalment skills referenciades: `laravel-best-practices`, `laravel-specialist` (si existeixen al teu entorn).
+
+---
+
+## Backend — Node.js (`Agents/backend/AgentNode.md`)
+
+- **Rol**: gateway temps real (Socket.IO), subscripció Redis, coordinació mapa/cua segons disseny.
+- **Estructura de fitxers**:
+  - **Un mòdul per responsabilitat**: p. ex. `sockets/eventNamespace.js`, `services/redisSubscriber.js`, `middleware/socketAuth.js` — no un sol `index.js` amb tot el codi del servidor.
+  - **Nom de fitxers**: **`kebab-case.js`** o **`camelCase.js`** — triar **una** convenció al començament del projecte i ser coherent (recomanat **kebab-case** per fitxers al disc al món JS).
+  - Exportacions clares (`export function` / `module.exports` segons ESM/CJS del projecte).
+- **Codi**: ES6+ (`const`/`let`), `async/await`, funcions fletxa on toqui; **prohibit `.map()` / `.filter()` / `.forEach()` / `.reduce()`** i **prohibit ternari** — bucles explícits i `if/else` (vege *Prohibicions estrictes*).
+- **Comentaris**: català; capçaleres de secció com a `AgentNode.md` (`//================================ NAMESPACES`, `VARIABLES`, `FUNCIONS`, `EXPORTS`); cada funció pública amb propòsit + passos **A / B / C**.
+- **Idioma codi**: català, **`camelCase`** per variables i funcions.
+- **Regla**: dades volàtils (cua, feedback immediat) via Socket/Redis; **persistència SQL** sempre delegada a **Laravel API**.
+- Skill referència: `nodejs-best-practices`.
+
+---
+
+## PostgreSQL (`Agents/backend/AgentPosgres.md`)
+
+- **Motor**: en aquest repo, **PostgreSQL 16** (PostGIS segons constitució), no el “18.3” del text antic dels Agents.
+- **Fitxers**: separar **`init`** / **migracions** / **seeds** en fitxers diferents si el projecte ho fa servir així; evitar un sol SQL enorme sense seccions.
+- **Disseny**: taules plural, `snake_case`, PK `id`; normalització mínima 3NF salvo excepcions de rendiment documentades.
+- **Scripts SQL**: comentaris en català; blocs DDL / FK / índex / DML com a `AgentPosgres.md`; cada taula amb comentari de propòsit i relacions **abans** del `CREATE TABLE`.
+- **Canvis de domini**: reflectir primer disseny consistent a BD abans de lògica només al client.
+
+---
+
+## Redis (`Agents/backend/AgentRedis.md`)
+
+- **Ús**: cau, holds, pub/sub entre Laravel i Node; **no** substitueix PostgreSQL per dades crítiques de negoci a llarg termini.
+- **Organització**: encapsular crides repetides en **helpers o classe** (`RedisSeatPublisher`, etc.) en lloc de duplicar `PUBLISH` arreu dels controladors o del Node.
+- **Laravel**: `Illuminate\Support\Facades\Redis` (o servei dedicat).
+- **Node**: client `redis` v4+, `async/await`; mateixa convenció de noms de fitxer que la resta del `socket-server`.
+- **Canals (referència Agents; ajustar noms al codi real del projecte)**: `seat_updates`, `queue_status`, `admin_commands` — si el spec (`plan.md` / socket-server) usa altres noms, **prioritzar el spec**.
+- Documentar operacions amb passos A/B/C (connexió, pub/sub, gestió d’esdeveniment).
+- Skills: `redis-best-practices`, `redis-development`, `redis-js`.
+
+---
+
+## Socket.IO — servidor (`Agents/backend/AgentSockets.md` + alineació FR-014)
+
+- **Estructura**: un fitxer per **namespace** o per **domini** (p. ex. `publicSeatBroadcast.js`, `authenticatedUserRoom.js`); handlers curts que deleguin en `services/`.
+- Validar **JWT** al **handshake** (`JWT_SECRET` compartida amb API); vincular accions a `user_id` del token.
+- ES6+ coherent amb Node 20 del projecte; **prohibit `.map()`** (i la resta de mètodes d’array enumerats a *Prohibicions estrictes*) en payloads; construir objectes amb bucles o funcions nominades.
+- Comentaris en català amb passos A/B/C dins de cada handler.
+- Esdeveniments de negoci del repo Speckit inclouen (entre d’altres) contenció de seient, resync de compte enrere, ticket validat, mètriques admin — **no** cal copiar literalment `seat:click` dels Agents si el `socket-server` ja defineix altres noms; **seguir el codi i el spec del repositori**.
+- **Regla**: sockets = feedback immediat; validesa final de compra sempre **Laravel + PostgreSQL**.
+
+---
+
+## Nuxt (`Agents/frontend/AgentNuxt.md`)
+
+- **Versió**: **Nuxt 3** (constitució), no “Nuxt 4” del text Agents.
+- **Estructura**:
+  - **`pages/`**: rutes; noms en **`kebab-case.vue`** o com defineixi el projecte (`events/[eventId]/seats.vue`); **sense** posar centenars de línies a una pàgina: extreure **`components/`** i **`composables/`**.
+  - **`components/`**: **PascalCase** per components de domini (`SeatMap.vue`, `BaseNeonButton.vue`) — convenció Vue habitual.
+  - **`composables/`**: prefix **`use` + camelCase** (`useTicketSocket.js`, `useSeatSelection.js`).
+  - **`middleware/`**: un fitxer per guard (`auth.js`, `guest.js`).
+  - **`plugins/`**: nom descriptiu **`*.client.js`** / **`*.js`** segons necessitat SSR.
+- **Vue**: `<script setup>`, `ref` / `computed` / `watch`; dades amb `useFetch` / `$fetch` cap a l’API Laravel.
+- **Lògica a la plantilla**: evitar expressions complexes inline; preferir **computed** o funcions **camelCase** al `<script setup>` amb **`if/else`**, sense ternaris; a templates, **`v-if` / `v-else`** en lloc de `{{ cond ? a : b }}`.
+- **Estètica DICE** (si s’aplica al projecte): fons negre, accent `#FF0055`, tipografia bold/uppercase segons `AgentNuxt` / `AgentTailwind`.
+- Plugin client per `socket.io-client` si cal (SSR-safe).
+- Skill: `nuxt`.
+
+---
+
+## Pinia (`Agents/frontend/AgentPinia.md`)
+
+- **Un store per domini** (auth, seients, cua, …); si un store creix massa, **dividir** en stores o en mòduls/composables auxiliars.
+- Fitxers: **`useXxxStore.js`** o `xxx.js` dins `stores/` amb nom coherent amb el domini.
+- Stores amb **setup style** (`defineStore` + funció).
+- Patró **Optimistic UI** on escaigui: snapshot → mutació optimista → sync API/socket → rollback si error.
+- Dins les accions, **prohibit** `.map()`, `.filter()`, `.forEach()` i `.reduce()`; actualitzar llistes amb bucles (`for`, `for...of`) i assignacions clares; **prohibit** operador ternari dins les stores.
+- Stores típics: auth (JWT, rol), esdeveniment/seients, cua si hi ha Gatekeeper.
+- Skill: `vue-pinia-best-practices`.
+
+---
+
+## JavaScript (frontend + Node) (`Agents/frontend/AgentJavaScript.md`)
+
+- **Només JavaScript** — vege secció *JavaScript únicament (prohibit TypeScript)*.
+- Català per comentaris i noms; **`camelCase`** per identificadors (no `snake_case` al JS de l’app).
+- `const` per defecte, `let` si cal reassignar; **prohibit `var`**.
+- `async/await` + `try/catch` per fluxos async.
+- **Destructuring** i **spread** permesos quan redueixin soroll sense ofuscar.
+- **Prohibit** **`.map()`**, **`.filter()`**, **`.forEach()`**, **`.reduce()`** — només bucles **`for`**, **`for...of`**, **`while`** per iterar.
+- **Prohibit** l’**operador ternari** (`?:`) — només **`if` / `else`**.
+- Alineat amb la secció **Prohibicions estrictes** d’aquest mateix fitxer.
+
+---
+
+## Tailwind (`Agents/frontend/AgentTailwind.md`)
+
+- **Components visuals**: preferir **talls petits** de template; si una vista té massa `class=`, extreure subcomponents o usar **`@apply`** amb moderació a un fitxer CSS base (sense inflar un sol `.vue`).
+- Tema DICE: negre `#000000`, accent `#FF0055`, grisos zinc; botons CTA grans.
+- Ordre de classes: layout → espaiat → tipografia → colors → estats.
+- Estats de seient al mapa (available / selected / reserved / sold) amb classes clares.
+- Skills: `tailwind-best-practices`, `tailwind-design-system`.
+
+---
+
+## Socket — client Nuxt (`Agents/frontend/AgentSockets.md`)
+
+- `socket.io-client` alineat amb la versió del servidor (p. ex. 4.7).
+- Plugin **`*.client.js`** que injecti el client; handshake amb `auth: { token: "Bearer " + jwt }` quan calgui room autenticada.
+- **Composable dedicat** per socket (`useTicketSocket.js`): allà els `socket.on` amb callbacks **curts** que deleguin en stores; **no** registrar deu listeners diferents dins d’un sol `page` sense composable.
+- Esdeveniments entrants han d’actualitzar **Pinia**; dades persistents des de **Laravel** amb `fetch`.
+- Mateixes regles JS: **camelCase**, comentaris en català; **prohibit** `.map` / `.filter` / ternaris — funcions nominades o bucles.
+
+---
+
+## GET / CUD (resum transversal Agents)
+
+- **GET / lectura estable**: API Laravel (`/api/...` segons OpenAPI del feature).
+- **CUD / negoci**: Laravel com a autoritat; temps real amb Socket + Redis com a reflex del que ja ha validat o coordinat l’API.
+
+---
+
+## Referència ràpida de fitxers
+
+| Tema | Fitxer |
+|------|--------|
+| Laravel | `Agents/backend/AgentLaravel.md` |
+| Node | `Agents/backend/AgentNode.md` |
+| PostgreSQL | `Agents/backend/AgentPosgres.md` |
+| Redis | `Agents/backend/AgentRedis.md` |
+| Socket.IO servidor | `Agents/backend/AgentSockets.md` |
+| Nuxt | `Agents/frontend/AgentNuxt.md` |
+| Pinia | `Agents/frontend/AgentPinia.md` |
+| JavaScript | `Agents/frontend/AgentJavaScript.md` |
+| Tailwind | `Agents/frontend/AgentTailwind.md` |
+| Socket client | `Agents/frontend/AgentSockets.md` |

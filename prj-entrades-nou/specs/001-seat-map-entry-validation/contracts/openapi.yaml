@@ -1,0 +1,1239 @@
+openapi: 3.1.0
+info:
+  title: Entrades API (MVP seat-map / hold / tickets / validation)
+  version: 0.5.0
+  description: |
+    API completa alineada amb backend-api/routes/api.php (fase 7): auth JWT,
+    holds anònims, comandes pending_payment, errors de seient, social, admin, validació,
+    feed, search, saved-events, user profile/settings. Socket híbrid documentat al spec (no WebSocket).
+
+servers:
+  - url: https://api.example.com
+    description: Producció
+  - url: http://localhost:8000
+    description: Local backend-api
+
+tags:
+  - name: Auth
+  - name: Holds
+  - name: Orders
+  - name: Tickets
+  - name: Social
+  - name: Admin
+  - name: Feed
+  - name: Search
+  - name: SavedEvents
+  - name: User
+  - name: Health
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Registre d’usuari (JWT resposta)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuari creat; token JWT (cos o cookie segons implementació)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          description: Validació fallida (email duplicat, etc.)
+
+  /api/auth/login:
+    post:
+      summary: Inici de sessió (JWT)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Token JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Credencials invàlides
+
+  /api/auth/me:
+    get:
+      summary: Perfil mínim de l’usuari autenticat
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dades bàsiques de perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /api/events/{eventId}/seatmap:
+    get:
+      summary: Mapa de seients (proxy Top Picks / dades fusionades)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Imatge snapshot URL + zones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatmapResponse'
+
+  /api/events/{eventId}/holds:
+    post:
+      summary: Crear hold atòmic (fins a 6 seients); pot ser anònim (sense Bearer)
+      description: |
+        Sense autenticació, el client envia (o rep via cookie) un identificador de sessió anònim per vincular el hold.
+        Amb Bearer, opcionalment s’associa el hold a l’usuari autenticat.
+      tags: [Holds]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seat_ids]
+              properties:
+                seat_ids:
+                  type: array
+                  maxItems: 6
+                  items:
+                    type: string
+                anonymous_session_id:
+                  type: string
+                  description: Opcional si ja existeix sessió anònima estable
+      responses:
+        '201':
+          description: Hold creat amb expires_at
+        '409':
+          description: Un o més seients no disponibles
+
+  /api/holds/{holdId}/login-grace:
+    post:
+      summary: Atorgar +120 s al TTL del hold (una vegada) en iniciar login des del checkout
+      tags: [Holds]
+      security: []
+      parameters:
+        - name: holdId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                anonymous_session_id:
+                  type: string
+                  description: Ha coincidir amb el hold creat en mode anònim
+      responses:
+        '200':
+          description: TTL estès; cos amb nou expires_at
+        '403':
+          description: Hold no vàlid o gràcia ja aplicada
+        '404':
+          description: Hold inexistent o expirat
+
+  /api/holds/{holdId}:
+    delete:
+      summary: Alliberar hold (expiració natural o cancel·lació)
+
+  /api/orders:
+    post:
+      summary: Confirmar comanda des d'un hold vàlid (estat pending_payment)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hold_id, anonymous_session_id]
+              properties:
+                hold_id:
+                  type: string
+                  format: uuid
+                anonymous_session_id:
+                  type: string
+      responses:
+        '201':
+          description: Comanda creada en pending_payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCreatedResponse'
+        '403':
+          description: Sessió/hold no coincideix
+        '409':
+          description: Hold caducat, seients no reservats o comanda duplicada
+
+  /api/orders/quantity:
+    post:
+      summary: Crear comanda per quantitat (sense selecció de seients)
+      description: |
+        Endpoint per comprar entrades per quantitat (1-6) sense selecció de seients.
+        Per a esdeveniments del catàleg de Ticketmaster.
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_id, quantity]
+              properties:
+                event_id:
+                  type: integer
+                  description: ID de l'esdeveniment
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 6
+                  description: Nombre d'entrades (1-6)
+      responses:
+        '201':
+          description: Comanda creada en pending_payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantityOrderCreatedResponse'
+        '422':
+          description: Quantitat invàlida o esdeveniment no trobat
+        '401':
+          description: No autenticat
+
+  /api/events/nearby:
+    get:
+      summary: Esdeveniments propers (filtre de proximitat)
+      description: Retorna esdeveniments dins d'un radi geogràfic utilitzant PostGIS
+      tags: [Search]
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitud
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          description: Longitud
+          schema:
+            type: number
+        - name: radius
+          in: query
+          description: Radi en km (per defecte 50)
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Llista d'esdeveniments propers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventSummary'
+
+  /api/cities/search:
+    get:
+      summary: Cercador de ciutats amb autocompletat
+      description: Retorna ciutats que coincideixen amb la cerca per obtenir coordenades
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Terme de cerca (mínim 2 caràcters)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Llista de ciutats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        lat:
+                          type: number
+                        lng:
+                          type: number
+
+  /api/events/{eventId}/price:
+    get:
+      summary: Obtenir preu unitari d'un esdeveniment
+      description: Retorna el preu per entrada per a compres per quantitat
+      tags: [Events]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Preu unitari
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: integer
+                  unit_price:
+                    type: string
+                  currency:
+                    type: string
+                    enum: [EUR]
+
+  /api/tickets:
+    get:
+      summary: Llistar entrades de l’usuari (historial)
+      security:
+        - bearerAuth: []
+
+  /api/tickets/{ticketId}/qr:
+    get:
+      summary: Obtenir SVG QR (o redirecció a recurs generat)
+      security:
+        - bearerAuth: []
+
+  /api/validation/scan:
+    post:
+      summary: Validar entrada (rol Validador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT llegit del QR
+      responses:
+        '200':
+          description: Entrada marcada com a usada
+        '400':
+          description: Token invàlid o ja usat
+        '503':
+          description: Sense connexió / servidor (client ha de reintentar)
+
+  /api/social/friends:
+    get:
+      summary: Llista d’amics (Usuari autenticat)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtre per substring a username o nom (FR-041)
+      responses:
+        '200':
+          description: Llista d’usuaris amics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friends:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendProfile'
+
+  /api/social/friend-invites:
+    get:
+      summary: Llistar invitacions (enviades i rebudes segons query)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [sent, received, all]
+            default: all
+      responses:
+        '200':
+          description: Llista d’invitacions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendInvite'
+    post:
+      summary: Crear invitació (usuari existent o correu de nou usuari)
+      description: |
+        Exactament un de `receiver_id` o `receiver_email` (no ambdós). Opcionalment `invite_token` per enllaç segur.
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendInviteCreateRequest'
+      responses:
+        '201':
+          description: Invitació creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendInvite'
+        '409':
+          description: Invitació duplicada o conflicte
+
+  /api/social/friend-invites/{inviteId}:
+    patch:
+      summary: Acceptar o rebutjar invitació rebuda
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendInvitePatchRequest'
+      responses:
+        '200':
+          description: Estat actualitzat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendInvite'
+        '403':
+          description: No autoritzat (no és el destinatari)
+        '409':
+          description: Estat incompatible (ja resolta)
+
+  /api/social/share-event:
+    post:
+      summary: Compartir esdeveniment amb un amic (notificació + Socket)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_id, to_user_id]
+              properties:
+                event_id:
+                  type: integer
+                to_user_id:
+                  type: integer
+      responses:
+        '201':
+          description: Compartit
+        '403':
+          description: Sense amistat acceptada
+
+  /api/notifications:
+    get:
+      summary: Feed de notificacions socials (social_notifications)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Llista ordenada per data desc
+
+  /api/notifications/{id}:
+    patch:
+      summary: Marcar notificació com a llegida
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [read]
+              properties:
+                read:
+                  type: boolean
+      responses:
+        '200':
+          description: Actualitzat
+        '404':
+          description: No trobat
+
+  /api/tickets/{ticketId}/transfer:
+    post:
+      summary: Transferir propietat del ticket a un altre Usuari (validat al servidor)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_user_id]
+              properties:
+                to_user_id:
+                  type: integer
+                  description: ID de l’usuari destinatari
+      responses:
+        '200':
+          description: Transferència registrada; el servidor invalida el JWT/QR anterior i emet credencial nova (SVG) per al destinatari
+        '403':
+          description: No autoritzat o ticket no transferible
+        '409':
+          description: Comanda amb més d’una entrada o entrada no vàlida
+
+  /api/admin/summary:
+    get:
+      summary: Resum esborrany per panell admin (mètriques + emit Socket intern opcional)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dades agregades mínimes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSummaryResponse'
+        '403':
+          description: Rol Administrador requerit
+
+/api/admin/discovery/sync:
+    post:
+      summary: Disparar sincronització amb Ticketmaster Discovery Feed (Administrador)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '202':
+          description: Job d'importació acceptat
+        '403':
+          description: Rol Administrador requerit
+
+/api/health:
+  get:
+    summary: Health check del servei
+    tags: [Health]
+    responses:
+      '200':
+        description: Servei operatiu
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+
+/api/feed/featured:
+  get:
+    summary: Events destacats (públic)
+    tags: [Feed]
+    responses:
+      '200':
+        description: Llista d'esdeveniments destacats
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EventSummary'
+
+/api/feed/for-you:
+  get:
+    summary: Events recomanats per a l'usuari (autenticat)
+    tags: [Feed]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Llista d'esdeveniments personalitzats
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EventSummary'
+
+/api/search/events:
+  get:
+    summary: Cercador d'esdeveniments (públic)
+    tags: [Search]
+    parameters:
+      - name: q
+        in: query
+        description: Terme de cerca
+        schema:
+          type: string
+      - name: date
+        in: query
+        description: Filtre per data (YYYY-MM-DD)
+        schema:
+          type: string
+      - name: location
+        in: query
+        description: Filtre per localització
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Resultats de cerca
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EventSummary'
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+      '400':
+        description: Paràmetres de cerca invàlids
+
+/api/saved-events:
+  get:
+    summary: Esdeveniments guardats per l'usuari (autenticat)
+    tags: [SavedEvents]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Llista d'esdeveniments guardats
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EventSummary'
+  post:
+    summary: Guardar un esdeveniment (autenticat)
+    tags: [SavedEvents]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [event_id]
+            properties:
+              event_id:
+                type: string
+    responses:
+      '201':
+        description: Esdeveniment guardat
+      '409':
+        description: Ja guardat anteriorment
+
+/api/saved-events/{eventId}:
+  delete:
+    summary: Eliminar esdeveniment guardat (autenticat)
+    tags: [SavedEvents]
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Esdeveniment eliminat dels guardats
+      '404':
+        description: No estava guardat
+
+/api/user/profile:
+  get:
+    summary: Perfil complet de l'usuari (autenticat)
+    tags: [User]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Dades completes del perfil
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileFull'
+      '401':
+        description: No autenticat
+  patch:
+    summary: Actualitzar perfil de l'usuari (autenticat)
+    tags: [User]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserProfileUpdateRequest'
+    responses:
+      '200':
+        description: Perfil actualitzat
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileFull'
+      '400':
+        description: Dades invàlides
+
+/api/user/settings:
+  patch:
+    summary: Actualitzar configuració de l'usuari (autenticat)
+    tags: [User]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserSettingsUpdateRequest'
+    responses:
+      '200':
+        description: Configuració actualitzada
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettings'
+      '400':
+        description: Configuració invàlida
+
+/api/holds/{holdId}/time:
+  get:
+    summary: Obtenir temps restant d'un hold (autenticat o anònim)
+    tags: [Holds]
+    parameters:
+      - name: holdId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Temps restant del hold
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hold_id:
+                  type: string
+                expires_at:
+                  type: string
+                  format: date-time
+                remaining_seconds:
+                  type: integer
+      '404':
+        description: Hold inexistent o expirat
+
+/api/orders/{order}/confirm-payment:
+  post:
+    summary: Confirmar pagament d'una comanda (autenticat)
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: order
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Pagament confirmat
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderConfirmedResponse'
+      '400':
+        description: Comanda no vàlida o ja pagada
+      '409':
+        description: Estat incompatible
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, username, email, password, password_confirmation]
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        password_confirmation:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT d’API (implementació actual Laravel)
+        token_type:
+          type: string
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/UserProfile'
+        access_token:
+          type: string
+          deprecated: true
+          description: No usar; veure `token`
+        expires_in:
+          type: integer
+          description: Segons fins expiració del JWT (si s’exposa)
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: string
+
+    FriendProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+
+    OrderCreatedResponse:
+      type: object
+      properties:
+        order_id:
+          type: integer
+        state:
+          type: string
+        event_id:
+          type: integer
+        hold_id:
+          type: string
+        currency:
+          type: string
+        total_amount:
+          type: string
+        payment:
+          type: object
+        lines:
+          type: array
+          items:
+            type: object
+
+    QuantityOrderCreatedResponse:
+      type: object
+      description: Resposta per comanda de compra per quantitat
+      properties:
+        order_id:
+          type: integer
+        state:
+          type: string
+        event_id:
+          type: integer
+        quantity:
+          type: integer
+        currency:
+          type: string
+        total_amount:
+          type: string
+        payment:
+          type: object
+          properties:
+            provider:
+              type: string
+            client_secret:
+              type: string
+            status:
+              type: string
+
+    AdminSummaryResponse:
+      type: object
+      properties:
+        stub:
+          type: boolean
+        events_total:
+          type: integer
+        orders_paid:
+          type: integer
+
+    SeatmapResponse:
+      type: object
+      properties:
+        snapshotImageUrl:
+          type: string
+          format: uri
+        zones:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+
+    FriendInvite:
+      type: object
+      required: [id, sender_id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          description: ID numèric d’usuari (string per compatibilitat JSON)
+        receiver_id:
+          type: string
+          nullable: true
+          description: ID numèric del destinatari registrat (string al JSON)
+        receiver_email:
+          type: string
+          format: email
+          nullable: true
+          description: Present si es convida per correu (usuari nou o pendent)
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        invite_token:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FriendInviteCreateRequest:
+      type: object
+      properties:
+        receiver_id:
+          type: integer
+        receiver_email:
+          type: string
+          format: email
+        invite_token:
+          type: string
+          description: Opcional; generat pel servidor si cal
+      oneOf:
+        - required: [receiver_id]
+        - required: [receiver_email]
+
+    FriendInvitePatchRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [accept, reject]
+
+    EventSummary:
+      type: object
+      example:
+        id: "evt-123"
+        title: "Concert de Nadal"
+        date: "2025-12-24T20:00:00Z"
+        venue: " Palau de la Música"
+        image_url: "https://example.com/images/event-123.jpg"
+      properties:
+        id:
+          type: string
+          example: "evt-123"
+        title:
+          type: string
+          example: "Concert de Nadal"
+        date:
+          type: string
+          format: date-time
+          example: "2025-12-24T20:00:00Z"
+        venue:
+          type: string
+          example: "Palau de la Música"
+        image_url:
+          type: string
+          format: uri
+          example: "https://example.com/images/event-123.jpg"
+
+    Pagination:
+      type: object
+      example:
+        page: 1
+        per_page: 20
+        total: 150
+        last_page: 8
+      properties:
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 150
+        last_page:
+          type: integer
+          example: 8
+
+    UserProfileFull:
+      type: object
+      example:
+        id: 42
+        name: "Joan García"
+        username: "joangarcia"
+        email: "joan@example.com"
+        avatar_url: "https://example.com/avatars/42.jpg"
+        bio: "Amant de la música"
+        roles: ["user"]
+      properties:
+        id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: "Joan García"
+        username:
+          type: string
+          example: "joangarcia"
+        email:
+          type: string
+          format: email
+          example: "joan@example.com"
+        avatar_url:
+          type: string
+          format: uri
+          example: "https://example.com/avatars/42.jpg"
+        bio:
+          type: string
+          example: "Amant de la música"
+        roles:
+          type: array
+          items:
+            type: string
+            example: ["user"]
+
+    UserProfileUpdateRequest:
+      type: object
+      example:
+        name: "Joan García"
+        email: "joan@example.com"
+        current_password: "********"
+        password: "novaContrasenya123"
+        password_confirmation: "novaContrasenya123"
+      properties:
+        name:
+          type: string
+          example: "Joan García"
+        email:
+          type: string
+          format: email
+          example: "joan@example.com"
+        current_password:
+          type: string
+          description: Obligatori si s’envia password (canvi de contrasenya)
+        password:
+          type: string
+          description: Nova contrasenya (opcional; mínim 8 caràcters)
+        password_confirmation:
+          type: string
+
+    UserSettings:
+      type: object
+      example:
+        language: ca
+        currency: EUR
+        notifications:
+          email: true
+          push: false
+      properties:
+        language:
+          type: string
+          example: ca
+        currency:
+          type: string
+          example: EUR
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+              example: true
+            push:
+              type: boolean
+              example: false
+
+    UserSettingsUpdateRequest:
+      type: object
+      example:
+        language: ca
+        currency: EUR
+        notifications:
+          email: true
+          push: true
+      properties:
+        language:
+          type: string
+          example: ca
+        currency:
+          type: string
+          example: EUR
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+              example: true
+            push:
+              type: boolean
+              example: true
+
+    OrderConfirmedResponse:
+      type: object
+      example:
+        order_id: 123
+        state: paid
+        payment_id: "pay_abc123"
+        confirmed_at: "2025-01-15T14:30:00Z"
+      properties:
+        order_id:
+          type: integer
+          example: 123
+        state:
+          type: string
+          example: paid
+        payment_id:
+          type: string
+          example: "pay_abc123"
+        confirmed_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T14:30:00Z"

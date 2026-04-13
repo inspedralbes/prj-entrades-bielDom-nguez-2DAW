@@ -1,0 +1,1 @@
+// Comandes personalitzades (buit inicial)

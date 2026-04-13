@@ -1,24 +1,33 @@
-# Monorepo prj-entrades-nou — dependències i artefactes de build
-
-# npm en qualsevol carpeta (frontend-nuxt, socket-server, eines, etc.)
-**/node_modules/
-
-# PHP Composer (redundant amb backend-api/.gitignore; queda explícit des de l'arrel)
-backend-api/vendor/
-
-# Nuxt — generat localment
-frontend-nuxt/.nuxt/
-frontend-nuxt/.output/
-frontend-nuxt/dist/
-
-# Eines
-.opencode/node_modules/
-
-# Env locals del frontend (el de Laravel va a backend-api/.gitignore)
-frontend-nuxt/.env
-frontend-nuxt/.env.*
-!frontend-nuxt/.env.example
-
-# IDE / SO
+# Universal
 .DS_Store
 Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+
+# Node / Nuxt / frontend-nuxt / socket-server
+node_modules/
+dist/
+build/
+.output/
+.nuxt/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+
+# PHP / Laravel / backend-api
+vendor/
+bootstrap/cache/*.php
+storage/*.key
+.phpunit.result.cache
+
+# Cypress
+frontend-nuxt/cypress/screenshots/
+frontend-nuxt/cypress/videos/
+frontend-nuxt/cypress/downloads/
+
+# Docker
+*.local.yml
