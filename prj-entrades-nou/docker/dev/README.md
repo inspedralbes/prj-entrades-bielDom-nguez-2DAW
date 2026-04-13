@@ -12,7 +12,7 @@ docker compose -f docker/dev/docker-compose.yml up
 Abans, copia les variables (vegeu [quickstart.md](../../specs/001-seat-map-entry-validation/quickstart.md)):
 
 - `cp backend-api/.env.example backend-api/.env` i ajusta secrets. **Dins Docker**, `entrypoint-api.sh` exporta **`DB_HOST=postgres`**, **`REDIS_HOST=redis`** i la URL interna del socket; el `.env` pot seguir amb `127.0.0.1` per si executes Artisan al **host** amb Postgres exposat al 5432.
-- `cp frontend-nuxt/.env.example frontend-nuxt/.env` si cal.
+- `cp frontend-nuxt/.env.example frontend-nuxt/.env` (**obligatori**): el compose carrega `NUXT_PUBLIC_*` des d’aquest fitxer. Producció darrere Nginx: `NUXT_PUBLIC_API_URL` i `NUXT_PUBLIC_SOCKET_URL` = `http://LA_TEVA_IP` (sense port).
 - `cp socket-server/.env.example socket-server/.env` si cal.
 
 **Esquema PostgreSQL:** `database/init.sql` i `database/inserts.sql` s’executen en crear el volum de dades de Postgres (primera vegada). Si cal recrear tot: `docker compose -f docker/dev/docker-compose.yml down -v` i tornar a pujar.

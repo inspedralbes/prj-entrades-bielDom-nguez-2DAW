@@ -38,12 +38,11 @@ cp socket-server/.env.example socket-server/.env
 
 Edita `frontend-nuxt/.env` amb les variables públiques d’adalt. Revisa secrets a `backend-api/.env` i alineació amb el compose (JWT, DB, etc.).
 
-## 3. Docker només a localhost (recomanat amb Nginx al 80)
+## 3. Ports Docker (visibles al host)
 
-Els serveis han d’escoltar a **127.0.0.1** perquè només Nginx sigui accessible des de fora. Opcions:
+El `docker-compose` publica **3000, 8000 i 3001** a `0.0.0.0` perquè Nginx al mateix servidor pugui fer `proxy_pass` a `127.0.0.1:PORT` i puguis provar amb `curl` des del host.
 
-- **A)** Edita `docker/dev/docker-compose.yml` i canvia cada `ports:` per exemple de `'3000:3000'` a `'127.0.0.1:3000:3000'` (i igual per 8000 i 3001), o  
-- **B**) Mantén els ports oberts només si el firewall ja bloqueja 3000/8000/3001 des de fora (`ufw`).
+Si vols **només** Nginx exposat a Internet, al **firewall** (`ufw`) no obris 3000/8000/3001 cap a fora; només el **80** (i 443 si tens HTTPS).
 
 ## 4. Arrencar el stack
 
@@ -69,14 +68,14 @@ cd /opt/entrades/prj-entrades-nou   # ajusta el camí
 sudo cp docker/prod/nginx/host-entrades.conf /etc/nginx/sites-available/entrades
 sudo ln -sf /etc/nginx/sites-available/entrades /etc/nginx/sites-enabled/
 
-# Evita conflicte amb el lloc per defecte (opcional)
-# sudo rm -f /etc/nginx/sites-enabled/default
+# OBLIGATORI: sense això veuràs la pàgina «Welcome to nginx»
+sudo rm -f /etc/nginx/sites-enabled/default
 
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-El fitxer `host-entrades.conf` usa `server_name 89.167.124.133;`. Si tens domini, edita aquesta línia o duplica el `server` block.
+El fitxer `host-entrades.conf` usa `default_server` i `server_name _ 89.167.124.133;` perquè aquest bloc guanyi al lloc per defecte. Si encara veus la pàgina de benvinguda, comprova que **no** quedi cap altre `default_server` actiu: `grep -r default_server /etc/nginx/sites-enabled/`
 
 ## 6. Tallafocs
 
@@ -88,7 +87,7 @@ sudo ufw enable
 sudo ufw status
 ```
 
-Assegura’t que **Docker** no exposi 3000/8000/3001 a `0.0.0.0` si vols que només Nginx sigui la porta d’entrada (vegeu pas 3).
+Opcional: si vols que 3000/8000/3001 **no** siguin accessibles des d’Internet, restringeix-los amb `ufw` i deixa només el 80 obert (vegeu pas 3).
 
 ## 7. Prova des del navegador
 

@@ -51,8 +51,9 @@ services:
       - ../../backend-api:/var/www/html
       - ../../database:/var/www/database:ro
       - ./entrypoint-api.sh:/entrypoint-api.sh:ro
+    # 0.0.0.0: explícit — servei accessible des del host (i des de Nginx reverse proxy)
     ports:
-      - '8000:8000'
+      - '0.0.0.0:8000:8000'
     environment:
       APP_ENV: local
       APP_DEBUG: 'true'
@@ -92,13 +93,14 @@ services:
       - ../../frontend-nuxt:/app
       - nuxt_node_modules:/app/node_modules
     ports:
-      - '3000:3000'
+      - '0.0.0.0:3000:3000'
+    env_file:
+      - ../../frontend-nuxt/.env
     environment:
       NUXT_HOST: 0.0.0.0
       NUXT_PORT: 3000
-      NUXT_PUBLIC_API_URL: http://localhost:8000
-      # Navegador del teu PC → port publicat; correcte (no usar socket-server aquí).
-      NUXT_PUBLIC_SOCKET_URL: http://localhost:3001
+      # NUXT_PUBLIC_API_URL i NUXT_PUBLIC_SOCKET_URL: només a frontend-nuxt/.env
+      # (si es posen també aquí, aquestes variables guanyen i ignoren el .env)
     depends_on:
       - backend-api
     # prepare: genera .nuxt abans del dev (el volum bind sovint no té .nuxt al primer cop).
@@ -113,7 +115,7 @@ services:
       - ../../socket-server:/app
       - socket_node_modules:/app/node_modules
     ports:
-      - '3001:3001'
+      - '0.0.0.0:3001:3001'
     environment:
       PORT: 3001
       REDIS_URL: redis://redis:6379
