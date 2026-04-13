@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { useCookie } from '#app';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
 export const useSocketStore = defineStore('socket', {
   state: () => ({
@@ -13,7 +14,7 @@ export const useSocketStore = defineStore('socket', {
       if (typeof window === 'undefined' || this.socket) return;
       
       const config = useRuntimeConfig();
-      const socketUrl = config.public.socketUrl || 'http://localhost:3001';
+      const socketUrl = resolvePublicSocketUrl(config.public.socketUrl);
       
       try {
         this.socket = window.io(socketUrl, {

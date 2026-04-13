@@ -4,19 +4,23 @@ import { io } from 'socket.io-client';
 import { useAuthStore } from '~/stores/auth';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useInteractiveSeatmapStore } from '~/stores/interactiveSeatmap';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
 /**
- * URL del socket: runtimeConfig, o fallback al mateix host que la pàgina i port 3001 (Docker dev mapeja 3001).
+ * URL del socket: runtimeConfig (amb resolució producció), o fallback localhost:3001 / mateix origen.
  */
 function resolveSocketBase (config) {
-  let base = (config.public.socketUrl || '').replace(/\/$/, '').trim();
-  if (base !== '') {
-    return base;
+  const configured = (config.public.socketUrl || '').trim();
+  if (configured !== '') {
+    return resolvePublicSocketUrl(configured).replace(/\/$/, '');
   }
   if (import.meta.client && typeof window !== 'undefined') {
     const h = window.location.hostname;
     const p = window.location.protocol;
-    return `${p}//${h}:3001`;
+    if (h === 'localhost' || h === '127.0.0.1') {
+      return `${p}//${h}:3001`;
+    }
+    return window.location.origin;
   }
   return '';
 }

@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
 /**
  * Dades del panell admin: resum REST + esdeveniments Socket.IO al namespace públic (room admin:dashboard).
@@ -14,7 +15,7 @@ export function useAdminDashboard () {
     if (!import.meta.client || !auth.token) {
       return () => {};
     }
-    const url = (config.public.socketUrl || '').replace(/\/$/, '');
+    const url = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
     if (!url) {
       return () => {};
     }

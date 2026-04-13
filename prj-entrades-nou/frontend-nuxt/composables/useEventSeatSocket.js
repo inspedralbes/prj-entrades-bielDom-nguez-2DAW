@@ -1,5 +1,6 @@
 import { unref } from 'vue';
 import { io } from 'socket.io-client';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
 /**
  * Socket.IO públic per `eventId` + room `anon:{anonSession}` (T023).
@@ -18,7 +19,7 @@ export function useEventSeatSocket (eventIdRef, callbacks = {}) {
     const holdStore = useHoldStore();
     holdStore.ensureAnonymousSession();
 
-    const base = (config.public.socketUrl || '').replace(/\/$/, '');
+    const base = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
     if (!base) {
       return;
     }

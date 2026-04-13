@@ -88,6 +88,7 @@ import { useAuthStore } from '~/stores/auth';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useApi } from '~/composables/useApi';
 import { useEventImage } from '~/composables/useEventImage';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
 
 const emit = defineEmits(['city-selected']);
 
@@ -95,6 +96,7 @@ definePageMeta({
   layout: 'default',
 });
 
+const config = useRuntimeConfig();
 const auth = useAuthStore();
 const { fetchApi } = useApi();
 const { getJson, postJson, deleteJson } = useAuthorizedApi();
@@ -143,8 +145,8 @@ function onCityInput() {
   }
   cityDebounce = setTimeout(async () => {
     try {
-      const base = useRuntimeConfig().public.apiUrl || '';
-      const res = await $fetch(`${base.replace(/\/$/, '')}/api/cities/search?q=${encodeURIComponent(cityQuery.value)}`);
+      const base = resolvePublicApiBaseUrl(config.public.apiUrl || '').replace(/\/$/, '');
+      const res = await $fetch(`${base}/api/cities/search?q=${encodeURIComponent(cityQuery.value)}`);
       cityResults.value = res.cities || [];
     } catch {}
   }, 300);

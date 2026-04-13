@@ -76,9 +76,11 @@
 </template>
 
 <script setup>
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase'
+
 const router = useRouter()
 const route = useRoute()
-const apiUrl = useRuntimeConfig().public?.apiUrl || 'http://localhost:8000'
+const config = useRuntimeConfig()
 
 const isRegister = ref(false)
 const loading = ref(false)
@@ -115,7 +117,8 @@ const handleSubmit = async () => {
       password: form.value.password,
     }
 
-    const res = await $fetch(`${apiUrl}${endpoint}`, {
+    const base = resolvePublicApiBaseUrl(config.public?.apiUrl || 'http://localhost:8000').replace(/\/$/, '')
+    const res = await $fetch(`${base}${endpoint}`, {
       method: 'POST',
       body,
     })

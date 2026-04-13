@@ -31,6 +31,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useAdminDashboard } from '~/composables/useAdminDashboard';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
 definePageMeta({
   layout: 'admin',
@@ -48,7 +49,7 @@ const pollSec = 12;
 let stopPoll;
 let stopSocket;
 
-const socketUrl = computed(() => config.public.socketUrl || '');
+const socketUrl = computed(() => resolvePublicSocketUrl(config.public.socketUrl));
 
 const summaryText = computed(() =>
   summary.value ? JSON.stringify(summary.value, null, 2) : '—',

@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicSocketUrl } from '~/utils/apiBase';
 import { useTicketsStore } from '~/stores/tickets';
 
 /**
@@ -17,7 +18,7 @@ export function usePrivateTicketSocket () {
     const auth = useAuthStore();
     const ticketsStore = useTicketsStore();
 
-    const base = (config.public.socketUrl || '').replace(/\/$/, '');
+    const base = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
     if (!base || !auth.token) {
       return;
     }

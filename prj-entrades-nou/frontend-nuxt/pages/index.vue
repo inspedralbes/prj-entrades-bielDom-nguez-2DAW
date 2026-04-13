@@ -65,6 +65,7 @@ import { onMounted, ref, watch } from 'vue';
 import { useRoute, onBeforeRouteLeave } from 'vue-router';
 import { useAuthStore } from '~/stores/auth';
 import { useEventImage } from '~/composables/useEventImage';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
 
 definePageMeta({
   layout: 'default',
@@ -129,7 +130,7 @@ watch(() => route.path, (newPath) => {
  * Categories per defecte: party, dj, concert.
  */
 async function fetchFeatured() {
-  const base = (config.public.apiUrl || '').replace(/\/$/, '');
+  const base = resolvePublicApiBaseUrl(config.public.apiUrl).replace(/\/$/, '');
   let url;
 
   if (proximityEnabled.value && typeof navigator !== 'undefined' && navigator.geolocation) {
