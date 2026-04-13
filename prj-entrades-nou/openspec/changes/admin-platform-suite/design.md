@@ -4,6 +4,12 @@ Monorepo **prj-entrades-nou**: **Laravel 11** (API JWT + Spatie `admin`), **Nuxt
 
 La suite **admin-platform-suite** ha de completar el producte descrit a `openspec/specs/admin-platform-suite/spec.md`.
 
+### Revisió model de dades (tasques 1.1)
+
+- **`orders`**: `state` inclou `pending_payment`, `paid`, `failed`. Els **ingressos del dia** es calculen com a suma de `total_amount` per a comandes `paid` amb `updated_at` dins del **dia natural** a la zona `config('admin.business_timezone')` (per defecte `Europe/Madrid`, variable `ADMIN_BUSINESS_TIMEZONE`).
+- **`events.hidden_at`**: ocultació lògica respecte al catàleg públic.
+- **Aforament per esdeveniment**: recompte de `seats` per `event_id` (o semàntica del mapa) per a informes i monitor; pendent d’ús explícit als endpoints de monitor (bloc C).
+
 ### Flux de desenvolupament i Git
 
 L’equip i els agents han de seguir el document **`WORKFLOW.md`** (mateix directori que aquest `design.md`): una **branca des de `dev` per bloc entregable**, verificació **manual (navegador) + automàtica (tests backend)** al 100%, **merge a `dev`**, marcatge **`[x]`** al `tasks.md` del bloc, i després **següent branca**. No es deixen tasques ni funcionalitats del `tasks.md` a mitges dins d’un merge declarat complet.

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
+use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Carbon\Carbon;
@@ -19,20 +20,20 @@ class AdminController extends Controller
     public function __construct (
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
+        private readonly AdminDashboardMetricsService $adminDashboardMetrics,
     ) {}
 
     public function summary (Request $request): JsonResponse
     {
-        $this->socketNotifier->emitMetricsStub([
-            'events_total' => Event::query()->count(),
-            'generated_at' => now()->toIso8601String(),
-        ]);
+        $metrics = $this->adminDashboardMetrics->buildSummaryPayload();
+        $payload = $metrics;
+        $payload['events_total'] = Event::query()->count();
+        $payload['orders_paid'] = Order::query()->where('state', Order::STATE_PAID)->count();
+        $payload['generated_at'] = now()->toIso8601String();
 
-        return response()->json([
-            'stub' => true,
-            'events_total' => Event::query()->count(),
-            'orders_paid' => Order::query()->where('state', Order::STATE_PAID)->count(),
-        ]);
+        $this->socketNotifier->emitMetricsStub($payload);
+
+        return response()->json($payload);
     }
 
     public function discoverySync (Request $request): JsonResponse
@@ -43,6 +44,8 @@ class AdminController extends Controller
         }
 
         $result = $this->ticketmasterEventImportService->sync($maxPages);
+
+        $this->adminDashboardMetrics->recordDiscoverySyncResult($result);
 
         return response()->json([
             'status' => 'completed',

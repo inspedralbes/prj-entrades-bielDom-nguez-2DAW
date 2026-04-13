@@ -14,19 +14,19 @@ Ordre suggerit: contracte i dades → backend → socket → frontend → proves
 
 ## 1. Contracte i model de dades
 
-- [ ] 1.1 Revisar taules `events`, `orders`, `tickets`, `users`, rols Spatie; documentar camps per **ingressos dia**, **pending_payment**, **hidden_at**, **aforament**.
-- [ ] 1.2 Ampliar `specs/001-seat-map-entry-validation/contracts/openapi.yaml` (o delta acordat) amb paths `GET/PATCH/POST/DELETE` necessaris sota `/api/admin/...` (dashboard, discovery search, import, monitor, usuaris, informes).
-- [ ] 1.3 Decidir persistència d’**alertes sync** (últim run vs taula `admin_sync_runs`); si cal migració Laravel, afegir migració i model.
+- [x] 1.1 Revisar taules `events`, `orders`, `tickets`, `users`, rols Spatie; documentar camps per **ingressos dia**, **pending_payment**, **hidden_at**, **aforament**.
+- [ ] 1.2 Ampliar `specs/001-seat-map-entry-validation/contracts/openapi.yaml` (o delta acordat) amb paths `GET/PATCH/POST/DELETE` necessaris sota `/api/admin/...` (dashboard, discovery search, import, monitor, usuaris, informes). *(Parcial: actualitzat `AdminSummaryResponse` + `GET /api/admin/summary`.)*
+- [x] 1.3 Decidir persistència d’**alertes sync** (últim run vs taula `admin_sync_runs`); si cal migració Laravel, afegir migració i model. *(Decisió: caché `admin_last_discovery_sync`, sense nova taula.)*
 
 ---
 
 ## 2. Backend — Dashboard global (A)
 
-- [ ] 2.1 Implementar **ingressos del dia** (TZ `Europe/Madrid` o la definida al `.env`) sobre comandes/tiquets pagats.
-- [ ] 2.2 Implementar recompte de comandes en estat **`pending_payment`** (o nom real del enum `Order`).
-- [ ] 2.3 Exposar **alertes** de sync TM (errors de l’últim job o llista curta) al payload del dashboard.
-- [ ] 2.4 Estendre `AdminController::summary` o crear `AdminDashboardController` + servei dedicat (`app/Services/Admin/`) amb respostes no stub.
-- [ ] 2.5 Tests feature: admin rep 403 sense rol; amb `admin` rep camps esperats.
+- [x] 2.1 Implementar **ingressos del dia** (TZ `Europe/Madrid` o la definida al `.env`) sobre comandes/tiquets pagats.
+- [x] 2.2 Implementar recompte de comandes en estat **`pending_payment`** (o nom real del enum `Order`).
+- [x] 2.3 Exposar **alertes** de sync TM (errors de l’últim job o llista curta) al payload del dashboard.
+- [x] 2.4 Estendre `AdminController::summary` o crear `AdminDashboardController` + servei dedicat (`app/Services/Admin/`) amb respostes no stub.
+- [x] 2.5 Tests feature: admin rep 403 sense rol; amb `admin` rep camps esperats.
 
 ---
 
@@ -92,7 +92,7 @@ Ordre suggerit: contracte i dades → backend → socket → frontend → proves
 
 ## 10. Frontend Nuxt — Pàgines
 
-- [ ] 10.1 **`pages/admin/index.vue`**: dashboard (usuaris viu, ingressos dia, pending_payment, alertes TM).
+- [x] 10.1 **`pages/admin/index.vue`**: dashboard (usuaris viu, ingressos dia, pending_payment, alertes TM). *(Mètriques principals + alertes + JSON; `online_users` encara 0 fins al bloc socket/presència.)*
 - [ ] 10.2 **`pages/admin/events.vue`**: taula + cercador Discovery + import + formulari crear/editar + ocultar.
 - [ ] 10.3 **Nova ruta** `pages/admin/events/[eventId]/monitor.vue` (o similar): mapa reutilitzat, comptadors, holds, recaptació.
 - [ ] 10.4 **`pages/admin/users.vue`**: llista, crear usuari, detall amb historial de comandes/tiquets.

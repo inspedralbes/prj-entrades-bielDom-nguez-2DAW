@@ -980,10 +980,37 @@ components:
       properties:
         stub:
           type: boolean
+          description: Fals quan el resum inclou mètriques reals (dashboard producció)
         events_total:
           type: integer
         orders_paid:
           type: integer
+        revenue_today:
+          type: string
+          description: Suma EUR de comandes pagades amb updated_at dins del dia natural (TZ negoci)
+        pending_payment_count:
+          type: integer
+          description: Comandes en estat pending_payment
+        sync_alerts:
+          type: array
+          description: Errors de l’última sincronització Discovery (des de caché)
+          items:
+            type: object
+            properties:
+              message:
+                type: string
+              severity:
+                type: string
+                example: error
+              at:
+                type: string
+                format: date-time
+        online_users:
+          type: integer
+          description: Usuaris connectats (0 fins que s’implementi presència Socket)
+        generated_at:
+          type: string
+          format: date-time
 
     SeatmapResponse:
       type: object
