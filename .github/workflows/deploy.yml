@@ -1,12 +1,5 @@
 # Desplegament al servidor (SSH + git pull + Docker)
-#
-# Secrets (Settings → Secrets and variables → Actions):
-#   DEPLOY_HOST     — IP o domini del servidor (ex. 89.167.124.133)
-#   DEPLOY_USER     — usuari SSH (ex. ubuntu, deploy)
-#   DEPLOY_SSH_KEY  — clau privada completa (PEM/OpenSSH)
-# Opcionals:
-#   DEPLOY_PATH     — camí absolut al monorepo al servidor (ex. /opt/entrades/prj-entrades-nou). Per defecte: ~/prj-entrades-nou
-# (SSH port 22 per defecte; si cal un altre, afegeix manualment `port:` a l’action o usa ssh config al runner)
+# Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, opcional DEPLOY_PATH
 #
 name: Deploy
 

@@ -1,3 +1,4 @@
+# Smoke — cwd prj-entrades-nou (mateix que abans quan el workflow vivia dins la subcarpeta)
 name: Smoke Test (Phase 1 Setup)
 
 on:
@@ -15,6 +16,9 @@ jobs:
     name: Docker Compose Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: prj-entrades-nou
 
     steps:
       - name: Checkout code
@@ -46,7 +50,6 @@ jobs:
           elapsed=0
           interval=5
 
-          # Wait for postgres
           echo "Checking postgres..."
           while [ $elapsed -lt $timeout ]; do
             if docker compose -f ${{ env.COMPOSE_FILE }} exec -T postgres pg_isready -U esdeveniments -d esdeveniments &>/dev/null; then
@@ -63,7 +66,6 @@ jobs:
             exit 1
           fi
 
-          # Wait for backend-api
           echo "Checking backend-api..."
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
