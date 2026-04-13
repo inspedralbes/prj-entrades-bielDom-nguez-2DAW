@@ -11,7 +11,7 @@ final class CinemaVenueLayout
     /**
      * @return list<int>
      */
-    public static function columnsForRow (int $row): array
+    public static function columnsForRow(int $row): array
     {
         if ($row < 1 || $row > 18) {
             return [];
@@ -47,7 +47,7 @@ final class CinemaVenueLayout
     /**
      * @return list<string> Tots els seat_id vàlids (section_1-row_{fila}-seat_{col}).
      */
-    public static function allSeatIds (): array
+    public static function allSeatIds(): array
     {
         $out = [];
         for ($row = 1; $row <= 18; $row++) {
@@ -62,7 +62,7 @@ final class CinemaVenueLayout
         return $out;
     }
 
-    public static function isValidSeatId (string $seatId): bool
+    public static function isValidSeatId(string $seatId): bool
     {
         if (! preg_match('/^section_1-row_(\d+)-seat_(\d+)$/', $seatId, $m)) {
             return false;
@@ -84,7 +84,7 @@ final class CinemaVenueLayout
     /**
      * @return list<int>
      */
-    private static function mergeSides (int $minL, int $maxL, int $minR, int $maxR): array
+    private static function mergeSides(int $minL, int $maxL, int $minR, int $maxR): array
     {
         $out = [];
         for ($c = $minL; $c <= $maxL; $c++) {

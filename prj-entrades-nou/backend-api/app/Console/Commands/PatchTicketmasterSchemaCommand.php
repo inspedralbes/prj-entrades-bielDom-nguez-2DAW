@@ -15,7 +15,7 @@ class PatchTicketmasterSchemaCommand extends Command
 
     protected $description = 'Afegeix columnes/indexos Ticketmaster si falten (BD antiga vs database/init.sql)';
 
-    public function handle (): int
+    public function handle(): int
     {
         $statements = [
             'ALTER TABLE venues ADD COLUMN IF NOT EXISTS external_tm_id VARCHAR(255)',

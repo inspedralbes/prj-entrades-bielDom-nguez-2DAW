@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\RoleSeeder;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
@@ -13,7 +14,7 @@ class AuthApiTest extends TestCase
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
     }
 
     public function test_register_returns_token_and_me_works(): void

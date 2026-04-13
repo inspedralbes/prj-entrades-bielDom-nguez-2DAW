@@ -15,24 +15,24 @@ class OrderLine extends Model
         'unit_price',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'unit_price' => 'decimal:2',
         ];
     }
 
-    public function order (): BelongsTo
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function seat (): BelongsTo
+    public function seat(): BelongsTo
     {
         return $this->belongsTo(Seat::class);
     }
 
-    public function ticket (): HasOne
+    public function ticket(): HasOne
     {
         return $this->hasOne(Ticket::class);
     }

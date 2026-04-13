@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\File;
  */
 class CypressOrderFlowSeeder extends Seeder
 {
-    public function run (): void
+    public function run(): void
     {
         $this->call(RoleSeeder::class);
 

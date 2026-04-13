@@ -13,7 +13,7 @@ class SocketTicketSvgClient
     /**
      * @return non-empty-string|null SVG o null si no hi ha URL interna o falla la crida
      */
-    public function svgForQrPayload (string $qrText): ?string
+    public function svgForQrPayload(string $qrText): ?string
     {
         if ($qrText === '') {
             return null;

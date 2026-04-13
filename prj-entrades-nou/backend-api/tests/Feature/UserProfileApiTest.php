@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -10,15 +11,15 @@ class UserProfileApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_profile (): void
+    public function test_profile(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Nom',
@@ -34,7 +35,7 @@ class UserProfileApiTest extends TestCase
         $g->assertJsonPath('name', 'Nom');
     }
 
-    public function test_profile_patch_email_and_password (): void
+    public function test_profile_patch_email_and_password(): void
     {
         $email = uniqid('patch', true).'@example.com';
         $reg = $this->postJson('/api/auth/register', [

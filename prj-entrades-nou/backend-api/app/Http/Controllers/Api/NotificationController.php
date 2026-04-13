@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -39,7 +39,7 @@ class NotificationController extends Controller
         return response()->json(['notifications' => $list]);
     }
 
-    public function update (Request $request, int $id): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -75,7 +75,7 @@ class NotificationController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function serializeNotification (SocialNotification $n): array
+    private function serializeNotification(SocialNotification $n): array
     {
         return [
             'id' => (int) $n->id,

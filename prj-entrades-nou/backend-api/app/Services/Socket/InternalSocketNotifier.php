@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\Log;
  */
 class InternalSocketNotifier
 {
-    public function emitToAnonSession (string $anonymousSessionId, string $eventName, array $payload): void
+    public function emitToAnonSession(string $anonymousSessionId, string $eventName, array $payload): void
     {
         $this->emit('anon:'.$anonymousSessionId, $eventName, $payload);
     }
 
-    public function emitToEventRoom (string $eventId, string $eventName, array $payload): void
+    public function emitToEventRoom(string $eventId, string $eventName, array $payload): void
     {
         $this->emit('event:'.$eventId, $eventName, $payload);
     }
@@ -24,7 +24,7 @@ class InternalSocketNotifier
     /**
      * Room {@code user:{id}} — mateix patró que el namespace privat del socket-server (T031).
      */
-    public function emitToUser (int|string $userId, string $eventName, array $payload): void
+    public function emitToUser(int|string $userId, string $eventName, array $payload): void
     {
         $this->emit('user:'.(string) $userId, $eventName, $payload);
     }
@@ -32,7 +32,7 @@ class InternalSocketNotifier
     /**
      * Esborrany T035: notificació mètriques cap a clients que escoltin el room (p. ex. panell admin T052).
      */
-    public function emitMetricsStub (array $payload): void
+    public function emitMetricsStub(array $payload): void
     {
         $this->emit('admin:dashboard', 'admin:metrics', $payload);
     }
@@ -40,7 +40,7 @@ class InternalSocketNotifier
     /**
      * Emit low stock warning for an event.
      */
-    public function emitLowStock (int $eventId, int $remainingTickets): void
+    public function emitLowStock(int $eventId, int $remainingTickets): void
     {
         $this->emit('event:'.$eventId, 'event:low_stock', [
             'event_id' => $eventId,
@@ -50,7 +50,7 @@ class InternalSocketNotifier
         ]);
     }
 
-    private function emit (string $room, string $eventName, array $payload): void
+    private function emit(string $room, string $eventName, array $payload): void
     {
         $base = Config::get('services.socket.internal_url');
         if ($base === null || $base === '') {

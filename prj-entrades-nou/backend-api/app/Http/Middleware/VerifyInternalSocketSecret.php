@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class VerifyInternalSocketSecret
 {
-    public function handle (Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): Response
     {
         $expected = config('services.socket.internal_secret');
         $got = $request->header('X-Internal-Secret', '');

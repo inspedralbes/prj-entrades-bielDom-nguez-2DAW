@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
  */
 class TicketmasterEventImportService
 {
-    public function __construct (
+    public function __construct(
         private readonly TicketmasterDiscoveryEventsClient $discoveryClient,
     ) {}
 
@@ -28,7 +28,7 @@ class TicketmasterEventImportService
      *   errors: array<int, string>
      * }
      */
-    public function sync (?int $maxPagesOverride = null): array
+    public function sync(?int $maxPagesOverride = null): array
     {
         $inserted = 0;
         $skippedNoVenue = 0;
@@ -120,7 +120,7 @@ class TicketmasterEventImportService
 
                 $fixedPrice = (float) Config::get('services.order.fixed_event_price_eur', 20.0);
 
-                $row = new Event();
+                $row = new Event;
                 $row->external_tm_id = $extEventId;
                 $row->name = $name;
                 $row->hold_ttl_seconds = 240;
@@ -161,7 +161,7 @@ class TicketmasterEventImportService
     /**
      * @param  array<string, mixed>  $item
      */
-    private function extractFirstVenue (array $item): ?array
+    private function extractFirstVenue(array $item): ?array
     {
         if (! isset($item['_embedded']['venues'])) {
             return null;
@@ -184,7 +184,7 @@ class TicketmasterEventImportService
     /**
      * @param  array<string, mixed>  $v0
      */
-    private function upsertVenueFromPayload (array $v0): ?Venue
+    private function upsertVenueFromPayload(array $v0): ?Venue
     {
         $tmVenueId = null;
         if (isset($v0['id']) && is_string($v0['id'])) {
@@ -212,7 +212,7 @@ class TicketmasterEventImportService
 
         $venue = Venue::query()->where('external_tm_id', $tmVenueId)->first();
         if ($venue === null) {
-            $venue = new Venue();
+            $venue = new Venue;
             $venue->external_tm_id = $tmVenueId;
             $venue->name = $venueName;
             $venue->address = $address;
@@ -246,7 +246,7 @@ class TicketmasterEventImportService
         return $venue;
     }
 
-    private function applyVenueLocation (Venue $venue, ?float $lat, ?float $lng): void
+    private function applyVenueLocation(Venue $venue, ?float $lat, ?float $lng): void
     {
         if ($lat === null || $lng === null) {
             return;
@@ -264,7 +264,7 @@ class TicketmasterEventImportService
     /**
      * @param  array<string, mixed>  $item
      */
-    private function extractEventName (array $item): string
+    private function extractEventName(array $item): string
     {
         if (isset($item['name']) && is_string($item['name']) && $item['name'] !== '') {
             return $item['name'];
@@ -276,7 +276,7 @@ class TicketmasterEventImportService
     /**
      * @param  array<string, mixed>  $item
      */
-    private function extractStartsAt (array $item): ?Carbon
+    private function extractStartsAt(array $item): ?Carbon
     {
         if (! isset($item['dates']) || ! is_array($item['dates'])) {
             return null;
@@ -308,7 +308,7 @@ class TicketmasterEventImportService
         }
     }
 
-    private function extractCategory (array $item): ?string
+    private function extractCategory(array $item): ?string
     {
         if (! isset($item['classifications']) || ! is_array($item['classifications'])) {
             return null;
@@ -336,7 +336,7 @@ class TicketmasterEventImportService
      *
      * @param  array<string, mixed>  $item
      */
-    private function extractAndMapCategory (array $item): ?string
+    private function extractAndMapCategory(array $item): ?string
     {
         if (! isset($item['classifications']) || ! is_array($item['classifications'])) {
             return null;
@@ -403,7 +403,7 @@ class TicketmasterEventImportService
      *
      * @param  array<string, mixed>  $item
      */
-    private function isLargeEvent (array $item): bool
+    private function isLargeEvent(array $item): bool
     {
         $minCapacity = (int) Config::get('services.ticketmaster.min_capacity', 500);
 
@@ -436,7 +436,7 @@ class TicketmasterEventImportService
      *
      * @param  array<string, mixed>  $item
      */
-    private function extractPosterImageUrl (array $item): ?string
+    private function extractPosterImageUrl(array $item): ?string
     {
         if (! isset($item['images']) || ! is_array($item['images']) || $item['images'] === []) {
             return null;
@@ -471,7 +471,7 @@ class TicketmasterEventImportService
      *
      * @param  array<string, mixed>  $item
      */
-    private function extractTmUrl (array $item): ?string
+    private function extractTmUrl(array $item): ?string
     {
         if (isset($item['url']) && is_string($item['url'])) {
             return $item['url'];
@@ -494,7 +494,7 @@ class TicketmasterEventImportService
      *
      * @param  array<string, mixed>  $item
      */
-    private function extractPrice (array $item): ?float
+    private function extractPrice(array $item): ?float
     {
         if (! isset($item['priceRanges']) || ! is_array($item['priceRanges'])) {
             return null;

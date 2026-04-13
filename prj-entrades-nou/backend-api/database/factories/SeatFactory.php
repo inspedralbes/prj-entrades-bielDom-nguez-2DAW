@@ -14,7 +14,7 @@ class SeatFactory extends Factory
 {
     protected $model = Seat::class;
 
-    public function definition (): array
+    public function definition(): array
     {
         return [
             'external_seat_key' => 'S-'.$this->faker->unique()->numerify('####'),

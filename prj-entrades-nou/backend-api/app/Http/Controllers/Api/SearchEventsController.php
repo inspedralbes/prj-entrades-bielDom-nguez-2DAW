@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class SearchEventsController extends Controller
 {
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         // A PostgreSQL, `venues.location` és geography; Eloquent el retorna com a string sense cast a Point.
         // Extraiem lat/lng amb PostGIS al JOIN. A sqlite (tests) no hi ha ST_Y/ST_X sobre geography.
@@ -108,7 +108,7 @@ class SearchEventsController extends Controller
     /**
      * Get events within a radius (proximity filter).
      */
-    public function nearby (Request $request): JsonResponse
+    public function nearby(Request $request): JsonResponse
     {
         $lat = $request->query('lat');
         $lng = $request->query('lng');
@@ -161,7 +161,7 @@ class SearchEventsController extends Controller
     /**
      * Search cities with autocomplete.
      */
-    public function searchCities (Request $request): JsonResponse
+    public function searchCities(Request $request): JsonResponse
     {
         $q = $request->query('q');
 
@@ -173,7 +173,7 @@ class SearchEventsController extends Controller
 
         $cities = Venue::query()
             ->whereNotNull('location')
-            ->selectRaw("DISTINCT ON (name) name, ST_Y(location) as lat, ST_X(location) as lng")
+            ->selectRaw('DISTINCT ON (name) name, ST_Y(location) as lat, ST_X(location) as lng')
             ->where('name', 'ILIKE', $term)
             ->limit(10)
             ->get();
@@ -192,7 +192,7 @@ class SearchEventsController extends Controller
     /**
      * Get unit price for an event (for quantity purchase).
      */
-    public function eventPrice (Request $request, int $eventId): JsonResponse
+    public function eventPrice(Request $request, int $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {
@@ -211,7 +211,7 @@ class SearchEventsController extends Controller
     /**
      * Get event detail by ID.
      */
-    public function show (int $eventId): JsonResponse
+    public function show(int $eventId): JsonResponse
     {
         $event = Event::query()
             ->with('venue')

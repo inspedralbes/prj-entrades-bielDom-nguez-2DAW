@@ -20,7 +20,7 @@ class SocialNotification extends Model
         'read_at',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'payload' => 'array',
@@ -28,7 +28,7 @@ class SocialNotification extends Model
         ];
     }
 
-    public function actor (): BelongsTo
+    public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
     }

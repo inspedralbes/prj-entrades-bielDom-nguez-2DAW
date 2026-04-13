@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Redis;
  */
 class EventSeatHoldService
 {
-    public function __construct (
+    public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
 
-    public function redisSeatKey (int|string $eventId, string $seatId): string
+    public function redisSeatKey(int|string $eventId, string $seatId): string
     {
         return 'event:'.(string) $eventId.':seat:'.$seatId;
     }
@@ -24,7 +24,7 @@ class EventSeatHoldService
     /**
      * Índex per alliberar ràpid en desconnexió: SET de seat_id.
      */
-    public function userEventHoldsKey (int $userId, int|string $eventId): string
+    public function userEventHoldsKey(int $userId, int|string $eventId): string
     {
         return 'user:'.(string) $userId.':event:'.(string) $eventId.':held_seats';
     }
@@ -32,7 +32,7 @@ class EventSeatHoldService
     /**
      * @return array{ok: true}|array{ok: false, reason: string, message?: string}
      */
-    public function holdSeat (Event $event, string $seatId, int $userId): array
+    public function holdSeat(Event $event, string $seatId, int $userId): array
     {
         if (! CinemaVenueLayout::isValidSeatId($seatId)) {
             return ['ok' => false, 'reason' => 'invalid_seat', 'message' => 'Seient no vàlid per al mapa'];
@@ -78,7 +78,7 @@ class EventSeatHoldService
      *
      * @return list<string> seat_id alliberats
      */
-    public function releaseAllHoldsForUser (int $userId, ?int $eventIdFilter = null): array
+    public function releaseAllHoldsForUser(int $userId, ?int $eventIdFilter = null): array
     {
         $conn = Redis::connection();
         $released = [];
@@ -122,7 +122,7 @@ class EventSeatHoldService
      *
      * @param  list<string>  $seatKeys
      */
-    public function finalizeCinemaSeatsAsSold (int|string $eventId, int $userId, array $seatKeys): void
+    public function finalizeCinemaSeatsAsSold(int|string $eventId, int $userId, array $seatKeys): void
     {
         $conn = Redis::connection();
         $indexKey = $this->userEventHoldsKey($userId, (int) $eventId);
@@ -138,7 +138,7 @@ class EventSeatHoldService
     /**
      * L’usuari deselecciona un seient al mapa: allibera Redis i notifica available.
      */
-    public function releaseUserSeatHold (Event $event, string $seatId, int $userId): bool
+    public function releaseUserSeatHold(Event $event, string $seatId, int $userId): bool
     {
         $conn = Redis::connection();
         $key = $this->redisSeatKey($event->id, $seatId);
@@ -158,7 +158,7 @@ class EventSeatHoldService
     /**
      * @return array<string, string> seat_id => user_id (string)
      */
-    public function getHoldsForEvent (int|string $eventId): array
+    public function getHoldsForEvent(int|string $eventId): array
     {
         $conn = Redis::connection();
         $pattern = 'event:'.(string) $eventId.':seat:*';
@@ -189,7 +189,7 @@ class EventSeatHoldService
         return $out;
     }
 
-    private function releaseHoldsForUserEvent ($conn, int $userId, int $eventId): array
+    private function releaseHoldsForUserEvent($conn, int $userId, int $eventId): array
     {
         $indexKey = $this->userEventHoldsKey($userId, $eventId);
         $seatIds = $conn->smembers($indexKey);
@@ -210,7 +210,7 @@ class EventSeatHoldService
         return $released;
     }
 
-    private function parseEventIdFromUserIndexKey (string $key): ?int
+    private function parseEventIdFromUserIndexKey(string $key): ?int
     {
         // Sense ancoratge ^: Predis/phpredis poden retornar el nom físic amb prefix Laravel (p. ex. app-database-user:…).
         if (preg_match('/user:\d+:event:(\d+):held_seats$/', $key, $m)) {
@@ -220,7 +220,7 @@ class EventSeatHoldService
         return null;
     }
 
-    private function parseSeatIdFromRedisKey (string $key): ?string
+    private function parseSeatIdFromRedisKey(string $key): ?string
     {
         // Sense ^ inicial: la clau real a Redis inclou el prefix de config/database.php (REDIS_PREFIX).
         if (preg_match('/event:\d+:seat:(.+)$/', $key, $m)) {
@@ -233,7 +233,7 @@ class EventSeatHoldService
     /**
      * @param  array<string, mixed>  $layout
      */
-    private function isSeatSoldInLayout (array $layout, string $seatId): bool
+    private function isSeatSoldInLayout(array $layout, string $seatId): bool
     {
         if (! array_key_exists($seatId, $layout)) {
             return false;
@@ -251,7 +251,7 @@ class EventSeatHoldService
         return false;
     }
 
-    private function emitSeatStatus (int|string $eventId, string $seatId, string $status, ?int $holderUserId): void
+    private function emitSeatStatus(int|string $eventId, string $seatId, string $status, ?int $holderUserId): void
     {
         $payload = [
             'eventId' => (string) $eventId,

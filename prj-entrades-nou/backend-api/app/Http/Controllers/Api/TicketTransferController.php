@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class TicketTransferController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly TicketTransferService $ticketTransferService,
     ) {}
 
-    public function store (Request $request, string $ticketId): JsonResponse
+    public function store(Request $request, string $ticketId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {

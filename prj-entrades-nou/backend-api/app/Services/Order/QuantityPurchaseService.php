@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class QuantityPurchaseService
 {
-    public function __construct (
+    public function __construct(
         private readonly PaymentStubService $paymentStubService,
     ) {}
 
@@ -24,7 +24,7 @@ class QuantityPurchaseService
      *   payment: array{provider: string, client_secret: string, status: string}
      * }|array{ok: false, reason: string, http_status: int}
      */
-    public function createQuantityOrder (User $user, int $eventId, int $quantity): array
+    public function createQuantityOrder(User $user, int $eventId, int $quantity): array
     {
         if ($quantity < 1 || $quantity > 6) {
             return ['ok' => false, 'reason' => 'invalid_quantity', 'http_status' => 422];

@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class UserProfileController extends Controller
 {
-    public function show (Request $request): JsonResponse
+    public function show(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -24,7 +24,7 @@ class UserProfileController extends Controller
         ]);
     }
 
-    public function updateProfile (Request $request): JsonResponse
+    public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
 

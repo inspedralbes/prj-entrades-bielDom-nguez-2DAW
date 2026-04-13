@@ -12,7 +12,7 @@ class VenueFactory extends Factory
 {
     protected $model = Venue::class;
 
-    public function definition (): array
+    public function definition(): array
     {
         return [
             'name' => 'Sala '.$this->faker->unique()->streetName(),

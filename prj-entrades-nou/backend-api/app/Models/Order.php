@@ -24,7 +24,7 @@ class Order extends Model
         'quantity',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'total_amount' => 'decimal:2',
@@ -32,17 +32,17 @@ class Order extends Model
         ];
     }
 
-    public function user (): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function event (): BelongsTo
+    public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    public function orderLines (): HasMany
+    public function orderLines(): HasMany
     {
         return $this->hasMany(OrderLine::class);
     }

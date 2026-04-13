@@ -13,12 +13,12 @@ use Illuminate\Support\Str;
 
 class HoldController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly SeatHoldService $seatHoldService,
         private readonly JwtTokenService $jwtTokenService,
     ) {}
 
-    public function store (Request $request, string $eventId): JsonResponse
+    public function store(Request $request, string $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {
@@ -81,7 +81,7 @@ class HoldController extends Controller
         ], 201);
     }
 
-    public function loginGrace (Request $request, string $holdId): JsonResponse
+    public function loginGrace(Request $request, string $holdId): JsonResponse
     {
         $validated = $request->validate([
             'anonymous_session_id' => ['required', 'string', 'max:128'],
@@ -108,7 +108,7 @@ class HoldController extends Controller
         ]);
     }
 
-    public function destroy (Request $request, string $holdId): JsonResponse
+    public function destroy(Request $request, string $holdId): JsonResponse
     {
         $validated = $request->validate([
             'anonymous_session_id' => ['nullable', 'string', 'max:128'],
@@ -141,7 +141,7 @@ class HoldController extends Controller
         return response()->json(['message' => 'Hold alliberat']);
     }
 
-    public function time (string $holdId): JsonResponse
+    public function time(string $holdId): JsonResponse
     {
         $data = $this->seatHoldService->getHoldTime($holdId);
         if ($data === null) {
@@ -153,7 +153,7 @@ class HoldController extends Controller
         ]);
     }
 
-    private function optionalUserId (Request $request): ?int
+    private function optionalUserId(Request $request): ?int
     {
         $header = $request->header('Authorization', '');
         if (! str_starts_with($header, 'Bearer ')) {

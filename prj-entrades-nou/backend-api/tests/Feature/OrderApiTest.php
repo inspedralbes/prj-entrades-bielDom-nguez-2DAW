@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\Ticket\JwtTicketService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -17,17 +18,17 @@ class OrderApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         config(['services.order.stub_unit_price' => 10.0]);
         config(['jwt.ticket_ttl_seconds' => 900]);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_create_pending_payment_order_requires_auth (): void
+    public function test_create_pending_payment_order_requires_auth(): void
     {
         $this->postJson('/api/orders', [
             'hold_id' => '550e8400-e29b-41d4-a716-446655440000',
@@ -35,7 +36,7 @@ class OrderApiTest extends TestCase
         ])->assertStatus(401);
     }
 
-    public function test_create_pending_payment_order_from_hold (): void
+    public function test_create_pending_payment_order_from_hold(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -85,7 +86,7 @@ class OrderApiTest extends TestCase
         ]);
     }
 
-    public function test_duplicate_order_same_hold_returns_409 (): void
+    public function test_duplicate_order_same_hold_returns_409(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -116,7 +117,7 @@ class OrderApiTest extends TestCase
         $this->postJson('/api/orders', $body, $headers)->assertStatus(409);
     }
 
-    public function test_wrong_anonymous_session_returns_403 (): void
+    public function test_wrong_anonymous_session_returns_403(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -145,7 +146,7 @@ class OrderApiTest extends TestCase
         ])->assertStatus(403);
     }
 
-    public function test_confirm_payment_marks_paid_and_seats_sold (): void
+    public function test_confirm_payment_marks_paid_and_seats_sold(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -206,7 +207,7 @@ class OrderApiTest extends TestCase
         $this->assertNull($s1->current_hold_id);
     }
 
-    public function test_confirm_payment_seat_unavailable_releases_hold_and_exact_message (): void
+    public function test_confirm_payment_seat_unavailable_releases_hold_and_exact_message(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -256,7 +257,7 @@ class OrderApiTest extends TestCase
         $this->assertSame('available', $s1->status);
     }
 
-    public function test_confirm_payment_twice_second_invalid_state (): void
+    public function test_confirm_payment_twice_second_invalid_state(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',

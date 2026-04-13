@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 
 class InternalSeatHoldController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly EventSeatHoldService $eventSeatHoldService,
     ) {}
 
     /**
      * POST /api/internal/seat-holds/release-user — cridat pel socket-server en desconnexió.
      */
-    public function releaseUser (Request $request): JsonResponse
+    public function releaseUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'min:1'],
@@ -34,7 +34,7 @@ class InternalSeatHoldController extends Controller
      * POST /api/internal/seat-holds/release-user-event — allibera holds Redis d’un usuari només per un esdeveniment
      * (p. ex. surt del mapa de seients / desconnexió socket d’aquest room).
      */
-    public function releaseUserEvent (Request $request): JsonResponse
+    public function releaseUserEvent(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'min:1'],

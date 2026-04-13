@@ -14,12 +14,12 @@ class SavedEvent extends Model
         'event_id',
     ];
 
-    public function event (): BelongsTo
+    public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    public function user (): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

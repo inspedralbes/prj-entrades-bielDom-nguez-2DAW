@@ -8,6 +8,7 @@ use App\Models\Seat;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\Auth\JwtTokenService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
@@ -17,7 +18,7 @@ class Phase6AdminSocialApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
@@ -25,11 +26,11 @@ class Phase6AdminSocialApiTest extends TestCase
         config(['jwt.ticket_ttl_seconds' => 900]);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_admin_summary_forbidden_for_non_admin (): void
+    public function test_admin_summary_forbidden_for_non_admin(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Usuari',
@@ -45,7 +46,7 @@ class Phase6AdminSocialApiTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_admin_summary_ok_and_emits_socket (): void
+    public function test_admin_summary_ok_and_emits_socket(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -57,7 +58,7 @@ class Phase6AdminSocialApiTest extends TestCase
         ]);
         $admin->assignRole('admin');
 
-        $token = app(\App\Services\Auth\JwtTokenService::class)->issueForUser($admin->fresh());
+        $token = app(JwtTokenService::class)->issueForUser($admin->fresh());
 
         $res = $this->withHeaders(['Authorization' => 'Bearer '.$token])
             ->getJson('/api/admin/summary');
@@ -67,7 +68,7 @@ class Phase6AdminSocialApiTest extends TestCase
         Http::assertSent(fn ($r) => str_contains($r->url(), 'internal/emit'));
     }
 
-    public function test_admin_patch_event_updates_tm_sync_and_hidden (): void
+    public function test_admin_patch_event_updates_tm_sync_and_hidden(): void
     {
         $admin = User::factory()->create([
             'username' => 'adm_patch_'.uniqid(),
@@ -96,7 +97,7 @@ class Phase6AdminSocialApiTest extends TestCase
         $this->assertNotNull($event->hidden_at);
     }
 
-    public function test_admin_patch_event_updates_price (): void
+    public function test_admin_patch_event_updates_price(): void
     {
         $admin = User::factory()->create([
             'username' => 'adm_price_'.uniqid(),
@@ -121,7 +122,7 @@ class Phase6AdminSocialApiTest extends TestCase
         $this->assertEquals(42.5, (float) $event->price);
     }
 
-    public function test_admin_patch_event_clear_hidden (): void
+    public function test_admin_patch_event_clear_hidden(): void
     {
         $admin = User::factory()->create([
             'username' => 'adm_patch2_'.uniqid(),
@@ -144,7 +145,7 @@ class Phase6AdminSocialApiTest extends TestCase
         $this->assertNull($event->hidden_at);
     }
 
-    public function test_admin_patch_event_forbidden_for_non_admin (): void
+    public function test_admin_patch_event_forbidden_for_non_admin(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Usuari',
@@ -161,7 +162,7 @@ class Phase6AdminSocialApiTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_admin_patch_event_404 (): void
+    public function test_admin_patch_event_404(): void
     {
         $admin = User::factory()->create([
             'username' => 'adm_404_'.uniqid(),
@@ -175,7 +176,7 @@ class Phase6AdminSocialApiTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_admin_patch_event_requires_at_least_one_field (): void
+    public function test_admin_patch_event_requires_at_least_one_field(): void
     {
         $admin = User::factory()->create([
             'username' => 'adm_422_'.uniqid(),
@@ -190,7 +191,7 @@ class Phase6AdminSocialApiTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_social_invite_accept_and_friends (): void
+    public function test_social_invite_accept_and_friends(): void
     {
         $a = $this->registerUser('alice6', 'alice6@example.com');
         $b = $this->registerUser('bob6', 'bob6@example.com');
@@ -216,7 +217,7 @@ class Phase6AdminSocialApiTest extends TestCase
         $friendsA->assertJsonPath('friends.0.id', $b['id']);
     }
 
-    public function test_ticket_transfer_requires_friendship (): void
+    public function test_ticket_transfer_requires_friendship(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"/>', 200),
@@ -250,7 +251,7 @@ class Phase6AdminSocialApiTest extends TestCase
         $ok->assertJsonPath('ticket_id', $ticketId);
     }
 
-    public function test_ticket_transfer_splits_order_with_multiple_lines (): void
+    public function test_ticket_transfer_splits_order_with_multiple_lines(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"/>', 200),
@@ -316,7 +317,7 @@ class Phase6AdminSocialApiTest extends TestCase
     /**
      * @return array{token: string, id: int}
      */
-    private function registerUser (string $username, string $email): array
+    private function registerUser(string $username, string $email): array
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => $username,
@@ -336,7 +337,7 @@ class Phase6AdminSocialApiTest extends TestCase
     /**
      * @return array{0: string} ticket id
      */
-    private function createSingleTicketOrderForUser (string $token): array
+    private function createSingleTicketOrderForUser(string $token): array
     {
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);

@@ -13,7 +13,7 @@ class SeatmapApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    public function test_seatmap_fallback_from_postgres (): void
+    public function test_seatmap_fallback_from_postgres(): void
     {
         $event = Event::factory()->create([
             'external_tm_id' => null,
@@ -43,7 +43,7 @@ class SeatmapApiTest extends TestCase
         $res->assertJsonPath('seats.0.status', 'available');
     }
 
-    public function test_seatmap_merges_ticketmaster_snapshot_with_pg_zones (): void
+    public function test_seatmap_merges_ticketmaster_snapshot_with_pg_zones(): void
     {
         config(['services.ticketmaster.key' => 'fake-key']);
 

@@ -12,7 +12,7 @@ class ProximityFilterApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_events_nearby_requires_lat_lng (): void
+    public function test_events_nearby_requires_lat_lng(): void
     {
         $response = $this->getJson('/api/events/nearby');
 
@@ -20,12 +20,12 @@ class ProximityFilterApiTest extends TestCase
         $response->assertJsonPath('message', 'lat and lng are required');
     }
 
-    public function test_events_nearby_returns_events_within_radius (): void
+    public function test_events_nearby_returns_events_within_radius(): void
     {
         config(['database.default' => 'pgsql']);
 
         $venue = Venue::factory()->create([
-            'location' => DB::raw("ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography"),
+            'location' => DB::raw('ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography'),
         ]);
         $nearEvent = Event::factory()->create([
             'venue_id' => $venue->id,
@@ -37,7 +37,7 @@ class ProximityFilterApiTest extends TestCase
         $response->assertJsonStructure(['events']);
     }
 
-    public function test_cities_search_requires_min_2_chars (): void
+    public function test_cities_search_requires_min_2_chars(): void
     {
         $response = $this->getJson('/api/cities/search?q=a');
 
@@ -45,13 +45,13 @@ class ProximityFilterApiTest extends TestCase
         $response->assertJsonPath('cities', []);
     }
 
-    public function test_cities_search_returns_matching_cities (): void
+    public function test_cities_search_returns_matching_cities(): void
     {
         config(['database.default' => 'pgsql']);
 
         Venue::factory()->create([
             'name' => 'Barcelona',
-            'location' => DB::raw("ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography"),
+            'location' => DB::raw('ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography'),
         ]);
 
         $response = $this->getJson('/api/cities/search?q=Bar');
@@ -60,13 +60,13 @@ class ProximityFilterApiTest extends TestCase
         $response->assertJsonStructure(['cities']);
     }
 
-    public function test_events_nearby_returns_distance_km (): void
+    public function test_events_nearby_returns_distance_km(): void
     {
         config(['database.default' => 'pgsql']);
 
         $venue = Venue::factory()->create([
             'name' => 'Barcelona',
-            'location' => DB::raw("ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography"),
+            'location' => DB::raw('ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography'),
         ]);
         $event = Event::factory()->create(['venue_id' => $venue->id]);
 
@@ -79,7 +79,7 @@ class ProximityFilterApiTest extends TestCase
         }
     }
 
-    public function test_event_price_returns_unit_price (): void
+    public function test_event_price_returns_unit_price(): void
     {
         $event = Event::factory()->create();
 
@@ -93,7 +93,7 @@ class ProximityFilterApiTest extends TestCase
         ]);
     }
 
-    public function test_event_price_404_for_nonexistent (): void
+    public function test_event_price_404_for_nonexistent(): void
     {
         $response = $this->getJson('/api/events/99999/price');
 

@@ -13,14 +13,14 @@ class HoldApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         Cache::flush();
     }
 
-    public function test_create_hold_and_conflict (): void
+    public function test_create_hold_and_conflict(): void
     {
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);
@@ -43,7 +43,7 @@ class HoldApiTest extends TestCase
         $r2->assertStatus(409);
     }
 
-    public function test_delete_hold (): void
+    public function test_delete_hold(): void
     {
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);
@@ -64,7 +64,7 @@ class HoldApiTest extends TestCase
         $this->assertSame('available', $s1->status);
     }
 
-    public function test_login_grace_once (): void
+    public function test_login_grace_once(): void
     {
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);
@@ -87,7 +87,7 @@ class HoldApiTest extends TestCase
         $g2->assertStatus(403);
     }
 
-    public function test_hold_time_endpoint (): void
+    public function test_hold_time_endpoint(): void
     {
         $event = Event::factory()->create(['hold_ttl_seconds' => 240]);
         $zone = Zone::factory()->create(['event_id' => $event->id]);

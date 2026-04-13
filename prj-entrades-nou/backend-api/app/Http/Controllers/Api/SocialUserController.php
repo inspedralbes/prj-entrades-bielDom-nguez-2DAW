@@ -14,16 +14,14 @@ use Illuminate\Http\Request;
  */
 class SocialUserController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly FriendshipQuery $friendshipQuery,
     ) {}
 
     /**
      * GET /api/social/discover/search?q= — per nom o nom d’usuari (mín. 2 caràcters).
-     *
-     * @return JsonResponse
      */
-    public function search (Request $request): JsonResponse
+    public function search(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -72,7 +70,7 @@ class SocialUserController extends Controller
     /**
      * GET /api/social/users/{userId} — dades mínimes + relació amb l’usuari autenticat.
      */
-    public function publicProfile (Request $request, string $userId): JsonResponse
+    public function publicProfile(Request $request, string $userId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -108,7 +106,7 @@ class SocialUserController extends Controller
     /**
      * @return array{status: string, pending_invite_id: string|null}
      */
-    private function resolveRelationship (User $me, User $other): array
+    private function resolveRelationship(User $me, User $other): array
     {
         if ($this->friendshipQuery->areFriends($me, $other)) {
             return ['status' => 'friend', 'pending_invite_id' => null];

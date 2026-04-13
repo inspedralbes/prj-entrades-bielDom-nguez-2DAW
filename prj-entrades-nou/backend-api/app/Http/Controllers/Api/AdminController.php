@@ -16,12 +16,12 @@ use Illuminate\Http\Request;
  */
 class AdminController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
     ) {}
 
-    public function summary (Request $request): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
         $this->socketNotifier->emitMetricsStub([
             'events_total' => Event::query()->count(),
@@ -35,7 +35,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function discoverySync (Request $request): JsonResponse
+    public function discoverySync(Request $request): JsonResponse
     {
         $maxPages = null;
         if ($request->query('max_pages') !== null) {
@@ -60,7 +60,7 @@ class AdminController extends Controller
      * Actualització parcial d'esdeveniment: visibilitat (hidden_at), bloqueig de sync TM (tm_sync_paused) i preu (des del panell admin).
      * El sync Ticketmaster no sobreescriu files existents (només afegeix nous); el preu editat aquí es manté.
      */
-    public function updateEvent (Request $request, string $eventId): JsonResponse
+    public function updateEvent(Request $request, string $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {
@@ -110,7 +110,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $query = Event::query()->orderBy('starts_at', 'desc');
 
@@ -132,7 +132,7 @@ class AdminController extends Controller
         return response()->json($events);
     }
 
-    public function store (Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'external_tm_id' => ['required', 'string', 'max:255', 'unique:events,external_tm_id'],
@@ -144,7 +144,7 @@ class AdminController extends Controller
             'hidden_at' => ['nullable', 'date'],
         ]);
 
-        $event = new Event();
+        $event = new Event;
         $event->external_tm_id = $data['external_tm_id'];
         $event->name = $data['name'];
         $event->venue_id = $data['venue_id'];
@@ -168,7 +168,7 @@ class AdminController extends Controller
         ], 201);
     }
 
-    public function destroy (Request $request, int $eventId): JsonResponse
+    public function destroy(Request $request, int $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {

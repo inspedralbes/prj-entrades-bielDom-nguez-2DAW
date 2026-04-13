@@ -13,7 +13,7 @@ class JwtTicketService
     /**
      * JWT de credencial d’entrada (HS256). Claims: jti = id intern del ticket, pub = public_uuid per QR.
      */
-    public function issueForTicket (Ticket $ticket, User $owner, int $eventId): string
+    public function issueForTicket(Ticket $ticket, User $owner, int $eventId): string
     {
         $secret = Config::get('jwt.secret');
         if ($secret === null || $secret === '') {
@@ -43,7 +43,7 @@ class JwtTicketService
     /**
      * @return object{jti: string, sub: string, pub: string, evt: int, typ: string, iat: int, exp: int}
      */
-    public function decode (string $jwt): object
+    public function decode(string $jwt): object
     {
         $secret = Config::get('jwt.secret');
         if ($secret === null || $secret === '') {

@@ -13,11 +13,11 @@ use App\Services\Socket\InternalSocketNotifier;
  */
 class SocialNotificationService
 {
-    public function __construct (
+    public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
 
-    public function recordEventShare (User $actor, User $recipient, Event $event): void
+    public function recordEventShare(User $actor, User $recipient, Event $event): void
     {
         $event->loadMissing('venue');
 
@@ -73,7 +73,7 @@ class SocialNotificationService
         ]);
     }
 
-    public function recordTicketTransfer (User $from, User $to, Ticket $ticket): void
+    public function recordTicketTransfer(User $from, User $to, Ticket $ticket): void
     {
         $ticket->loadMissing(['orderLine.order.event.venue', 'orderLine.seat']);
 

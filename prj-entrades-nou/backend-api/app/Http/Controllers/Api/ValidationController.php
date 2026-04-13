@@ -10,14 +10,14 @@ use Illuminate\Http\Request;
 
 class ValidationController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly TicketScanValidationService $ticketScanValidationService,
     ) {}
 
     /**
      * POST /api/validation/scan — JWT d’API (validador) + cos amb JWT de l’entrada (QR).
      */
-    public function scan (Request $request): JsonResponse
+    public function scan(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'token' => ['required', 'string'],

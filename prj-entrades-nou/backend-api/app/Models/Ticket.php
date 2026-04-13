@@ -26,7 +26,7 @@ class Ticket extends Model
         'validator_id',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'jwt_expires_at' => 'datetime',
@@ -34,7 +34,7 @@ class Ticket extends Model
         ];
     }
 
-    public function orderLine (): BelongsTo
+    public function orderLine(): BelongsTo
     {
         return $this->belongsTo(OrderLine::class);
     }

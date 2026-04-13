@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Event;
-use App\Models\Order;
 use App\Models\Seat;
 use App\Models\Ticket;
 use App\Models\Zone;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -15,22 +15,22 @@ class TicketsListApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         config(['services.order.stub_unit_price' => 10.0]);
         config(['jwt.ticket_ttl_seconds' => 900]);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_list_requires_auth (): void
+    public function test_list_requires_auth(): void
     {
         $this->getJson('/api/tickets')->assertStatus(401);
     }
 
-    public function test_list_empty_for_new_user (): void
+    public function test_list_empty_for_new_user(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Sense entrades',
@@ -49,7 +49,7 @@ class TicketsListApiTest extends TestCase
         $res->assertJsonPath('tickets', []);
     }
 
-    public function test_list_returns_ticket_after_paid_order (): void
+    public function test_list_returns_ticket_after_paid_order(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Amb entrada',
@@ -106,7 +106,7 @@ class TicketsListApiTest extends TestCase
         $list->assertJsonPath('tickets.0.order_id', $orderId);
     }
 
-    public function test_list_does_not_include_other_users_tickets (): void
+    public function test_list_does_not_include_other_users_tickets(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Usuari A',

@@ -28,12 +28,12 @@ class FriendInvite extends Model
         'invite_token',
     ];
 
-    public function sender (): BelongsTo
+    public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    public function receiver (): BelongsTo
+    public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'receiver_id');
     }

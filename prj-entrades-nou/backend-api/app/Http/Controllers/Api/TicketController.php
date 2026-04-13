@@ -16,7 +16,7 @@ use Illuminate\Http\Response;
 
 class TicketController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly JwtTicketService $jwtTicketService,
         private readonly SocketTicketSvgClient $socketTicketSvgClient,
         private readonly LocalTicketSvgQrService $localTicketSvgQrService,
@@ -25,7 +25,7 @@ class TicketController extends Controller
     /**
      * GET /api/tickets — historial d’entrades de l’usuari autenticat (T028).
      */
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -88,7 +88,7 @@ class TicketController extends Controller
     /**
      * GET /api/tickets/{ticketId}/qr — SVG del QR amb payload JWT de l’entrada (T027).
      */
-    public function showQr (Request $request, string $ticketId): Response|JsonResponse
+    public function showQr(Request $request, string $ticketId): Response|JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -140,7 +140,7 @@ class TicketController extends Controller
      *
      * @return array{id: ?int, key: ?string, row: ?int, col: ?int, label: ?string}|null
      */
-    private function seatPresentationFromLine (?OrderLine $line, ?Seat $seat): ?array
+    private function seatPresentationFromLine(?OrderLine $line, ?Seat $seat): ?array
     {
         if ($line === null) {
             return null;
@@ -179,7 +179,7 @@ class TicketController extends Controller
         ];
     }
 
-    private function ensureFreshTicketCredential (Ticket $ticket): void
+    private function ensureFreshTicketCredential(Ticket $ticket): void
     {
         $ttl = (int) config('jwt.ticket_ttl_seconds', 900);
         $expiresAt = $ticket->jwt_expires_at;

@@ -10,7 +10,7 @@ class TicketmasterSyncTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_extract_and_map_category_filters_museums (): void
+    public function test_extract_and_map_category_filters_museums(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -33,7 +33,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_extract_and_map_category_maps_dj_genres (): void
+    public function test_extract_and_map_category_maps_dj_genres(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -56,7 +56,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertEquals('DJ', $result);
     }
 
-    public function test_extract_and_map_category_maps_concerts (): void
+    public function test_extract_and_map_category_maps_concerts(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -78,7 +78,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertEquals('Music', $result);
     }
 
-    public function test_extract_poster_image_url_picks_largest_dimensions (): void
+    public function test_extract_poster_image_url_picks_largest_dimensions(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -99,7 +99,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertSame('https://cdn.example/large.jpg', $result);
     }
 
-    public function test_extract_poster_image_url_returns_null_without_images (): void
+    public function test_extract_poster_image_url_returns_null_without_images(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -112,7 +112,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertNull($method->invoke($service, []));
     }
 
-    public function test_extract_tm_url_from_url_field (): void
+    public function test_extract_tm_url_from_url_field(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -130,7 +130,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertEquals('https://www.ticketmaster.com/event/123', $result);
     }
 
-    public function test_is_large_event_returns_true_when_no_capacity_info (): void
+    public function test_is_large_event_returns_true_when_no_capacity_info(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -146,7 +146,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function test_is_large_event_returns_false_for_small_venue (): void
+    public function test_is_large_event_returns_false_for_small_venue(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()
@@ -168,7 +168,7 @@ class TicketmasterSyncTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function test_is_large_event_returns_true_for_large_venue (): void
+    public function test_is_large_event_returns_true_for_large_venue(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
             ->disableOriginalConstructor()

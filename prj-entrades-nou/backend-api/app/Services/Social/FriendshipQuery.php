@@ -10,7 +10,7 @@ use App\Models\User;
  */
 class FriendshipQuery
 {
-    public function areFriends (User $a, User $b): bool
+    public function areFriends(User $a, User $b): bool
     {
         if ((int) $a->id === (int) $b->id) {
             return false;
@@ -31,7 +31,7 @@ class FriendshipQuery
     /**
      * @return array<int, array{id: int, username: string, name: string}>
      */
-    public function friendProfilesFor (User $user): array
+    public function friendProfilesFor(User $user): array
     {
         $me = (int) $user->id;
         $invites = FriendInvite::query()
@@ -71,7 +71,7 @@ class FriendshipQuery
      *
      * @return array<int, array{id: int, username: string, name: string}>
      */
-    public function friendProfilesForSearch (User $user, ?string $q): array
+    public function friendProfilesForSearch(User $user, ?string $q): array
     {
         $profiles = $this->friendProfilesFor($user);
         if ($q === null) {

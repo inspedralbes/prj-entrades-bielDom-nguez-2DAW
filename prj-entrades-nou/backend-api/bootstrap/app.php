@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Middleware\AuthenticateJwt;
+use App\Http\Middleware\VerifyInternalSocketSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,9 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'jwt.auth' => \App\Http\Middleware\AuthenticateJwt::class,
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'internal.socket' => \App\Http\Middleware\VerifyInternalSocketSecret::class,
+            'jwt.auth' => AuthenticateJwt::class,
+            'role' => RoleMiddleware::class,
+            'internal.socket' => VerifyInternalSocketSecret::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

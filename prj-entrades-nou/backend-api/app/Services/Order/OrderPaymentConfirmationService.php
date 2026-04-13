@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class OrderPaymentConfirmationService
 {
-    public function __construct (
+    public function __construct(
         private readonly SeatHoldService $seatHoldService,
         private readonly JwtTicketService $jwtTicketService,
         private readonly EventSeatHoldService $eventSeatHoldService,
@@ -27,7 +27,7 @@ class OrderPaymentConfirmationService
      *
      * @return array{ok: true, order: Order}|array{ok: false, http_status: int, reason: string, message?: string}
      */
-    public function confirmFinalPayment (User $user, Order $order): array
+    public function confirmFinalPayment(User $user, Order $order): array
     {
         if ((int) $order->user_id !== (int) $user->id) {
             return ['ok' => false, 'http_status' => 403, 'reason' => 'forbidden'];
@@ -157,7 +157,7 @@ class OrderPaymentConfirmationService
         return ['ok' => true, 'order' => $fresh];
     }
 
-    private function orderHasCinemaSeatKeys (Order $order): bool
+    private function orderHasCinemaSeatKeys(Order $order): bool
     {
         $lines = OrderLine::query()->where('order_id', $order->id)->get();
         $n = $lines->count();
@@ -176,7 +176,7 @@ class OrderPaymentConfirmationService
      *
      * @return array{ok: true, order: Order}|array{ok: false, http_status: int, reason: string, message?: string}
      */
-    private function confirmCinemaSeatOrder (User $user, Order $order): array
+    private function confirmCinemaSeatOrder(User $user, Order $order): array
     {
         $finalizeKeys = [];
         $finalizeEventId = 0;
@@ -279,7 +279,7 @@ class OrderPaymentConfirmationService
     /**
      * @param  array<string, mixed>  $layout
      */
-    private function isSeatMarkedSoldInLayout (array $layout, string $seatId): bool
+    private function isSeatMarkedSoldInLayout(array $layout, string $seatId): bool
     {
         if (! array_key_exists($seatId, $layout)) {
             return false;
@@ -300,7 +300,7 @@ class OrderPaymentConfirmationService
     /**
      * Confirm payment for quantity-based order (no seats).
      */
-    private function confirmQuantityOrder (User $user, Order $order): array
+    private function confirmQuantityOrder(User $user, Order $order): array
     {
         try {
             DB::transaction(function () use ($order, $user) {

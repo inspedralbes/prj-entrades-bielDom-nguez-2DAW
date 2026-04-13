@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class SavedEventsController extends Controller
 {
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         $rows = SavedEvent::query()
@@ -37,7 +37,7 @@ class SavedEventsController extends Controller
         ]);
     }
 
-    public function store (Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'event_id' => ['required', 'integer', 'exists:events,id'],
@@ -57,7 +57,7 @@ class SavedEventsController extends Controller
         return response()->json(['saved' => true, 'event_id' => $event->id], 201);
     }
 
-    public function destroy (Request $request, int $eventId): JsonResponse
+    public function destroy(Request $request, int $eventId): JsonResponse
     {
         $user = $request->user();
         SavedEvent::query()

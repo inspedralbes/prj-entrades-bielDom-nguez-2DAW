@@ -12,7 +12,7 @@ class SyncTicketmasterEventsCommand extends Command
 
     protected $description = 'Sincronitza esdeveniments i recintes des de Ticketmaster Discovery cap a les taules locals.';
 
-    public function handle (TicketmasterEventImportService $importService): int
+    public function handle(TicketmasterEventImportService $importService): int
     {
         $maxPages = null;
         if ($this->option('pages') !== null) {

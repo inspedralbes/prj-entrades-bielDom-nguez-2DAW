@@ -16,12 +16,12 @@ use Illuminate\Validation\ValidationException;
 
 class SocialController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly FriendshipQuery $friendshipQuery,
         private readonly SocialNotificationService $socialNotificationService,
     ) {}
 
-    public function friends (Request $request): JsonResponse
+    public function friends(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -39,7 +39,7 @@ class SocialController extends Controller
         ]);
     }
 
-    public function shareEvent (Request $request): JsonResponse
+    public function shareEvent(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -70,7 +70,7 @@ class SocialController extends Controller
         return response()->json(['shared' => true, 'event_id' => (int) $event->id], 201);
     }
 
-    public function invitesIndex (Request $request): JsonResponse
+    public function invitesIndex(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -115,7 +115,7 @@ class SocialController extends Controller
         return response()->json(['invites' => $rows]);
     }
 
-    public function invitesStore (Request $request): JsonResponse
+    public function invitesStore(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -178,7 +178,7 @@ class SocialController extends Controller
         return response()->json($this->invitePayload($invite->fresh()->load(['sender', 'receiver'])), 201);
     }
 
-    public function invitesPatch (Request $request, string $inviteId): JsonResponse
+    public function invitesPatch(Request $request, string $inviteId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -225,7 +225,7 @@ class SocialController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function invitePayload (FriendInvite $invite): array
+    private function invitePayload(FriendInvite $invite): array
     {
         $senderName = '';
         $senderUsername = '';

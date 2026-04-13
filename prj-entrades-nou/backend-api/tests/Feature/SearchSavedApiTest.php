@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\SavedEvent;
 use App\Models\Venue;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -13,15 +14,15 @@ class SearchSavedApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_search_events_by_query (): void
+    public function test_search_events_by_query(): void
     {
         $venue = Venue::factory()->create();
         Event::factory()->create([
@@ -35,7 +36,7 @@ class SearchSavedApiTest extends TestCase
         $this->assertNotEmpty($res->json('events'));
     }
 
-    public function test_saved_events_roundtrip (): void
+    public function test_saved_events_roundtrip(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'U',

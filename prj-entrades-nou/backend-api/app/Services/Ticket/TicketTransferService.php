@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 
 class TicketTransferService
 {
-    public function __construct (
+    public function __construct(
         private readonly FriendshipQuery $friendshipQuery,
         private readonly SocialNotificationService $socialNotificationService,
     ) {}
@@ -26,7 +26,7 @@ class TicketTransferService
      *
      * @return array{ok: true, ticket: Ticket}|array{ok: false, http_status: int, message: string}
      */
-    public function transfer (User $from, Ticket $ticket, User $to): array
+    public function transfer(User $from, Ticket $ticket, User $to): array
     {
         if ((int) $from->id === (int) $to->id) {
             return ['ok' => false, 'http_status' => 422, 'message' => 'El destinatari ha de ser un altre usuari.'];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventFactory> */
+    /** @use HasFactory<EventFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -29,7 +30,7 @@ class Event extends Model
         'image_url',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'starts_at' => 'datetime',
@@ -40,12 +41,12 @@ class Event extends Model
         ];
     }
 
-    public function venue (): BelongsTo
+    public function venue(): BelongsTo
     {
         return $this->belongsTo(Venue::class);
     }
 
-    public function zones (): HasMany
+    public function zones(): HasMany
     {
         return $this->hasMany(Zone::class);
     }

@@ -13,7 +13,7 @@ class PaymentStubService
     /**
      * @return array{provider: string, client_secret: string, status: string}
      */
-    public function createPaymentIntent (Order $order): array
+    public function createPaymentIntent(Order $order): array
     {
         return [
             'provider' => 'stub',

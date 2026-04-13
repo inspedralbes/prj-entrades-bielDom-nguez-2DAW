@@ -7,11 +7,12 @@ use App\Models\Event;
 use App\Models\UserSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class FeedController extends Controller
 {
-    public function featured (): JsonResponse
+    public function featured(): JsonResponse
     {
         $events = Event::query()
             ->whereNull('hidden_at')
@@ -26,7 +27,7 @@ class FeedController extends Controller
         ]);
     }
 
-    public function forYou (Request $request): JsonResponse
+    public function forYou(Request $request): JsonResponse
     {
         $user = $request->user();
         if ($user === null) {
@@ -59,9 +60,9 @@ class FeedController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Event>
+     * @return Collection<int, Event>
      */
-    private function eventsByIdsPreservingOrder (array $ids)
+    private function eventsByIdsPreservingOrder(array $ids)
     {
         if ($ids === []) {
             return collect();
@@ -82,7 +83,7 @@ class FeedController extends Controller
      *
      * @return array<string, \Closure>
      */
-    private function venueEagerLoad (): array
+    private function venueEagerLoad(): array
     {
         return [
             'venue' => static function ($q) {
@@ -92,9 +93,9 @@ class FeedController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Event>
+     * @return Collection<int, Event>
      */
-    private function eventsByProximity (float $lat, float $lng)
+    private function eventsByProximity(float $lat, float $lng)
     {
         $rows = DB::select(
             'SELECT e.id FROM events e
@@ -109,7 +110,7 @@ class FeedController extends Controller
         return $this->eventsByIdsPreservingOrder($ids);
     }
 
-    private function canUsePostgisProximity (?string $lat, ?string $lng): bool
+    private function canUsePostgisProximity(?string $lat, ?string $lng): bool
     {
         if ($lat === null || $lng === null) {
             return false;
@@ -124,7 +125,7 @@ class FeedController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function eventPayload (Event $e): array
+    private function eventPayload(Event $e): array
     {
         return [
             'id' => $e->id,

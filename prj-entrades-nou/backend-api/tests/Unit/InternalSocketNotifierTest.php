@@ -11,7 +11,7 @@ use Tests\TestCase;
  */
 class InternalSocketNotifierTest extends TestCase
 {
-    public function test_emit_to_event_room_posts_json_with_held_payload (): void
+    public function test_emit_to_event_room_posts_json_with_held_payload(): void
     {
         Http::fake([
             'fake-socket.test/*' => Http::response('', 204),
@@ -63,7 +63,7 @@ class InternalSocketNotifierTest extends TestCase
         });
     }
 
-    public function test_emit_to_event_room_posts_json_with_sold_payload (): void
+    public function test_emit_to_event_room_posts_json_with_sold_payload(): void
     {
         Http::fake([
             'fake-socket.test/*' => Http::response('', 204),
@@ -94,7 +94,7 @@ class InternalSocketNotifierTest extends TestCase
         });
     }
 
-    public function test_emit_skips_when_internal_url_empty (): void
+    public function test_emit_skips_when_internal_url_empty(): void
     {
         Http::fake();
 

@@ -13,7 +13,7 @@ class ZoneFactory extends Factory
 {
     protected $model = Zone::class;
 
-    public function definition (): array
+    public function definition(): array
     {
         return [
             'event_id' => Event::factory(),

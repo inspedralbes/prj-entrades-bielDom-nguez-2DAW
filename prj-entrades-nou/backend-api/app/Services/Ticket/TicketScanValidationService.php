@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class TicketScanValidationService
 {
-    public function __construct (
+    public function __construct(
         private readonly JwtTicketService $jwtTicketService,
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
@@ -18,7 +18,7 @@ class TicketScanValidationService
     /**
      * Valida el JWT llegit del QR, marca l’entrada com a utilitzada i notifica el titular per Socket (T030–T031).
      */
-    public function validateAndMarkUsed (User $validator, string $ticketJwt): Ticket
+    public function validateAndMarkUsed(User $validator, string $ticketJwt): Ticket
     {
         if (! $validator->hasRole('validator')) {
             abort(403, 'Només el personal validador pot escanejar entrades.');

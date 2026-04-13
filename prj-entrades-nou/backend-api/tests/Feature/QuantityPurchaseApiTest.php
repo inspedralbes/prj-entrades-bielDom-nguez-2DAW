@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,7 +12,7 @@ class QuantityPurchaseApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_quantity_order_requires_auth (): void
+    public function test_create_quantity_order_requires_auth(): void
     {
         $event = Event::factory()->create();
 
@@ -23,7 +24,7 @@ class QuantityPurchaseApiTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_create_quantity_order_validates_quantity_range (): void
+    public function test_create_quantity_order_validates_quantity_range(): void
     {
         $user = $this->createUserWithToken();
         $event = Event::factory()->create();
@@ -37,7 +38,7 @@ class QuantityPurchaseApiTest extends TestCase
         $response->assertJsonPath('errors.quantity.0', 'The quantity field must be at least 1.');
     }
 
-    public function test_create_quantity_order_max_6 (): void
+    public function test_create_quantity_order_max_6(): void
     {
         $user = $this->createUserWithToken();
         $event = Event::factory()->create();
@@ -51,7 +52,7 @@ class QuantityPurchaseApiTest extends TestCase
         $response->assertJsonPath('errors.quantity.0', 'The quantity field must not be greater than 6.');
     }
 
-    public function test_create_quantity_order_creates_order (): void
+    public function test_create_quantity_order_creates_order(): void
     {
         $user = $this->createUserWithToken();
         $event = Event::factory()->create();
@@ -74,7 +75,7 @@ class QuantityPurchaseApiTest extends TestCase
         ]);
     }
 
-    public function test_create_quantity_order_calculates_total_correctly (): void
+    public function test_create_quantity_order_calculates_total_correctly(): void
     {
         config(['services.order.stub_unit_price' => 25.0]);
         $user = $this->createUserWithToken();
@@ -89,7 +90,7 @@ class QuantityPurchaseApiTest extends TestCase
         $response->assertJsonPath('total_amount', '100.00');
     }
 
-    public function test_create_quantity_order_fails_for_nonexistent_event (): void
+    public function test_create_quantity_order_fails_for_nonexistent_event(): void
     {
         $user = $this->createUserWithToken();
 
@@ -102,7 +103,7 @@ class QuantityPurchaseApiTest extends TestCase
         $response->assertJsonPath('reason', 'event_not_found');
     }
 
-    public function test_order_confirmation_generates_multiple_tickets (): void
+    public function test_order_confirmation_generates_multiple_tickets(): void
     {
         config(['services.order.stub_unit_price' => 25.0]);
         $user = $this->createUserWithToken();
@@ -129,9 +130,9 @@ class QuantityPurchaseApiTest extends TestCase
         $this->assertSame(3, $ticketCount);
     }
 
-    private function createUserWithToken (): array
+    private function createUserWithToken(): array
     {
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
         $token = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'password',

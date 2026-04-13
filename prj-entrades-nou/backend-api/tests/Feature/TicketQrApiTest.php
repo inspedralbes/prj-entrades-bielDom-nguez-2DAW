@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Seat;
 use App\Models\Ticket;
 use App\Models\Zone;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
@@ -15,7 +16,7 @@ class TicketQrApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
@@ -23,17 +24,17 @@ class TicketQrApiTest extends TestCase
         config(['jwt.ticket_ttl_seconds' => 900]);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_qr_requires_auth (): void
+    public function test_qr_requires_auth(): void
     {
         $this->getJson('/api/tickets/550e8400-e29b-41d4-a716-446655440000/qr')
             ->assertStatus(401);
     }
 
-    public function test_qr_returns_svg_for_owner (): void
+    public function test_qr_returns_svg_for_owner(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response(
@@ -53,7 +54,7 @@ class TicketQrApiTest extends TestCase
         $this->assertStringContainsString('<svg', $res->getContent());
     }
 
-    public function test_qr_404_for_other_user (): void
+    public function test_qr_404_for_other_user(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"/>', 200, ['Content-Type' => 'image/svg+xml']),
@@ -76,7 +77,7 @@ class TicketQrApiTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_qr_409_when_ticket_used (): void
+    public function test_qr_409_when_ticket_used(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response('<svg xmlns="http://www.w3.org/2000/svg"/>', 200),
@@ -96,7 +97,7 @@ class TicketQrApiTest extends TestCase
     /**
      * @return array{0: string, 1: string} token, ticket uuid
      */
-    private function createPaidOrderWithTicket (): array
+    private function createPaidOrderWithTicket(): array
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador QR',

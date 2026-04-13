@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Redis;
  */
 class CinemaSeatOrderService
 {
-    public function __construct (
+    public function __construct(
         private readonly PaymentStubService $paymentStubService,
     ) {}
 
@@ -24,7 +24,7 @@ class CinemaSeatOrderService
      * @param  list<string>  $seatKeys
      * @return array{ok: true, order: Order, payment: array<string, mixed>}|array{ok: false, reason: string, http_status: int, message?: string}
      */
-    public function createPendingOrder (User $user, int $eventId, array $seatKeys): array
+    public function createPendingOrder(User $user, int $eventId, array $seatKeys): array
     {
         $n = count($seatKeys);
         if ($n < 1 || $n > 6) {
@@ -109,7 +109,7 @@ class CinemaSeatOrderService
     /**
      * @param  array<string, mixed>  $layout
      */
-    private function isSeatSoldInLayout (array $layout, string $seatId): bool
+    private function isSeatSoldInLayout(array $layout, string $seatId): bool
     {
         if (! array_key_exists($seatId, $layout)) {
             return false;

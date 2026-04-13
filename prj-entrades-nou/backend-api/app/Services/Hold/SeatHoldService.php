@@ -12,16 +12,16 @@ use Illuminate\Support\Str;
 
 class SeatHoldService
 {
-    public function __construct (
+    public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
 
-    public function cacheKeyForHold (string $holdUuid): string
+    public function cacheKeyForHold(string $holdUuid): string
     {
         return 'hold:byid:'.$holdUuid;
     }
 
-    public function releaseExpiredSeatLocks (): void
+    public function releaseExpiredSeatLocks(): void
     {
         Seat::query()
             ->whereNotNull('held_until')
@@ -37,7 +37,7 @@ class SeatHoldService
      * @param  array<int, int>  $seatIds
      * @return array{ok: true, hold_id: string, expires_at: string, anonymous_session_id: string, seat_ids: array<int, int>}|array{ok: false, reason: string, seat_ids?: array<int, int>}
      */
-    public function createHold (Event $event, array $seatIds, string $anonymousSessionId, ?int $userId): array
+    public function createHold(Event $event, array $seatIds, string $anonymousSessionId, ?int $userId): array
     {
         $this->releaseExpiredSeatLocks();
 
@@ -58,10 +58,10 @@ class SeatHoldService
         $createdAt = now();
         $expiresAt = $createdAt->copy()->addSeconds($ttlSeconds);
 
-            $failedSeatIds = [];
+        $failedSeatIds = [];
 
-            DB::beginTransaction();
-            try {
+        DB::beginTransaction();
+        try {
             $idsUnique = array_values(array_unique($seatIds));
             sort($idsUnique);
 
@@ -155,7 +155,7 @@ class SeatHoldService
     /**
      * @return array{ok: true, expires_at: string}|array{ok: false, reason: string}
      */
-    public function applyLoginGrace (string $holdUuid, string $anonymousSessionId): array
+    public function applyLoginGrace(string $holdUuid, string $anonymousSessionId): array
     {
         $cacheKey = $this->cacheKeyForHold($holdUuid);
         $raw = Cache::get($cacheKey);
@@ -208,7 +208,7 @@ class SeatHoldService
     /**
      * @return array{ok: true}|array{ok: false, reason: string}
      */
-    public function releaseHold (string $holdUuid, string $anonymousSessionId, ?int $userId): array
+    public function releaseHold(string $holdUuid, string $anonymousSessionId, ?int $userId): array
     {
         $cacheKey = $this->cacheKeyForHold($holdUuid);
         $raw = Cache::get($cacheKey);
@@ -245,18 +245,18 @@ class SeatHoldService
     /**
      * Allibera cache Redis i files de seients per a un hold (p. ex. pagament denegat, T021).
      */
-    public function forceReleaseHold (string $holdUuid): void
+    public function forceReleaseHold(string $holdUuid): void
     {
         Cache::forget($this->cacheKeyForHold($holdUuid));
         $this->releaseSeatsInDb($holdUuid);
     }
 
-    public function forgetHoldCache (string $holdUuid): void
+    public function forgetHoldCache(string $holdUuid): void
     {
         Cache::forget($this->cacheKeyForHold($holdUuid));
     }
 
-    private function releaseSeatsInDb (string $holdUuid): void
+    private function releaseSeatsInDb(string $holdUuid): void
     {
         Seat::query()
             ->where('current_hold_id', $holdUuid)
@@ -270,7 +270,7 @@ class SeatHoldService
     /**
      * @return array{expires_at: ?string, server_time: string}|null
      */
-    public function getHoldTime (string $holdUuid): ?array
+    public function getHoldTime(string $holdUuid): ?array
     {
         $cacheKey = $this->cacheKeyForHold($holdUuid);
         $raw = Cache::get($cacheKey);
@@ -299,7 +299,7 @@ class SeatHoldService
      *
      * @return array{ok: true, payload: array<string, mixed>}|array{ok: false, reason: string}
      */
-    public function prepareHoldForOrder (string $holdUuid, int $userId, string $anonymousSessionId): array
+    public function prepareHoldForOrder(string $holdUuid, int $userId, string $anonymousSessionId): array
     {
         $cacheKey = $this->cacheKeyForHold($holdUuid);
         $raw = Cache::get($cacheKey);
@@ -338,7 +338,7 @@ class SeatHoldService
      *
      * @param  array<string, mixed>  $payload
      */
-    public function persistUserOnHold (string $holdUuid, array $payload, int $userId): void
+    public function persistUserOnHold(string $holdUuid, array $payload, int $userId): void
     {
         $payload['user_id'] = $userId;
         $expiresAt = Carbon::parse((string) $payload['expires_at']);

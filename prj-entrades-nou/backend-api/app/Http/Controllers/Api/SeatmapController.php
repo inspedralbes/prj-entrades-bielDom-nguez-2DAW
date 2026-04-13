@@ -13,13 +13,13 @@ use Illuminate\Http\Request;
 
 class SeatmapController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly TicketmasterSeatmapClient $ticketmasterSeatmapClient,
         private readonly PostgresSeatmapFallbackService $postgresSeatmapFallbackService,
         private readonly EventSeatHoldService $eventSeatHoldService,
     ) {}
 
-    public function show (string $eventId): JsonResponse
+    public function show(string $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {
@@ -75,7 +75,7 @@ class SeatmapController extends Controller
     /**
      * POST /api/events/{eventId}/seat-holds — bloqueig temporal (JWT).
      */
-    public function holdSeat (Request $request, string $eventId): JsonResponse
+    public function holdSeat(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -116,7 +116,7 @@ class SeatmapController extends Controller
     /**
      * POST /api/events/{eventId}/seat-holds/release — alliberar reserva Redis (deselecció al mapa).
      */
-    public function releaseSeat (Request $request, string $eventId): JsonResponse
+    public function releaseSeat(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -149,7 +149,7 @@ class SeatmapController extends Controller
      * POST /api/events/{eventId}/seat-holds/release-all — allibera tots els holds Redis de l’usuari en aquest esdeveniment
      * (p. ex. surt del mapa). Notifica available per socket com releaseSeat.
      */
-    public function releaseAllMyHolds (Request $request, string $eventId): JsonResponse
+    public function releaseAllMyHolds(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -172,7 +172,7 @@ class SeatmapController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function extractSoldSeatLayout (Event $event): array
+    private function extractSoldSeatLayout(Event $event): array
     {
         $layout = $event->seat_layout;
         if (! is_array($layout)) {

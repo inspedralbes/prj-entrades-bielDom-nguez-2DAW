@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class PendingPaymentOrderService
 {
-    public function __construct (
+    public function __construct(
         private readonly SeatHoldService $seatHoldService,
         private readonly PaymentStubService $paymentStubService,
     ) {}
@@ -25,7 +25,7 @@ class PendingPaymentOrderService
      *   payment: array{provider: string, client_secret: string, status: string}
      * }|array{ok: false, reason: string, http_status: int}
      */
-    public function createFromHold (User $user, string $holdUuid, string $anonymousSessionId): array
+    public function createFromHold(User $user, string $holdUuid, string $anonymousSessionId): array
     {
         $prepared = $this->seatHoldService->prepareHoldForOrder($holdUuid, (int) $user->id, $anonymousSessionId);
         if ($prepared['ok'] === false) {
@@ -124,7 +124,7 @@ class PendingPaymentOrderService
      * @param  array{ok: false, reason: string}  $prepared
      * @return array{ok: false, reason: string, http_status: int}
      */
-    private function mapHoldFailure (string $reason): array
+    private function mapHoldFailure(string $reason): array
     {
         $map = [
             'hold_not_found' => 404,
@@ -140,7 +140,7 @@ class PendingPaymentOrderService
         ];
     }
 
-    private function mapTransactionFailure (string $message): array
+    private function mapTransactionFailure(string $message): array
     {
         $map = [
             'seat_mismatch' => 409,

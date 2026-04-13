@@ -17261,3 +17261,4 @@ LINE 1: select * from \"users\" where \"users\".\"id\" = $1 limit 1
 #40 /var/www/html/public/index.php(20): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
 #41 {main}
 "} 
+[2026-04-13 19:45:33] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 

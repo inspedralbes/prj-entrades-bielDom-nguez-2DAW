@@ -17,7 +17,7 @@ class LocalTicketSvgQrService
     /**
      * @return non-empty-string|null
      */
-    public function svgForPayload (string $text): ?string
+    public function svgForPayload(string $text): ?string
     {
         if ($text === '') {
             return null;
@@ -25,7 +25,7 @@ class LocalTicketSvgQrService
 
         try {
             $builder = new Builder(
-                writer: new SvgWriter(),
+                writer: new SvgWriter,
                 writerOptions: [
                     SvgWriter::WRITER_OPTION_EXCLUDE_XML_DECLARATION => true,
                 ],

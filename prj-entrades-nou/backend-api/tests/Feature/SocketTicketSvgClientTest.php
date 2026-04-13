@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class SocketTicketSvgClientTest extends TestCase
 {
-    public function test_svg_for_qr_payload_posts_to_internal_qr_svg (): void
+    public function test_svg_for_qr_payload_posts_to_internal_qr_svg(): void
     {
         Http::fake([
             'http://socket.test/internal/qr-svg' => Http::response(
@@ -34,7 +34,7 @@ class SocketTicketSvgClientTest extends TestCase
         });
     }
 
-    public function test_returns_null_when_no_internal_url (): void
+    public function test_returns_null_when_no_internal_url(): void
     {
         config(['services.socket.internal_url' => '']);
 
@@ -42,7 +42,7 @@ class SocketTicketSvgClientTest extends TestCase
         $this->assertNull($client->svgForQrPayload('x'));
     }
 
-    public function test_returns_null_for_empty_text (): void
+    public function test_returns_null_for_empty_text(): void
     {
         config(['services.socket.internal_url' => 'http://socket.test']);
         Http::fake();

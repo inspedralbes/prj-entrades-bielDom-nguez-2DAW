@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Event;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\Hold\SeatHoldService;
 use App\Services\Order\CinemaSeatOrderService;
 use App\Services\Order\OrderPaymentConfirmationService;
 use App\Services\Order\PendingPaymentOrderService;
@@ -15,14 +17,14 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly PendingPaymentOrderService $pendingPaymentOrderService,
         private readonly OrderPaymentConfirmationService $orderPaymentConfirmationService,
         private readonly QuantityPurchaseService $quantityPurchaseService,
         private readonly CinemaSeatOrderService $cinemaSeatOrderService,
     ) {}
 
-    public function store (Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -83,7 +85,7 @@ class OrderController extends Controller
         ], 201);
     }
 
-    public function confirmPayment (Request $request, Order $order): JsonResponse
+    public function confirmPayment(Request $request, Order $order): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -128,7 +130,7 @@ class OrderController extends Controller
         ]);
     }
 
-    private function confirmErrorMessage (string $reason): string
+    private function confirmErrorMessage(string $reason): string
     {
         return match ($reason) {
             'forbidden' => 'No autoritzat',
@@ -140,7 +142,7 @@ class OrderController extends Controller
     /**
      * Create order for quantity-based purchase (no seat selection).
      */
-    public function storeQuantity (Request $request): JsonResponse
+    public function storeQuantity(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -191,7 +193,7 @@ class OrderController extends Controller
     /**
      * Comanda amb seients del mapa cinema (claus Redis + seat_key a order_lines).
      */
-    public function storeCinemaSeats (Request $request): JsonResponse
+    public function storeCinemaSeats(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -248,7 +250,7 @@ class OrderController extends Controller
     /**
      * Create order for seat-based purchase.
      */
-    public function storeSeats (Request $request): JsonResponse
+    public function storeSeats(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -266,8 +268,8 @@ class OrderController extends Controller
         $eventId = $validated['event_id'];
         $sessionId = $validated['anonymous_session_id'];
 
-        $holdResult = app(\App\Services\Hold\SeatHoldService::class)->createHold(
-            \App\Models\Event::findOrFail($eventId),
+        $holdResult = app(SeatHoldService::class)->createHold(
+            Event::findOrFail($eventId),
             $seatIds,
             $sessionId,
             $user->id
@@ -288,7 +290,7 @@ class OrderController extends Controller
         $orderResult = $this->pendingPaymentOrderService->createFromHold($user, $holdResult['hold_id'], $sessionId);
 
         if ($orderResult['ok'] === false) {
-            app(\App\Services\Hold\SeatHoldService::class)->releaseHold($holdResult['hold_id'], $sessionId, $user->id);
+            app(SeatHoldService::class)->releaseHold($holdResult['hold_id'], $sessionId, $user->id);
 
             $msg = match ($orderResult['reason']) {
                 'hold_not_found' => 'La reserva ha expirat',

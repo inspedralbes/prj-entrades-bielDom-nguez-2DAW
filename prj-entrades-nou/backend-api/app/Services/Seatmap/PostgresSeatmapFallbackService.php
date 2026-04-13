@@ -14,7 +14,7 @@ class PostgresSeatmapFallbackService
     /**
      * @return array{snapshotImageUrl: ?string, zones: list<array{id: string, label: string, availability?: int}>}
      */
-    public function buildForEvent (Event $event): array
+    public function buildForEvent(Event $event): array
     {
         $snapshot = null;
         if ($event->image_url !== null && $event->image_url !== '') {
@@ -49,7 +49,7 @@ class PostgresSeatmapFallbackService
     /**
      * @return list<array{id: int, zoneId: string, key: string, status: string}>
      */
-    public function seatsForEvent (Event $event): array
+    public function seatsForEvent(Event $event): array
     {
         $seats = Seat::query()
             ->where('event_id', $event->id)

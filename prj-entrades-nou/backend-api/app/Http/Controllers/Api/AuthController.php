@@ -107,7 +107,7 @@ class AuthController extends Controller
     /**
      * Nom d’usuari intern (BD) quan el registre només envia el nom visible.
      */
-    private function generateUniqueUsername (string $name): string
+    private function generateUniqueUsername(string $name): string
     {
         $base = Str::slug($name);
         if ($base === '') {

@@ -14,17 +14,17 @@ class TicketTransfer extends Model
         'status',
     ];
 
-    public function ticket (): BelongsTo
+    public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
-    public function fromUser (): BelongsTo
+    public function fromUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'from_user_id');
     }
 
-    public function toUser (): BelongsTo
+    public function toUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'to_user_id');
     }

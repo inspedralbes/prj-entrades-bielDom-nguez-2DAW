@@ -13,7 +13,7 @@ class TicketmasterDiscoveryEventsClient
     /**
      * @return array{events: array<int, array<string, mixed>>, page: int, total_pages: int, more: bool}|null
      */
-    public function fetchEventsPage (int $pageZeroBased, int $size, string $countryCode): ?array
+    public function fetchEventsPage(int $pageZeroBased, int $size, string $countryCode): ?array
     {
         $disabled = Config::get('services.ticketmaster.disabled');
         if ($disabled === true) {

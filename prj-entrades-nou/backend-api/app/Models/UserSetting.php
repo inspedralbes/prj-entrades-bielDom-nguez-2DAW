@@ -16,14 +16,14 @@ class UserSetting extends Model
         'proximity_personalization_enabled',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'proximity_personalization_enabled' => 'boolean',
         ];
     }
 
-    public function user (): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

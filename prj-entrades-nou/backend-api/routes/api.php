@@ -1,14 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\FeedController;
-use App\Http\Controllers\Api\SavedEventsController;
-use App\Http\Controllers\Api\SearchEventsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
-use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\InternalSeatHoldController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\SavedEventsController;
+use App\Http\Controllers\Api\SearchEventsController;
 use App\Http\Controllers\Api\SeatmapController;
 use App\Http\Controllers\Api\SocialController;
 use App\Http\Controllers\Api\SocialUserController;
@@ -16,7 +17,6 @@ use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TicketTransferController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\ValidationController;
-use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'show']);

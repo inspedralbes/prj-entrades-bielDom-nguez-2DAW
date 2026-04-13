@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Zone;
 use App\Services\Auth\JwtTokenService;
 use App\Services\Ticket\JwtTicketService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
@@ -18,7 +19,7 @@ class ValidationScanApiTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
@@ -26,16 +27,16 @@ class ValidationScanApiTest extends TestCase
         config(['jwt.ticket_ttl_seconds' => 900]);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_scan_requires_auth (): void
+    public function test_scan_requires_auth(): void
     {
         $this->postJson('/api/validation/scan', ['token' => 'x'])->assertStatus(401);
     }
 
-    public function test_scan_forbidden_for_buyer_role (): void
+    public function test_scan_forbidden_for_buyer_role(): void
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador',
@@ -52,7 +53,7 @@ class ValidationScanApiTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_scan_success_then_second_scan_400 (): void
+    public function test_scan_success_then_second_scan_400(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -78,7 +79,7 @@ class ValidationScanApiTest extends TestCase
         });
     }
 
-    public function test_scan_400_on_garbage_token (): void
+    public function test_scan_400_on_garbage_token(): void
     {
         $validatorToken = $this->createValidatorToken();
 
@@ -90,7 +91,7 @@ class ValidationScanApiTest extends TestCase
     /**
      * @return array{0: string, 1: string, 2: string} buyer API token, ticket JWT, validator API token
      */
-    private function createBuyerWithTicketAndValidator (): array
+    private function createBuyerWithTicketAndValidator(): array
     {
         $reg = $this->postJson('/api/auth/register', [
             'name' => 'Comprador V',
@@ -141,7 +142,7 @@ class ValidationScanApiTest extends TestCase
         return [$buyerToken, $jwtTicket, $validatorToken];
     }
 
-    private function createValidatorToken (): string
+    private function createValidatorToken(): string
     {
         $validator = User::factory()->create([
             'username' => 'val_g_'.uniqid(),

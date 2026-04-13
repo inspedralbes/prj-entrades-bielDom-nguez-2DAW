@@ -13,7 +13,7 @@ class TicketmasterSeatmapClient
     /**
      * @return array{snapshotImageUrl: string, zones: array<int, array{id: string, label: string}>}|null
      */
-    public function fetch (?string $externalTmId): ?array
+    public function fetch(?string $externalTmId): ?array
     {
         if ($externalTmId === null || $externalTmId === '') {
             return null;

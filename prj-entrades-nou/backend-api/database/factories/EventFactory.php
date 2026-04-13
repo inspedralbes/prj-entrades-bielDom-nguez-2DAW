@@ -13,7 +13,7 @@ class EventFactory extends Factory
 {
     protected $model = Event::class;
 
-    public function definition (): array
+    public function definition(): array
     {
         return [
             'external_tm_id' => null,
