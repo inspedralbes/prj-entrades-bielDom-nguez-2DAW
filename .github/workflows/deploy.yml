@@ -23,6 +23,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Sense DEPLOY_HOST l'action SSH falla amb "missing server host"
+      - name: Comprovar secrets obligatoris (DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY)
+        env:
+          H: ${{ secrets.DEPLOY_HOST }}
+          U: ${{ secrets.DEPLOY_USER }}
+          K: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$H" ]; then
+            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_HOST (IP o domini del servidor): Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          if [ -z "$U" ]; then
+            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_USER (usuari SSH)."
+            exit 1
+          fi
+          if [ -z "$K" ]; then
+            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_SSH_KEY (clau privada PEM, sencer)."
+            exit 1
+          fi
+
       - name: Desplegar per SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
