@@ -6,7 +6,7 @@
 #   DEPLOY_SSH_KEY  — clau privada completa (PEM/OpenSSH)
 # Opcionals:
 #   DEPLOY_PATH     — camí absolut al monorepo al servidor (ex. /opt/entrades/prj-entrades-nou). Per defecte: ~/prj-entrades-nou
-#   DEPLOY_PORT     — port SSH si no és 22
+# (SSH port 22 per defecte; si cal un altre, afegeix manualment `port:` a l’action o usa ssh config al runner)
 #
 name: Deploy
 
@@ -36,7 +36,6 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT }}
           script_stop: true
           script: |
             set -e
