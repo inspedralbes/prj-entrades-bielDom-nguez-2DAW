@@ -154,6 +154,21 @@ a {
   margin: 0 0.5rem 0.75rem;
 }
 
+.admin-sidebar__back {
+  display: block;
+  margin: 0 0.5rem 1rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  color: #ff0055;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.admin-sidebar__back:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
 .admin-sidebar nav {
   display: flex;
   flex-direction: column;

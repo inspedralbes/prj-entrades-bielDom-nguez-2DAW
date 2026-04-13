@@ -11,6 +11,9 @@
           Social
           <span v-if="socialUnread > 0" class="app-nav__badge" aria-label="Notificacions sense llegir">{{ socialUnreadLabel }}</span>
         </NuxtLink>
+        <ClientOnly>
+          <NuxtLink v-if="showAdminLink" to="/admin" class="app-nav__link--admin">Administració</NuxtLink>
+        </ClientOnly>
         <NuxtLink to="/profile">Perfil</NuxtLink>
       </nav>
     </header>
@@ -42,6 +45,12 @@
           Social
           <span v-if="socialUnread > 0" class="app-nav__badge app-nav__badge--footer" aria-label="Notificacions sense llegir">{{ socialUnreadLabel }}</span>
         </NuxtLink>
+        <ClientOnly>
+          <NuxtLink v-if="showAdminLink" to="/admin" class="app-nav__link--admin">
+            <span class="app-nav__ico" aria-hidden="true">⚙</span>
+            Admin
+          </NuxtLink>
+        </ClientOnly>
         <NuxtLink to="/profile">
           <span class="app-nav__ico" aria-hidden="true">☺</span>
           Perfil
@@ -54,7 +63,20 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+
+const auth = useAuthStore();
+
+const showAdminLink = computed(() => {
+  const roles = auth.user && Array.isArray(auth.user.roles) ? auth.user.roles : [];
+  for (let i = 0; i < roles.length; i++) {
+    if (roles[i] === 'admin') {
+      return true;
+    }
+  }
+  return false;
+});
 
 const route = useRoute();
 const { getJson } = useAuthorizedApi();
@@ -147,5 +169,9 @@ onUnmounted(() => {
 }
 .app-nav--mobile .app-nav__link--social {
   position: relative;
+}
+.app-nav__link--admin {
+  font-weight: 700;
+  color: #ff0055;
 }
 </style>

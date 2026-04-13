@@ -14,6 +14,7 @@
             <input
               v-model="form.name"
               type="text"
+              autocomplete="name"
               class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               :class="errors.name ? 'border-red-500' : 'border-gray-300'"
             />
@@ -26,6 +27,7 @@
           <input
             v-model="form.email"
             type="email"
+            autocomplete="email"
             class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             :class="errors.email ? 'border-red-500' : 'border-gray-300'"
           />
@@ -35,11 +37,16 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Contrasenya</label>
           <input
+            id="login-password"
             v-model="form.password"
+            name="password"
             type="password"
+            :autocomplete="isRegister ? 'new-password' : 'current-password'"
+            :minlength="isRegister ? 8 : undefined"
             class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             :class="errors.password ? 'border-red-500' : 'border-gray-300'"
           />
+          <p v-if="isRegister" class="mt-1 text-xs text-gray-500">Mínim 8 caràcters.</p>
           <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
         </div>
 
@@ -47,8 +54,12 @@
           <div>
             <label class="block text-sm font-medium text-gray-700">Confirmar contrasenya</label>
             <input
+              id="login-password-confirmation"
               v-model="form.password_confirmation"
+              name="password_confirmation"
               type="password"
+              autocomplete="new-password"
+              minlength="8"
               class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               :class="errors.password_confirmation ? 'border-red-500' : 'border-gray-300'"
             />
@@ -98,6 +109,39 @@ const toggleMode = () => {
   errors.value = {}
 }
 
+/**
+ * Laravel retorna errors per camp com a array de strings; la plantilla necessita un string per missatge.
+ */
+function normalizeLaravelErrors (raw) {
+  const out = {}
+  if (!raw || typeof raw !== 'object') {
+    return out
+  }
+  const keys = Object.keys(raw)
+  for (let i = 0; i < keys.length; i = i + 1) {
+    const k = keys[i]
+    const v = raw[k]
+    if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'string') {
+      out[k] = v[0]
+      continue
+    }
+    if (typeof v === 'string') {
+      out[k] = v
+    }
+  }
+  return out
+}
+
+function extract422Payload (err) {
+  if (err && err.data && typeof err.data === 'object') {
+    return err.data
+  }
+  if (err && err.response && err.response._data && typeof err.response._data === 'object') {
+    return err.response._data
+  }
+  return null
+}
+
 const handleSubmit = async () => {
   loading.value = true
   error.value = ''
@@ -105,19 +149,50 @@ const handleSubmit = async () => {
 
   try {
     const endpoint = isRegister.value ? '/api/auth/register' : '/api/auth/login'
-    const body = isRegister.value ? {
-      name: form.value.name,
-      email: form.value.email,
-      password: form.value.password,
-      password_confirmation: form.value.password_confirmation,
-    } : {
-      email: form.value.email,
-      password: form.value.password,
+    let body
+    if (isRegister.value) {
+      const pw = String(form.value.password ?? '')
+      const pwc = String(form.value.password_confirmation ?? '')
+      if (pw.length < 8) {
+        errors.value = {
+          password: 'La contrasenya ha de tenir com a mínim 8 caràcters.',
+        }
+        loading.value = false
+        return
+      }
+      if (pwc.length < 8) {
+        errors.value = {
+          password_confirmation: 'La confirmació ha de tenir com a mínim 8 caràcters.',
+        }
+        loading.value = false
+        return
+      }
+      if (pw !== pwc) {
+        errors.value = {
+          password_confirmation: 'La confirmació de la contrasenya no coincideix.',
+        }
+        loading.value = false
+        return
+      }
+      body = {
+        name: (form.value.name || '').trim(),
+        email: (form.value.email || '').trim(),
+        password: pw,
+        password_confirmation: pwc,
+      }
+    } else {
+      body = {
+        email: (form.value.email || '').trim(),
+        password: String(form.value.password ?? '').trim(),
+      }
     }
 
     const res = await $fetch(`${apiUrl}${endpoint}`, {
       method: 'POST',
       body,
+      headers: {
+        Accept: 'application/json',
+      },
     })
 
     if (res.token) {
@@ -131,10 +206,15 @@ const handleSubmit = async () => {
       router.push(redirect)
     }
   } catch (err) {
-    if (err.data?.errors) {
-      errors.value = err.data.errors
-    } else if (err.data?.message) {
-      error.value = err.data.message
+    const payload = extract422Payload(err)
+    if (payload && payload.errors) {
+      errors.value = normalizeLaravelErrors(payload.errors)
+      const ek = Object.keys(errors.value)
+      if (ek.length === 0 && payload.message && typeof payload.message === 'string') {
+        error.value = payload.message
+      }
+    } else if (payload && payload.message) {
+      error.value = payload.message
     } else {
       error.value = 'Error de connexió. Torna a intentar.'
     }

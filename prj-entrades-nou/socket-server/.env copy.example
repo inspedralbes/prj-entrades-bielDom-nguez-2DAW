@@ -1,7 +1,7 @@
 PORT=3001
 REDIS_URL=redis://redis:6379
 # Ha de ser el mateix string que JWT_SECRET del backend-api que signa el login (no SOCKET_INTERNAL_SECRET).
-# Mínim 32 caràcters (HS256 / firebase/php-jwt).
+# Mínim 32 caràcters per HS256 (firebase/php-jwt).
 JWT_SECRET=tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok
 # Opcional: protegeix /internal/emit i /internal/qr-svg (capçalera X-Internal-Secret)
 SOCKET_INTERNAL_SECRET=
