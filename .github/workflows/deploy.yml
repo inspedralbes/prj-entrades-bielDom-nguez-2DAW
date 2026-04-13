@@ -1,5 +1,10 @@
 # Desplegament al servidor (SSH + git pull + Docker)
-# Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, opcional DEPLOY_PATH
+#
+# Configuració (Settings → Secrets and variables → Actions):
+# - Obligatori: secret DEPLOY_SSH_KEY (clau privada PEM completa)
+# - Host i usuari: secret DEPLOY_HOST / DEPLOY_USER **o** variable DEPLOY_HOST / DEPLOY_USER
+#   (les variables no amaguen el valor; la clau sempre ha de ser secret)
+# - Opcional: secret o variable DEPLOY_PATH (ruta al servidor; per defecte ~/prj-entrades-nou)
 #
 name: Deploy
 
@@ -23,31 +28,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Sense DEPLOY_HOST l'action SSH falla amb "missing server host"
-      - name: Comprovar secrets obligatoris (DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY)
+      # Host i usuari: secrets o variables de repositori (vege capçalera del fitxer)
+      - name: Comprovar configuració de desplegament
         env:
-          H: ${{ secrets.DEPLOY_HOST }}
-          U: ${{ secrets.DEPLOY_USER }}
-          K: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          if [ -z "$H" ]; then
-            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_HOST (IP o domini del servidor): Settings → Secrets and variables → Actions."
+          if [ -z "$HOST" ]; then
+            echo "::error::Define DEPLOY_HOST com a Secret o Variable del repositori (IP o domini)."
             exit 1
           fi
-          if [ -z "$U" ]; then
-            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_USER (usuari SSH)."
+          if [ -z "$USER" ]; then
+            echo "::error::Define DEPLOY_USER com a Secret o Variable del repositori."
             exit 1
           fi
-          if [ -z "$K" ]; then
-            echo "::error title=Secret faltant::Afegeix el repository secret DEPLOY_SSH_KEY (clau privada PEM, sencer)."
+          if [ -z "$KEY" ]; then
+            echo "::error::Afegeix el secret DEPLOY_SSH_KEY (clau privada PEM, sencer)."
             exit 1
           fi
 
       - name: Desplegar per SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
+          host: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script_stop: true
           script: |
@@ -56,7 +61,7 @@ jobs:
             if [ -z "$BRANCH" ]; then
               BRANCH='${{ github.ref_name }}'
             fi
-            DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}'
+            DEPLOY_PATH='${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH }}'
             if [ -z "$DEPLOY_PATH" ]; then
               DEPLOY_PATH="${HOME}/prj-entrades-nou"
             fi
