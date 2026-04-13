@@ -5,12 +5,18 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
 class QuantityPurchaseApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
+    }
 
     public function test_create_quantity_order_requires_auth(): void
     {

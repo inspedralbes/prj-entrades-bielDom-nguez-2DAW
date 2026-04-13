@@ -160,30 +160,36 @@ class EventSeatHoldService
      */
     public function getHoldsForEvent(int|string $eventId): array
     {
-        $conn = Redis::connection();
-        $pattern = 'event:'.(string) $eventId.':seat:*';
-        $keys = $conn->keys($pattern);
         $out = [];
-        if (! is_array($keys)) {
-            return $out;
-        }
 
-        $n = count($keys);
-        for ($i = 0; $i < $n; $i++) {
-            $k = $keys[$i];
-            $seatId = $this->parseSeatIdFromRedisKey((string) $k);
-            if ($seatId === null) {
-                continue;
+        try {
+            $conn = Redis::connection();
+            $pattern = 'event:'.(string) $eventId.':seat:*';
+            $keys = $conn->keys($pattern);
+            if (! is_array($keys)) {
+                return $out;
             }
-            // Mateixa clau lògica que setex a holdSeat(). get($k) amb el nom retornat per KEYS
-            // pot fallar segons client Redis + REDIS_PREFIX (doble prefix / format físic), i llavors
-            // redis_holds surt buit en GET /seatmap tot i tenir holds a Redis.
-            $logicalKey = $this->redisSeatKey($eventId, $seatId);
-            $val = $conn->get($logicalKey);
-            if ($val === null || $val === false || $val === '') {
-                continue;
+
+            $n = count($keys);
+            for ($i = 0; $i < $n; $i++) {
+                $k = $keys[$i];
+                $seatId = $this->parseSeatIdFromRedisKey((string) $k);
+                if ($seatId === null) {
+                    continue;
+                }
+                // Mateixa clau lògica que setex a holdSeat(). get($k) amb el nom retornat per KEYS
+                // pot fallar segons client Redis + REDIS_PREFIX (doble prefix / format físic), i llavors
+                // redis_holds surt buit en GET /seatmap tot i tenir holds a Redis.
+                $logicalKey = $this->redisSeatKey($eventId, $seatId);
+                $val = $conn->get($logicalKey);
+                if ($val === null || $val === false || $val === '') {
+                    continue;
+                }
+                $out[$seatId] = (string) $val;
             }
-            $out[$seatId] = (string) $val;
+        } catch (\Throwable $e) {
+            // Sense Redis (p. ex. PHPUnit local / CI sense servei): mapa sense holds en temps real.
+            return [];
         }
 
         return $out;

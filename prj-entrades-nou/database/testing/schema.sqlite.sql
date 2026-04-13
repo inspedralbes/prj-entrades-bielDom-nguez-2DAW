@@ -167,7 +167,7 @@ CREATE INDEX orders_state_index ON orders (state);
 CREATE TABLE order_lines (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     order_id INTEGER NOT NULL,
-    seat_id INTEGER NOT NULL,
+    seat_id INTEGER,
     unit_price NUMERIC NOT NULL,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),

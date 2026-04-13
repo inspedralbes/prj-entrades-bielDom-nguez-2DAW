@@ -363,6 +363,10 @@ class TicketmasterEventImportService
                 $genre = $c['genre'];
                 if (isset($genre['name']) && is_string($genre['name'])) {
                     $genreName = $genre['name'];
+                    $genreLower = strtolower($genreName);
+                    if ($genreLower === 'museum' || str_contains($genreLower, 'museum')) {
+                        return null;
+                    }
                     if (in_array($genreName, ['DJ', 'Rave', 'Electronic'])) {
                         return 'DJ';
                     }
@@ -407,27 +411,23 @@ class TicketmasterEventImportService
     {
         $minCapacity = (int) Config::get('services.ticketmaster.min_capacity', 500);
 
+        if (isset($item['_embedded']['venues']) && is_array($item['_embedded']['venues'])) {
+            $venues = $item['_embedded']['venues'];
+            if (count($venues) > 0) {
+                $venue = $venues[0];
+                if (is_array($venue) && isset($venue['capacity'])) {
+                    $capacity = (int) $venue['capacity'];
+
+                    return $capacity >= $minCapacity;
+                }
+            }
+        }
+
         if (! isset($item['info']) && ! isset($item['pleaseNote'])) {
             return true;
         }
 
-        if (! isset($item['_embedded']['venues']) || ! is_array($item['_embedded']['venues'])) {
-            return true;
-        }
-
-        $venues = $item['_embedded']['venues'];
-        if (count($venues) === 0) {
-            return true;
-        }
-
-        $venue = $venues[0];
-        if (! is_array($venue) || ! isset($venue['capacity'])) {
-            return true;
-        }
-
-        $capacity = (int) $venue['capacity'];
-
-        return $capacity >= $minCapacity;
+        return true;
     }
 
     /**

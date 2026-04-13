@@ -4,13 +4,37 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\Venue;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
 
+/**
+ * Proves amb geografia: en CI (sense PostgreSQL+PostGIS) es salten els casos ST_*.
+ */
 class ProximityFilterApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseFromSql;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['database.default' => 'sqlite']);
+    }
+
+    protected function tearDown(): void
+    {
+        config(['database.default' => 'sqlite']);
+        parent::tearDown();
+    }
+
+    private function skipUnlessPostgis(): void
+    {
+        try {
+            DB::connection('pgsql')->getPdo();
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('PostgreSQL no disponible (normal a GitHub Actions sense servei pg).');
+        }
+    }
 
     public function test_events_nearby_requires_lat_lng(): void
     {
@@ -22,12 +46,13 @@ class ProximityFilterApiTest extends TestCase
 
     public function test_events_nearby_returns_events_within_radius(): void
     {
+        $this->skipUnlessPostgis();
         config(['database.default' => 'pgsql']);
 
         $venue = Venue::factory()->create([
             'location' => DB::raw('ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography'),
         ]);
-        $nearEvent = Event::factory()->create([
+        Event::factory()->create([
             'venue_id' => $venue->id,
         ]);
 
@@ -47,6 +72,7 @@ class ProximityFilterApiTest extends TestCase
 
     public function test_cities_search_returns_matching_cities(): void
     {
+        $this->skipUnlessPostgis();
         config(['database.default' => 'pgsql']);
 
         Venue::factory()->create([
@@ -62,13 +88,14 @@ class ProximityFilterApiTest extends TestCase
 
     public function test_events_nearby_returns_distance_km(): void
     {
+        $this->skipUnlessPostgis();
         config(['database.default' => 'pgsql']);
 
         $venue = Venue::factory()->create([
             'name' => 'Barcelona',
             'location' => DB::raw('ST_SetSRID(ST_MakePoint(2.1686, 41.3874), 4326)::geography'),
         ]);
-        $event = Event::factory()->create(['venue_id' => $venue->id]);
+        Event::factory()->create(['venue_id' => $venue->id]);
 
         $response = $this->getJson('/api/events/nearby?lat=41.3874&lng=2.1686&radius=50');
 

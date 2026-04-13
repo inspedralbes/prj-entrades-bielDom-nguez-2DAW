@@ -3,13 +3,10 @@
 namespace Tests\Unit;
 
 use App\Services\Ticketmaster\TicketmasterEventImportService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class TicketmasterSyncTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_extract_and_map_category_filters_museums(): void
     {
         $service = $this->getMockBuilder(TicketmasterEventImportService::class)
@@ -75,7 +72,7 @@ class TicketmasterSyncTest extends TestCase
         ];
 
         $result = $method->invoke($service, $eventWithConcert);
-        $this->assertEquals('Music', $result);
+        $this->assertEquals('Concert', $result);
     }
 
     public function test_extract_poster_image_url_picks_largest_dimensions(): void

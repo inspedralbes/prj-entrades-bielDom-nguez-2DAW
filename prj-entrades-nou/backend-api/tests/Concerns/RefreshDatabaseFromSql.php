@@ -19,10 +19,16 @@ trait RefreshDatabaseFromSql
     protected function migrateDatabases(): void
     {
         $path = base_path('../database/testing/schema.sqlite.sql');
+        $resolved = realpath($path);
+        if ($resolved === false || ! is_readable($resolved)) {
+            throw new \RuntimeException(
+                'No es troba o no es pot llegir database/testing/schema.sqlite.sql (ruta esperada des de backend-api: '.$path.').'
+            );
+        }
 
         $this->artisan('db:wipe', ['--force' => true, '--no-interaction' => true]);
 
-        $sql = File::get($path);
+        $sql = File::get($resolved);
 
         foreach ($this->splitSqlStatements($sql) as $statement) {
             if ($statement !== '') {

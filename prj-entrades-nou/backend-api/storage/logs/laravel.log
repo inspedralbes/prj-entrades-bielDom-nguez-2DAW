@@ -17262,3 +17262,355 @@ LINE 1: select * from \"users\" where \"users\".\"id\" = $1 limit 1
 #41 {main}
 "} 
 [2026-04-13 19:45:33] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-13 19:54:27] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-13 19:54:28] testing.INFO: hold.created {"event_id":1,"hold_id":"54682c44-c190-4708-b6e9-5db984582fea","seat_count":2} 
+[2026-04-13 19:54:35] testing.WARNING: socket.internal_emit_failed {"room":"anon:anon-b","event":"seat:contention","message":"cURL error 28: Resolving timed out after 3014 milliseconds (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:54:35] testing.INFO: hold.created {"event_id":1,"hold_id":"e9bafbc3-f90d-403a-914b-f075b8028a35","seat_count":1} 
+[2026-04-13 19:54:35] testing.INFO: hold.created {"event_id":1,"hold_id":"8222ebae-bd0d-43f7-a3b9-3ca7c26aabd1","seat_count":1} 
+[2026-04-13 19:54:38] testing.WARNING: socket.internal_emit_failed {"room":"event:1","event":"countdown:resync","message":"cURL error 6: Could not resolve host: socket-server (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"988eda94-d732-430c-9ba6-e1e741958d28","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"9b57bc57-6a9f-4d41-a4f5-676f302e4451","seat_count":2} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"9de1b627-a959-4bbb-9339-60340abf3d65","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"382af65d-7698-420a-b197-81601658ea4a","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"384da000-e139-495b-863c-c53b9133481a","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"fd0e850b-f7ee-459c-b920-1a01b46fe444","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"48360494-4311-42a0-b10c-fdb96256550c","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"145668ac-668a-4644-8182-893ac9aed7f3","seat_count":1} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:54:38] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:54:38] testing.INFO: ticket.transferred {"ticket_id":"73721dd9-6571-4922-8e1f-c9ec1d6ebf66","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:54:38] testing.INFO: hold.created {"event_id":1,"hold_id":"573c23f4-3c50-49ff-8131-62a574c207e0","seat_count":2} 
+[2026-04-13 19:54:38] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:54:38] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:54:38] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:54:38] testing.INFO: ticket.transferred {"ticket_id":"690159d4-0694-4dc9-a915-0635e2138c1d","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:55:02] testing.ERROR: php_network_getaddresses: getaddrinfo for redis failed: Host desconocido. [tcp://redis:6379] {"exception":"[object] (Predis\\Connection\\ConnectionException(code: 0): php_network_getaddresses: getaddrinfo for redis failed: Host desconocido. [tcp://redis:6379] at C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php:131)
+[stacktrace]
+#0 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(109): Predis/Connection/AbstractConnection->onConnectionError('php_network_get...', 0)
+#1 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(154): Predis/Connection/StreamConnection->createStreamSocket(Object(Predis/Connection/Parameters), 'tcp://redis:637...', 4)
+#2 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(80): Predis/Connection/StreamConnection->tcpStreamInitializer(Object(Predis/Connection/Parameters))
+#3 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(80): Predis/Connection/StreamConnection->createResource()
+#4 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(230): Predis/Connection/AbstractConnection->connect()
+#5 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(156): Predis/Connection/StreamConnection->connect()
+#6 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(263): Predis/Connection/AbstractConnection->getResource()
+#7 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(370): Predis/Connection/StreamConnection->write('*2/r/n$4/r/nKEYS/r/n$...')
+#8 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(109): Predis/Connection/StreamConnection->writeRequest(Object(Predis/Command/Redis/KEYS))
+#9 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Client.php(381): Predis/Connection/AbstractConnection->executeCommand(Object(Predis/Command/Redis/KEYS))
+#10 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Client.php(335): Predis/Client->executeCommand(Object(Predis/Command/Redis/KEYS))
+#11 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Redis/Connections/Connection.php(121): Predis/Client->__call('keys', Array)
+#12 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Redis/Connections/Connection.php(252): Illuminate/Redis/Connections/Connection->command('keys', Array)
+#13 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/app/Services/Seatmap/EventSeatHoldService.php(165): Illuminate/Redis/Connections/Connection->__call('keys', Array)
+#14 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/app/Http/Controllers/Api/SeatmapController.php(39): App/Services/Seatmap/EventSeatHoldService->getHoldsForEvent(1)
+#15 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App/Http/Controllers/Api/SeatmapController->show('1')
+#16 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(269): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/SeatmapController), 'show')
+#17 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(215): Illuminate/Routing/Route->runController()
+#18 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate/Routing/Route->run()
+#19 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#20 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(52): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#21 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#24 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#25 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#26 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#27 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#28 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#29 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#32 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#33 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#34 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#35 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#36 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#37 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#38 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#39 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#40 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#41 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#42 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#43 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#44 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks->handle(Object(Illuminate/Http/Request), Object(Closure))
+#45 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#46 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/ValidatePathEncoding->handle(Object(Illuminate/Http/Request), Object(Closure))
+#47 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#48 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#49 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#50 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#51 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(573): Illuminate/Foundation/Testing/TestCase->call('GET', '/api/events/1/s...', Array, Array, Array, Array, '[]')
+#52 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(381): Illuminate/Foundation/Testing/TestCase->json('GET', '/api/events/1/s...', Array, Array, 0)
+#53 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/tests/Feature/SeatmapApiTest.php(35): Illuminate/Foundation/Testing/TestCase->getJson('/api/events/1/s...')
+#54 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(1332): Tests/Feature/SeatmapApiTest->test_seatmap_fallback_from_postgres()
+#55 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(519): PHPUnit/Framework/TestCase->runTest()
+#56 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(99): PHPUnit/Framework/TestCase->runBare()
+#57 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(359): PHPUnit/Framework/TestRunner->run(Object(Tests/Feature/SeatmapApiTest))
+#58 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestCase->run()
+#59 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestSuite->run()
+#60 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestSuite->run()
+#61 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit/Framework/TestSuite->run()
+#62 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit/TextUI/TestRunner->run(Object(PHPUnit/TextUI/Configuration/Configuration), Object(PHPUnit/Runner/ResultCache/DefaultResultCache), Object(PHPUnit/Framework/TestSuite))
+#63 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/phpunit(104): PHPUnit/TextUI/Application->run(Array)
+#64 {main}
+"} 
+[2026-04-13 19:55:05] testing.ERROR: php_network_getaddresses: getaddrinfo for redis failed: Host desconocido. [tcp://redis:6379] {"exception":"[object] (Predis\\Connection\\ConnectionException(code: 0): php_network_getaddresses: getaddrinfo for redis failed: Host desconocido. [tcp://redis:6379] at C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php:131)
+[stacktrace]
+#0 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(109): Predis/Connection/AbstractConnection->onConnectionError('php_network_get...', 0)
+#1 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(154): Predis/Connection/StreamConnection->createStreamSocket(Object(Predis/Connection/Parameters), 'tcp://redis:637...', 4)
+#2 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(80): Predis/Connection/StreamConnection->tcpStreamInitializer(Object(Predis/Connection/Parameters))
+#3 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(80): Predis/Connection/StreamConnection->createResource()
+#4 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(230): Predis/Connection/AbstractConnection->connect()
+#5 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(156): Predis/Connection/StreamConnection->connect()
+#6 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(263): Predis/Connection/AbstractConnection->getResource()
+#7 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/StreamConnection.php(370): Predis/Connection/StreamConnection->write('*2/r/n$4/r/nKEYS/r/n$...')
+#8 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Connection/AbstractConnection.php(109): Predis/Connection/StreamConnection->writeRequest(Object(Predis/Command/Redis/KEYS))
+#9 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Client.php(381): Predis/Connection/AbstractConnection->executeCommand(Object(Predis/Command/Redis/KEYS))
+#10 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/predis/predis/src/Client.php(335): Predis/Client->executeCommand(Object(Predis/Command/Redis/KEYS))
+#11 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Redis/Connections/Connection.php(121): Predis/Client->__call('keys', Array)
+#12 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Redis/Connections/Connection.php(252): Illuminate/Redis/Connections/Connection->command('keys', Array)
+#13 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/app/Services/Seatmap/EventSeatHoldService.php(165): Illuminate/Redis/Connections/Connection->__call('keys', Array)
+#14 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/app/Http/Controllers/Api/SeatmapController.php(39): App/Services/Seatmap/EventSeatHoldService->getHoldsForEvent(1)
+#15 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App/Http/Controllers/Api/SeatmapController->show('1')
+#16 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(269): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/SeatmapController), 'show')
+#17 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(215): Illuminate/Routing/Route->runController()
+#18 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate/Routing/Route->run()
+#19 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#20 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(52): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#21 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#24 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#25 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#26 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#27 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#28 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#29 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#32 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#33 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#34 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#35 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#36 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#37 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#38 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#39 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#40 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#41 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#42 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#43 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#44 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks->handle(Object(Illuminate/Http/Request), Object(Closure))
+#45 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#46 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate/Http/Middleware/ValidatePathEncoding->handle(Object(Illuminate/Http/Request), Object(Closure))
+#47 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#48 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#49 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#50 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#51 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(573): Illuminate/Foundation/Testing/TestCase->call('GET', '/api/events/1/s...', Array, Array, Array, Array, '[]')
+#52 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(381): Illuminate/Foundation/Testing/TestCase->json('GET', '/api/events/1/s...', Array, Array, 0)
+#53 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/tests/Feature/SeatmapApiTest.php(71): Illuminate/Foundation/Testing/TestCase->getJson('/api/events/1/s...')
+#54 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(1332): Tests/Feature/SeatmapApiTest->test_seatmap_merges_ticketmaster_snapshot_with_pg_zones()
+#55 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(519): PHPUnit/Framework/TestCase->runTest()
+#56 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(99): PHPUnit/Framework/TestCase->runBare()
+#57 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestCase.php(359): PHPUnit/Framework/TestRunner->run(Object(Tests/Feature/SeatmapApiTest))
+#58 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestCase->run()
+#59 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestSuite->run()
+#60 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit/Framework/TestSuite->run()
+#61 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit/Framework/TestSuite->run()
+#62 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit/TextUI/TestRunner->run(Object(PHPUnit/TextUI/Configuration/Configuration), Object(PHPUnit/Runner/ResultCache/DefaultResultCache), Object(PHPUnit/Framework/TestSuite))
+#63 C:/Users/bield/Documents/2-Programacio/2-COLE/2-DAW/2.ProjectesTransversals/3-Tr3/prj-entrades-nou/backend-api/vendor/phpunit/phpunit/phpunit(104): PHPUnit/TextUI/Application->run(Array)
+#64 {main}
+"} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"93b8579c-3a94-4854-8f07-2c1dae33339a","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"a096f40b-734c-45ca-8167-c4d15bdd81fe","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"aed416d7-3f1b-40a4-b942-beb62f52faa8","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"426abba9-0817-4d18-805d-13b634e3b19e","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"6bb6ba72-6fca-490b-8931-083a81e370fa","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: hold.created {"event_id":1,"hold_id":"ca0d7e55-e8b1-4032-a88b-520a0ab096fa","seat_count":1} 
+[2026-04-13 19:55:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:55:05] testing.INFO: ticket.validated {"ticket_id":"fa369df1-49e4-4be5-82fb-31b22ad632ef","validator_id":2,"owner_user_id":1} 
+[2026-04-13 19:56:36] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-13 19:56:36] testing.INFO: hold.created {"event_id":1,"hold_id":"a6c9f6dd-15a3-45f9-8b3c-f5ed336dddbe","seat_count":2} 
+[2026-04-13 19:56:43] testing.WARNING: socket.internal_emit_failed {"room":"anon:anon-b","event":"seat:contention","message":"cURL error 28: Resolving timed out after 3004 milliseconds (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:56:43] testing.INFO: hold.created {"event_id":1,"hold_id":"ff61c763-44a8-4ca9-a79f-ad6a85681c66","seat_count":1} 
+[2026-04-13 19:56:43] testing.INFO: hold.created {"event_id":1,"hold_id":"b4f94fb1-c8ca-4a26-b029-f26d81a036a8","seat_count":1} 
+[2026-04-13 19:56:46] testing.WARNING: socket.internal_emit_failed {"room":"event:1","event":"countdown:resync","message":"cURL error 6: Could not resolve host: socket-server (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"fc69b35a-58f0-455d-a6c6-cdfc761ade56","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"5b0733a1-6cde-4204-a94a-992e47919e35","seat_count":2} 
+[2026-04-13 19:56:46] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"928c601c-a18d-4cbb-80b4-91290bb90878","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"93d0bc74-eb24-44d5-975f-02ab639e3a4e","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"3072f6a3-48e7-44fa-a3fd-d8d4cee9740d","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"86ab143a-2f08-4fae-91a9-9e510ab4e7c6","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: hold.created {"event_id":1,"hold_id":"b4f72367-21d5-4b8e-98eb-226bc01e515c","seat_count":1} 
+[2026-04-13 19:56:46] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:46] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:47] testing.INFO: hold.created {"event_id":1,"hold_id":"d244f9e5-604b-4c81-8aef-890db5a9f27a","seat_count":1} 
+[2026-04-13 19:56:47] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:47] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:47] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:56:47] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:56:47] testing.INFO: ticket.transferred {"ticket_id":"47b6803b-c105-4309-953c-60fa6e9ecf3e","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:56:47] testing.INFO: hold.created {"event_id":1,"hold_id":"bf91bf75-c44a-467c-a314-abc2fa9dffe7","seat_count":2} 
+[2026-04-13 19:56:47] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:47] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:56:47] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:56:47] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:56:47] testing.INFO: ticket.transferred {"ticket_id":"5f153c01-ba4e-4065-9bc3-43d056195aa4","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:57:02] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-13 19:57:02] testing.INFO: hold.created {"event_id":1,"hold_id":"74d66aae-f8f7-4ec9-a1df-1fd6de55663b","seat_count":2} 
+[2026-04-13 19:57:08] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:57:08] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":4} 
+[2026-04-13 19:57:08] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:57:08] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:09] testing.WARNING: socket.internal_emit_failed {"room":"anon:anon-b","event":"seat:contention","message":"cURL error 28: Resolving timed out after 3006 milliseconds (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:57:09] testing.INFO: hold.created {"event_id":1,"hold_id":"754f3880-46b5-4d69-a466-52e9cb58f30c","seat_count":1} 
+[2026-04-13 19:57:09] testing.INFO: hold.created {"event_id":1,"hold_id":"510ea357-dcad-47f0-9176-e85abe6d7b05","seat_count":1} 
+[2026-04-13 19:57:12] testing.WARNING: socket.internal_emit_failed {"room":"event:1","event":"countdown:resync","message":"cURL error 6: Could not resolve host: socket-server (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"924ba9f4-e46d-4542-a1ae-48d38cd4c67f","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"8b552f56-3175-4c4a-b8c8-26374aadf666","seat_count":2} 
+[2026-04-13 19:57:12] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"294af65e-543e-4ab0-ae33-8b43057f8cde","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"6a02508d-6f38-44c2-8bcd-49f0f687332e","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"b7198292-02c4-4326-aafa-2e6d6dfeb036","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"a6323c90-f1c2-4fab-a74e-105338a1ee14","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: hold.created {"event_id":1,"hold_id":"96b91dfd-fe87-4609-8246-aa9c825b6fc7","seat_count":1} 
+[2026-04-13 19:57:12] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:12] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:13] testing.INFO: hold.created {"event_id":1,"hold_id":"cb9a001f-aba1-4d1a-b0f1-896d8a4a3cd3","seat_count":1} 
+[2026-04-13 19:57:13] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:13] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:13] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:57:13] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:57:13] testing.INFO: ticket.transferred {"ticket_id":"964ad6b9-2edd-45e5-9d56-eccbba2b2611","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:57:13] testing.INFO: hold.created {"event_id":1,"hold_id":"3d748f6a-db6b-42a4-a59f-2ec62b0d2ba1","seat_count":2} 
+[2026-04-13 19:57:13] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:13] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:13] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:57:13] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:57:13] testing.INFO: ticket.transferred {"ticket_id":"dcfbbbd8-26cf-4020-a241-434e71739fb7","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"1975e5c6-3a33-446f-bae6-9dca2bccfb28","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"179dcdfb-b448-4e64-8823-61e6045acda3","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"f4eac0f3-6b82-417c-9a77-ab0fe8caf4ab","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"3e517797-1bea-4179-a161-58bff1c3bccd","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"abf8dd5f-c1ce-45cc-b5c1-dfd178ff13e3","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: hold.created {"event_id":1,"hold_id":"c9fd64ac-76bf-4cd9-84e6-e82c6e6f7117","seat_count":1} 
+[2026-04-13 19:57:14] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:14] testing.INFO: ticket.validated {"ticket_id":"5234ac1d-740c-4927-af83-c4be9b7f6500","validator_id":2,"owner_user_id":1} 
+[2026-04-13 19:57:34] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:57:34] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":4} 
+[2026-04-13 19:57:34] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:57:34] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:39] testing.INFO: hold.created {"event_id":1,"hold_id":"59595a65-802b-46aa-ae37-7d07b878a901","seat_count":1} 
+[2026-04-13 19:57:39] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:39] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: hold.created {"event_id":1,"hold_id":"fc765ac8-06c7-423d-8851-50e2f923d421","seat_count":1} 
+[2026-04-13 19:57:40] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: hold.created {"event_id":1,"hold_id":"98aa197e-291b-46c8-8425-d7d7607a4056","seat_count":1} 
+[2026-04-13 19:57:40] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: hold.created {"event_id":1,"hold_id":"a3b4b1e8-8f16-4388-8abf-861fcf5ca535","seat_count":1} 
+[2026-04-13 19:57:40] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: hold.created {"event_id":1,"hold_id":"0708d830-49d3-492b-ad27-b7ac7e20859e","seat_count":1} 
+[2026-04-13 19:57:40] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: hold.created {"event_id":1,"hold_id":"1aa74758-d14f-455b-8889-7cacf7af46ad","seat_count":1} 
+[2026-04-13 19:57:40] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:57:40] testing.INFO: ticket.validated {"ticket_id":"7edee6ec-41e8-4c8b-b72a-51dc22a2c57e","validator_id":2,"owner_user_id":1} 
+[2026-04-13 19:57:54] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-13 19:57:54] testing.INFO: hold.created {"event_id":1,"hold_id":"cd1c1942-eed5-490e-8d4c-3211ea524c61","seat_count":2} 
+[2026-04-13 19:58:01] testing.WARNING: socket.internal_emit_failed {"room":"anon:anon-b","event":"seat:contention","message":"cURL error 28: Resolving timed out after 3011 milliseconds (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:58:01] testing.INFO: hold.created {"event_id":1,"hold_id":"877f3731-6fd2-441c-960c-cbec17a1ead3","seat_count":1} 
+[2026-04-13 19:58:01] testing.INFO: hold.created {"event_id":1,"hold_id":"e8ac3c69-4856-4b02-8749-5bb03f2204f4","seat_count":1} 
+[2026-04-13 19:58:04] testing.WARNING: socket.internal_emit_failed {"room":"event:1","event":"countdown:resync","message":"cURL error 6: Could not resolve host: socket-server (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"dc4aa5e3-74b4-4cff-aa9a-330e5269afac","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"e774270a-ab94-4b4a-8c8f-79c130cd3bc1","seat_count":2} 
+[2026-04-13 19:58:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"0cbe9f67-20be-4253-9859-bb65ce8414d6","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"f4bbd9d6-09b6-4d5e-a245-f87ee672c369","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"53b80029-88e6-437d-ac8c-d40305667d1c","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"de7ac3d1-1fae-431d-a2bc-118181c26b5d","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: hold.created {"event_id":1,"hold_id":"d593387d-9387-48ba-badc-4b675e895ca6","seat_count":1} 
+[2026-04-13 19:58:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:04] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:05] testing.INFO: hold.created {"event_id":1,"hold_id":"dd7562f6-25e9-4bdb-aab1-e657ac9104f1","seat_count":1} 
+[2026-04-13 19:58:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:05] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:58:05] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:58:05] testing.INFO: ticket.transferred {"ticket_id":"328203e3-ef87-4acf-8fe4-56f67ef9fa05","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:58:05] testing.INFO: hold.created {"event_id":1,"hold_id":"f4948003-975b-43b3-a6ad-85f17b2301c8","seat_count":2} 
+[2026-04-13 19:58:05] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:05] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:05] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:58:05] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-13 19:58:05] testing.INFO: ticket.transferred {"ticket_id":"bda939f8-14c7-438f-8f82-fb99637fbf86","from_user_id":1,"to_user_id":2} 
+[2026-04-13 19:58:26] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:58:26] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":4} 
+[2026-04-13 19:58:26] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-13 19:58:26] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"0dce780e-338e-4a4d-a4d0-8c4ee64ff648","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"c1e7ebca-860b-40f3-a518-28fa42a13bbb","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"e89e96a5-0320-44c5-af15-c8bbbeb03e7a","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"0e73dcd7-8265-453d-a032-dc6f6cb1c2d6","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"317cbd42-d40c-4081-991c-4f9a3a4e3b99","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: hold.created {"event_id":1,"hold_id":"b609be4b-6875-4aa8-96cd-9d8c618629c2","seat_count":1} 
+[2026-04-13 19:58:32] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-13 19:58:32] testing.INFO: ticket.validated {"ticket_id":"df45415b-1c0d-4afd-971e-4e4cc1271cf3","validator_id":2,"owner_user_id":1} 
