@@ -1,12 +1,12 @@
 # Desplegament al servidor (SSH + git pull + Docker)
 #
-# Si no tens secrets/variables de desplegament, el job "SSH deploy" es SALTA (verd, sense error).
-# Per activar el desplegament automàtic (push a main o workflow manual):
-#   Settings → Secrets and variables → Actions
+# Sense DEPLOY_* complet, el pas SSH s'omet (workflow verd, sense error).
+# Configuració: Settings → Secrets and variables → Actions
 #   - Secret: DEPLOY_SSH_KEY (clau privada PEM completa)
-#   - Secret o Variable: DEPLOY_HOST (IP o domini)
-#   - Secret o Variable: DEPLOY_USER (usuari SSH)
+#   - Secret o Variable: DEPLOY_HOST, DEPLOY_USER
 #   Opcional: DEPLOY_PATH (secret o variable; per defecte ~/prj-entrades-nou)
+#
+# Nota: no es pot usar `secrets` dins `if:` del job; la comprovació és un pas amb output.
 #
 name: Deploy
 
@@ -28,11 +28,24 @@ jobs:
   deploy:
     name: SSH deploy
     runs-on: ubuntu-latest
-    # Només s'executa si hi ha clau SSH i host i usuari (com a secret o variable)
-    if: ${{ secrets.DEPLOY_SSH_KEY != '' && (secrets.DEPLOY_HOST != '' || vars.DEPLOY_HOST != '') && (secrets.DEPLOY_USER != '' || vars.DEPLOY_USER != '') }}
 
     steps:
+      - name: Comprovar si hi ha configuració de desplegament
+        id: deploy_gate
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$USER" ] || [ -z "$KEY" ]; then
+            echo "run_deploy=false" >> "$GITHUB_OUTPUT"
+            echo '::notice title=Deploy desactivat::Defineix DEPLOY_HOST, DEPLOY_USER (secret o variable) i DEPLOY_SSH_KEY (secret).'
+          else
+            echo "run_deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Desplegar per SSH
+        if: steps.deploy_gate.outputs.run_deploy == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
