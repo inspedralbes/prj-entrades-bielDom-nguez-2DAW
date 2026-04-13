@@ -39,6 +39,11 @@ jobs:
           echo "REDIS_PORT=6379" >> backend-api/.env
           echo "SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001" >> backend-api/.env
           echo "JWT_SECRET=smoke_test_secret" >> backend-api/.env
+          # docker/dev/docker-compose.yml exige env_file: frontend-nuxt/.env (no es commiteja)
+          echo "# smoke CI — mateix patró que frontend-nuxt/.env.example" > frontend-nuxt/.env
+          echo "NUXT_PUBLIC_API_URL=http://localhost:8000" >> frontend-nuxt/.env
+          echo "NUXT_PUBLIC_SOCKET_URL=http://localhost:3001" >> frontend-nuxt/.env
+          echo "NUXT_PUBLIC_GOOGLE_MAPS_KEY=" >> frontend-nuxt/.env
 
       - name: Build and start services
         run: docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} up --build -d
