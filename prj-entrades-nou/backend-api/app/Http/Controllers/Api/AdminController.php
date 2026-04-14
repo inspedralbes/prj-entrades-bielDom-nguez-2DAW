@@ -9,9 +9,9 @@ use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 
 /**
  * Esborranys T035: panell / import — respostes mínimes fins a T052.
