@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ class PresenceController extends Controller
 {
     public function __construct (
         private readonly InternalSocketNotifier $socketNotifier,
+        private readonly AdminDashboardMetricsService $adminDashboardMetrics,
     ) {}
 
     public function ping (Request $request): JsonResponse
@@ -38,11 +40,10 @@ class PresenceController extends Controller
         }
 
         try {
-            $this->socketNotifier->emitMetricsStub([
-                'stub' => false,
-                'online_users' => $n,
-                'generated_at' => now()->toIso8601String(),
-            ]);
+            $payload = $this->adminDashboardMetrics->buildFullDashboardPayload();
+            $payload['online_users'] = $n;
+            $payload['generated_at'] = now()->toIso8601String();
+            $this->socketNotifier->emitMetricsStub($payload);
         } catch (\Throwable) {
             /* sense socket a tests locals */
         }

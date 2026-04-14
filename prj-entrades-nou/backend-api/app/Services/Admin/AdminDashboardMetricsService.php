@@ -2,7 +2,11 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Resources\AdminLogResource;
+use App\Models\AdminLog;
+use App\Models\Event;
 use App\Models\Order;
+use App\Models\Ticket;
 use Carbon\Carbon;
 use DateTimeZone;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +19,8 @@ use Illuminate\Support\Facades\Redis;
 class AdminDashboardMetricsService
 {
     public const CACHE_KEY_LAST_DISCOVERY = 'admin_last_discovery_sync';
+
+    public const MAX_CHART_DAYS = 30;
 
     /**
      * Desa el resultat de l’última execució Discovery per mostrar alertes al dashboard.
@@ -51,6 +57,8 @@ class AdminDashboardMetricsService
     }
 
     /**
+     * Payload base (KPIs sense recomptes globals ni logs).
+     *
      * @return array<string, mixed>
      */
     public function buildSummaryPayload (): array
@@ -86,6 +94,124 @@ class AdminDashboardMetricsService
             'sync_alerts' => $syncAlerts,
             'online_users' => $online,
         ];
+    }
+
+    /**
+     * Payload complet del panell admin (summary HTTP + socket): inclou KPIs extres, logs recents i metadades.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildFullDashboardPayload (): array
+    {
+        $metrics = $this->buildSummaryPayload();
+
+        $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tz = new DateTimeZone($tzName);
+        $start = Carbon::now($tz)->startOfDay();
+        $end = Carbon::now($tz);
+
+        $ordersPaidToday = Order::query()
+            ->where('state', Order::STATE_PAID)
+            ->where('updated_at', '>=', $start)
+            ->where('updated_at', '<=', $end)
+            ->count();
+
+        // Tiquets emesos (historial): totes les files de tiquets venuts al sistema.
+        $ticketsSoldTotal = Ticket::query()->count();
+
+        $recentLogs = AdminLog::query()
+            ->with('adminUser')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        $recent = [];
+        foreach ($recentLogs as $log) {
+            $recent[] = (new AdminLogResource($log))->resolve();
+        }
+
+        $metrics['orders_paid_today'] = $ordersPaidToday;
+        $metrics['tickets_sold_total'] = $ticketsSoldTotal;
+        $metrics['recent_admin_logs'] = $recent;
+        $metrics['events_total'] = Event::query()->count();
+        $metrics['orders_paid'] = Order::query()->where('state', Order::STATE_PAID)->count();
+        $metrics['generated_at'] = now()->toIso8601String();
+
+        return $metrics;
+    }
+
+    /**
+     * Sèrie d’ingressos per dia natural (TZ negoci), darrers N dies (1–30).
+     *
+     * @return array<int, array{date: string, revenue: string}>
+     */
+    public function revenueByDay (int $days): array
+    {
+        if ($days < 1) {
+            $days = 1;
+        }
+        if ($days > self::MAX_CHART_DAYS) {
+            $days = self::MAX_CHART_DAYS;
+        }
+
+        $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tz = new DateTimeZone($tzName);
+        $out = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dayStart = Carbon::now($tz)->copy()->subDays($i)->startOfDay();
+            $dayEnd = Carbon::now($tz)->copy()->subDays($i)->endOfDay();
+            $sum = Order::query()
+                ->where('state', Order::STATE_PAID)
+                ->where('updated_at', '>=', $dayStart)
+                ->where('updated_at', '<=', $dayEnd)
+                ->sum('total_amount');
+            $rev = '0.00';
+            if ($sum !== null) {
+                $rev = number_format((float) $sum, 2, '.', '');
+            }
+            $row = [
+                'date' => $dayStart->format('Y-m-d'),
+                'revenue' => $rev,
+            ];
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Recompte de comandes pagades per dia natural, darrers N dies.
+     *
+     * @return array<int, array{date: string, count: int}>
+     */
+    public function ordersPaidByDay (int $days): array
+    {
+        if ($days < 1) {
+            $days = 1;
+        }
+        if ($days > self::MAX_CHART_DAYS) {
+            $days = self::MAX_CHART_DAYS;
+        }
+
+        $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tz = new DateTimeZone($tzName);
+        $out = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dayStart = Carbon::now($tz)->copy()->subDays($i)->startOfDay();
+            $dayEnd = Carbon::now($tz)->copy()->subDays($i)->endOfDay();
+            $c = Order::query()
+                ->where('state', Order::STATE_PAID)
+                ->where('updated_at', '>=', $dayStart)
+                ->where('updated_at', '<=', $dayEnd)
+                ->count();
+            $row = [
+                'date' => $dayStart->format('Y-m-d'),
+                'count' => (int) $c,
+            ];
+            $out[] = $row;
+        }
+
+        return $out;
     }
 
     private function countOnlineUsersFromPresenceZset (): int

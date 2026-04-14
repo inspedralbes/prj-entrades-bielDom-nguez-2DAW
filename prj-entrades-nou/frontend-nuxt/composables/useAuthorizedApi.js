@@ -67,6 +67,39 @@ export function useAuthorizedApi () {
   }
 
   /**
+   * GraphQL POST a `/api/graphql` (panell admin).
+   *
+   * @param {string} query
+   * @param {Record<string, unknown>} [variables]
+   */
+  /**
+   * URL del endpoint GraphQL: suporta base `http://host` o `http://host/api`.
+   */
+  function graphqlEndpointUrl () {
+    const root = (base.value || '').replace(/\/$/, '');
+    if (root.endsWith('/api')) {
+      return `${root}/graphql`;
+    }
+    return `${root}/api/graphql`;
+  }
+
+  async function postGraphql (query, variables) {
+    const body = { query };
+    if (variables !== undefined && variables !== null) {
+      body.variables = variables;
+    }
+    return await $fetch(graphqlEndpointUrl(), {
+      method: 'POST',
+      headers: authHeaders({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+      body,
+      timeout: 30000,
+    });
+  }
+
+  /**
    * @returns {Promise<string>} Marcatge SVG
    */
   async function getTicketQrSvg (ticketId) {
@@ -88,6 +121,7 @@ export function useAuthorizedApi () {
     base,
     getJson,
     postJson,
+    postGraphql,
     deleteJson,
     patchJson,
     getTicketQrSvg,

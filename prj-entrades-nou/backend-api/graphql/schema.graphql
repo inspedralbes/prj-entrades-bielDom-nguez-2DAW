@@ -1,0 +1,20 @@
+"Scalar per dates en punts de sèrie."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+type AdminRevenueDayPoint {
+    date: String!
+    revenue: String!
+}
+
+type AdminOrdersPaidDayPoint {
+    date: String!
+    count: Int!
+}
+
+type Query {
+    adminDashboardRevenueByDay(days: Int = 30): [AdminRevenueDayPoint!]!
+        @field(resolver: "App\\GraphQL\\Queries\\AdminDashboardRevenueByDay")
+
+    adminDashboardOrdersPaidByDay(days: Int = 30): [AdminOrdersPaidDayPoint!]!
+        @field(resolver: "App\\GraphQL\\Queries\\AdminDashboardOrdersPaidByDay")
+}

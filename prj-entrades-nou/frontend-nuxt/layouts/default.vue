@@ -1,20 +1,20 @@
 <template>
   <div class="app-shell">
     <header class="app-header">
-      <NuxtLink to="/" class="app-logo" aria-label="Inici">Entrades</NuxtLink>
+      <NuxtLink prefetch to="/" class="app-logo" aria-label="Inici">Entrades</NuxtLink>
       <nav class="app-nav app-nav--desktop" aria-label="Navegació principal">
-        <NuxtLink to="/">Inici</NuxtLink>
-        <NuxtLink to="/search">Cercar</NuxtLink>
-        <NuxtLink to="/tickets">Entrades</NuxtLink>
-        <NuxtLink to="/saved">Guardats</NuxtLink>
-        <NuxtLink to="/social" class="app-nav__link--social">
+        <NuxtLink prefetch to="/">Inici</NuxtLink>
+        <NuxtLink prefetch to="/search">Cercar</NuxtLink>
+        <NuxtLink prefetch to="/tickets">Entrades</NuxtLink>
+        <NuxtLink prefetch to="/saved">Guardats</NuxtLink>
+        <NuxtLink prefetch to="/social" class="app-nav__link--social">
           Social
           <span v-if="socialUnread > 0" class="app-nav__badge" aria-label="Notificacions sense llegir">{{ socialUnreadLabel }}</span>
         </NuxtLink>
         <ClientOnly>
-          <NuxtLink v-if="showAdminLink" to="/admin" class="app-nav__link--admin">Administració</NuxtLink>
+          <NuxtLink v-if="showAdminLink" prefetch to="/admin" class="app-nav__link--admin">Administració</NuxtLink>
         </ClientOnly>
-        <NuxtLink to="/profile">Perfil</NuxtLink>
+        <NuxtLink prefetch to="/profile">Perfil</NuxtLink>
       </nav>
     </header>
 
@@ -24,34 +24,34 @@
 
     <footer class="app-footer app-footer--mobile" aria-label="Navegació mòbil">
       <nav class="app-nav app-nav--mobile">
-        <NuxtLink to="/">
+        <NuxtLink prefetch to="/">
           <span class="app-nav__ico" aria-hidden="true">⌂</span>
           Inici
         </NuxtLink>
-        <NuxtLink to="/search">
+        <NuxtLink prefetch to="/search">
           <span class="app-nav__ico" aria-hidden="true">⌕</span>
           Cercar
         </NuxtLink>
-        <NuxtLink to="/tickets">
+        <NuxtLink prefetch to="/tickets">
           <span class="app-nav__ico" aria-hidden="true">▦</span>
           Entrades
         </NuxtLink>
-        <NuxtLink to="/saved">
+        <NuxtLink prefetch to="/saved">
           <span class="app-nav__ico" aria-hidden="true">♥</span>
           Guardats
         </NuxtLink>
-        <NuxtLink to="/social" class="app-nav__link--social">
+        <NuxtLink prefetch to="/social" class="app-nav__link--social">
           <span class="app-nav__ico" aria-hidden="true">◎</span>
           Social
           <span v-if="socialUnread > 0" class="app-nav__badge app-nav__badge--footer" aria-label="Notificacions sense llegir">{{ socialUnreadLabel }}</span>
         </NuxtLink>
         <ClientOnly>
-          <NuxtLink v-if="showAdminLink" to="/admin" class="app-nav__link--admin">
+          <NuxtLink v-if="showAdminLink" prefetch to="/admin" class="app-nav__link--admin">
             <span class="app-nav__ico" aria-hidden="true">⚙</span>
             Admin
           </NuxtLink>
         </ClientOnly>
-        <NuxtLink to="/profile">
+        <NuxtLink prefetch to="/profile">
           <span class="app-nav__ico" aria-hidden="true">☺</span>
           Perfil
         </NuxtLink>

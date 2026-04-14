@@ -28,4 +28,8 @@ export default defineNuxtConfig({
       googleMapsKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_KEY || '',
     },
   },
+  // Ruta antiga «adminlogs» → pàgina actual (evita 404 si hi ha enllaços guardats).
+  routeRules: {
+    '/admin/adminlogs': { redirect: '/admin/logs' },
+  },
 });

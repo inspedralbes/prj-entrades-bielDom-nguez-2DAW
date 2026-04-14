@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminDiscoveryController;
+use App\Http\Controllers\Api\AdminLogController;
 use App\Http\Controllers\Api\AdminMonitorController;
 use App\Http\Controllers\Api\AdminReportsController;
 use App\Http\Controllers\Api\AdminUsersController;
@@ -82,6 +83,7 @@ Route::middleware('jwt.auth')->post('/social/friend-invites', [SocialController:
 Route::middleware('jwt.auth')->patch('/social/friend-invites/{inviteId}', [SocialController::class, 'invitesPatch']);
 
 Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/logs', [AdminLogController::class, 'index']);
     Route::get('/summary', [AdminController::class, 'summary']);
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
     Route::get('/discovery/search', [AdminDiscoveryController::class, 'search']);

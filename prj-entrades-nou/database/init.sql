@@ -301,3 +301,19 @@ CREATE TABLE role_has_permissions (
     role_id BIGINT NOT NULL REFERENCES roles (id) ON DELETE CASCADE,
     PRIMARY KEY (permission_id, role_id)
 );
+
+-- Auditoria panell administració
+CREATE TABLE admin_logs (
+    id BIGSERIAL PRIMARY KEY,
+    admin_user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    action VARCHAR(64) NOT NULL,
+    entity_type VARCHAR(120) NOT NULL,
+    entity_id BIGINT,
+    summary TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+
+CREATE INDEX admin_logs_created_at_index ON admin_logs (created_at DESC);
+CREATE INDEX admin_logs_admin_user_id_index ON admin_logs (admin_user_id);
