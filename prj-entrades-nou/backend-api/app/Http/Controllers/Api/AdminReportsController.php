@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  */
 class AdminReportsController extends Controller
 {
-    public function salesSeries (Request $request): JsonResponse
+    public function salesSeries(Request $request): JsonResponse
     {
         $data = $request->validate([
             'from' => ['required', 'date'],
@@ -65,7 +65,7 @@ class AdminReportsController extends Controller
             } else {
                 $key = $u->format('Y-m-d H:00:00');
             }
-            if (! array_key_exists($key, $buckets)) {
+            if (!array_key_exists($key, $buckets)) {
                 $buckets[$key] = 0.0;
             }
             $buckets[$key] = $buckets[$key] + (float) $o->total_amount;
@@ -85,7 +85,7 @@ class AdminReportsController extends Controller
         ]);
     }
 
-    public function occupancy (Request $request): JsonResponse
+    public function occupancy(Request $request): JsonResponse
     {
         $data = $request->validate([
             'event_id' => ['required', 'integer', 'min:1'],

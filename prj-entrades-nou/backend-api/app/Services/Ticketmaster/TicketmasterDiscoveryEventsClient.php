@@ -43,12 +43,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || ! $response->successful()) {
+        if ($response === null || !$response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return null;
         }
 
@@ -83,7 +83,7 @@ class TicketmasterDiscoveryEventsClient
      *
      * @return array{events: array<int, array<string, mixed>>, page: int, total_pages: int, more: bool}|null
      */
-    public function searchEventsPage (string $keyword, int $pageZeroBased, int $size, string $countryCode): ?array
+    public function searchEventsPage(string $keyword, int $pageZeroBased, int $size, string $countryCode): ?array
     {
         $disabled = Config::get('services.ticketmaster.disabled');
         if ($disabled === true) {
@@ -114,12 +114,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || ! $response->successful()) {
+        if ($response === null || !$response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return null;
         }
 
@@ -154,7 +154,7 @@ class TicketmasterDiscoveryEventsClient
      *
      * @return array<string, mixed>|null
      */
-    public function fetchEventDetailById (string $externalId): ?array
+    public function fetchEventDetailById(string $externalId): ?array
     {
         $disabled = Config::get('services.ticketmaster.disabled');
         if ($disabled === true) {
@@ -180,12 +180,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || ! $response->successful()) {
+        if ($response === null || !$response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return null;
         }
 

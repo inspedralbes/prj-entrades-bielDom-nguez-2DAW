@@ -22,7 +22,8 @@ class AdminController extends Controller
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
         private readonly AdminDashboardMetricsService $adminDashboardMetrics,
-    ) {}
+    ) {
+    }
 
     public function summary(Request $request): JsonResponse
     {
@@ -176,7 +177,7 @@ class AdminController extends Controller
             'image_url' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $event = new Event;
+        $event = new Event();
         $event->external_tm_id = $data['external_tm_id'];
         $event->name = $data['name'];
         $event->venue_id = $data['venue_id'];

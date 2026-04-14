@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\Redis;
  */
 class AdminMonitorController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly EventSeatHoldService $eventSeatHoldService,
     ) {}
 
-    public function show (Request $request, string $eventId): JsonResponse
+    public function show(Request $request, string $eventId): JsonResponse
     {
         $event = Event::query()->find($eventId);
         if ($event === null) {

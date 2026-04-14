@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class AdminUsersController extends Controller
 {
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $q = User::query()->with('roles');
 
@@ -38,7 +38,7 @@ class AdminUsersController extends Controller
         return response()->json($paginator);
     }
 
-    public function store (Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -66,7 +66,7 @@ class AdminUsersController extends Controller
             $n = count($roles);
             for ($i = 0; $i < $n; $i++) {
                 $rn = $roles[$i];
-                if (! is_string($rn)) {
+                if (!is_string($rn)) {
                     continue;
                 }
                 if ($rn === '') {
@@ -89,10 +89,10 @@ class AdminUsersController extends Controller
         ], 201);
     }
 
-    public function destroy (Request $request, int $userId): JsonResponse
+    public function destroy(Request $request, int $userId): JsonResponse
     {
         $actor = $request->user();
-        if (! $actor instanceof User) {
+        if (!$actor instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -117,7 +117,7 @@ class AdminUsersController extends Controller
         return response()->json(['message' => 'Usuari eliminat']);
     }
 
-    public function orders (Request $request, int $userId): JsonResponse
+    public function orders(Request $request, int $userId): JsonResponse
     {
         $user = User::query()->find($userId);
         if ($user === null) {
@@ -194,7 +194,7 @@ class AdminUsersController extends Controller
     /**
      * @return array<int, string>
      */
-    private function roleNamesForUser (User $user): array
+    private function roleNamesForUser(User $user): array
     {
         $out = [];
         $roles = $user->roles;
@@ -209,7 +209,7 @@ class AdminUsersController extends Controller
     /**
      * @return array<string, mixed>|null
      */
-    private function lastTransferForTicket (string $ticketId): ?array
+    private function lastTransferForTicket(string $ticketId): ?array
     {
         $tr = TicketTransfer::query()
             ->where('ticket_id', $ticketId)

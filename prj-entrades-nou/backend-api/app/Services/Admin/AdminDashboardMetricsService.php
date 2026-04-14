@@ -27,7 +27,7 @@ class AdminDashboardMetricsService
      *   errors: array<int, string>
      * }  $result
      */
-    public function recordDiscoverySyncResult (array $result): void
+    public function recordDiscoverySyncResult(array $result): void
     {
         $errors = [];
         if (isset($result['errors']) && is_array($result['errors'])) {
@@ -53,7 +53,7 @@ class AdminDashboardMetricsService
     /**
      * @return array<string, mixed>
      */
-    public function buildSummaryPayload (): array
+    public function buildSummaryPayload(): array
     {
         $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
         $tz = new DateTimeZone($tzName);
@@ -88,7 +88,7 @@ class AdminDashboardMetricsService
         ];
     }
 
-    private function countOnlineUsersFromPresenceZset (): int
+    private function countOnlineUsersFromPresenceZset(): int
     {
         try {
             $conn = Redis::connection();
@@ -105,10 +105,10 @@ class AdminDashboardMetricsService
     /**
      * @return array<int, array{message: string, severity: string, at: string}>
      */
-    private function buildSyncAlertsFromCache (): array
+    private function buildSyncAlertsFromCache(): array
     {
         $cached = Cache::get(self::CACHE_KEY_LAST_DISCOVERY);
-        if (! is_array($cached)) {
+        if (!is_array($cached)) {
             return [];
         }
 
@@ -120,7 +120,7 @@ class AdminDashboardMetricsService
         $out = [];
         if (isset($cached['errors']) && is_array($cached['errors'])) {
             foreach ($cached['errors'] as $msg) {
-                if (! is_string($msg)) {
+                if (!is_string($msg)) {
                     continue;
                 }
                 if ($msg === '') {

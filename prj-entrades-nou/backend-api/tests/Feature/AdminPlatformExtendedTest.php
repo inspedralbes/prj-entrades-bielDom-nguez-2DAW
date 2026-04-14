@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\Auth\JwtTokenService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -13,21 +14,21 @@ class AdminPlatformExtendedTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
     }
 
-    public function test_presence_ping_requires_auth (): void
+    public function test_presence_ping_requires_auth(): void
     {
         $this->postJson('/api/presence/ping')->assertStatus(401);
     }
 
-    public function test_presence_ping_ok (): void
+    public function test_presence_ping_ok(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -43,7 +44,7 @@ class AdminPlatformExtendedTest extends TestCase
             ->assertJsonPath('ok', true);
     }
 
-    public function test_admin_users_list (): void
+    public function test_admin_users_list(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -54,7 +55,7 @@ class AdminPlatformExtendedTest extends TestCase
             ->assertOk();
     }
 
-    public function test_admin_reports_sales_and_occupancy (): void
+    public function test_admin_reports_sales_and_occupancy(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -75,7 +76,7 @@ class AdminPlatformExtendedTest extends TestCase
             ->assertJsonStructure(['capacity', 'sold', 'remaining', 'occupancy_percent']);
     }
 
-    public function test_admin_monitor_returns_json (): void
+    public function test_admin_monitor_returns_json(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -93,7 +94,7 @@ class AdminPlatformExtendedTest extends TestCase
             ->assertJsonPath('event_id', $event->id);
     }
 
-    public function test_admin_delete_event_soft_hides (): void
+    public function test_admin_delete_event_soft_hides(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -111,7 +112,7 @@ class AdminPlatformExtendedTest extends TestCase
         $this->assertNotNull($event->hidden_at);
     }
 
-    public function test_admin_discovery_search_requires_keyword (): void
+    public function test_admin_discovery_search_requires_keyword(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
