@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
+use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,20 +21,20 @@ class AdminController extends Controller
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
+        private readonly AdminDashboardMetricsService $adminDashboardMetrics,
     ) {}
 
     public function summary(Request $request): JsonResponse
     {
-        $this->socketNotifier->emitMetricsStub([
-            'events_total' => Event::query()->count(),
-            'generated_at' => now()->toIso8601String(),
-        ]);
+        $metrics = $this->adminDashboardMetrics->buildSummaryPayload();
+        $payload = $metrics;
+        $payload['events_total'] = Event::query()->count();
+        $payload['orders_paid'] = Order::query()->where('state', Order::STATE_PAID)->count();
+        $payload['generated_at'] = now()->toIso8601String();
 
-        return response()->json([
-            'stub' => true,
-            'events_total' => Event::query()->count(),
-            'orders_paid' => Order::query()->where('state', Order::STATE_PAID)->count(),
-        ]);
+        $this->socketNotifier->emitMetricsStub($payload);
+
+        return response()->json($payload);
     }
 
     public function discoverySync(Request $request): JsonResponse
@@ -43,6 +45,8 @@ class AdminController extends Controller
         }
 
         $result = $this->ticketmasterEventImportService->sync($maxPages);
+
+        $this->adminDashboardMetrics->recordDiscoverySyncResult($result);
 
         return response()->json([
             'status' => 'completed',
@@ -71,22 +75,24 @@ class AdminController extends Controller
             'tm_sync_paused' => ['sometimes', 'boolean'],
             'hidden_at' => ['sometimes', 'nullable', 'date'],
             'price' => ['sometimes', 'numeric', 'min:0.01', 'max:999999.99'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'starts_at' => ['sometimes', 'date'],
+            'venue_id' => ['sometimes', 'integer', 'exists:venues,id'],
+            'image_url' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'category' => ['sometimes', 'nullable', 'string', 'max:100'],
         ]);
 
-        $hasTm = array_key_exists('tm_sync_paused', $data);
-        $hasHidden = array_key_exists('hidden_at', $data);
-        $hasPrice = array_key_exists('price', $data);
-        if ($hasTm === false && $hasHidden === false && $hasPrice === false) {
+        if (count($data) === 0) {
             return response()->json([
-                'message' => 'Envia almenys un camp: tm_sync_paused, hidden_at o price.',
+                'message' => 'Envia almenys un camp editable.',
             ], 422);
         }
 
-        if ($hasTm === true) {
+        if (array_key_exists('tm_sync_paused', $data)) {
             $event->tm_sync_paused = $data['tm_sync_paused'];
         }
 
-        if ($hasHidden === true) {
+        if (array_key_exists('hidden_at', $data)) {
             if ($data['hidden_at'] === null) {
                 $event->hidden_at = null;
             } else {
@@ -94,8 +100,28 @@ class AdminController extends Controller
             }
         }
 
-        if ($hasPrice === true) {
+        if (array_key_exists('price', $data)) {
             $event->price = $data['price'];
+        }
+
+        if (array_key_exists('name', $data)) {
+            $event->name = $data['name'];
+        }
+
+        if (array_key_exists('starts_at', $data)) {
+            $event->starts_at = Carbon::parse($data['starts_at']);
+        }
+
+        if (array_key_exists('venue_id', $data)) {
+            $event->venue_id = (int) $data['venue_id'];
+        }
+
+        if (array_key_exists('image_url', $data)) {
+            $event->image_url = $data['image_url'];
+        }
+
+        if (array_key_exists('category', $data)) {
+            $event->category = $data['category'];
         }
 
         $event->save();
@@ -104,7 +130,11 @@ class AdminController extends Controller
             'id' => $event->id,
             'external_tm_id' => $event->external_tm_id,
             'name' => $event->name,
+            'venue_id' => $event->venue_id,
+            'starts_at' => $event->starts_at?->toIso8601String(),
+            'category' => $event->category,
             'price' => $event->price,
+            'image_url' => $event->image_url,
             'tm_sync_paused' => $event->tm_sync_paused,
             'hidden_at' => $event->hidden_at?->toIso8601String(),
         ]);
@@ -142,6 +172,8 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:100'],
             'hold_ttl_seconds' => ['nullable', 'integer', 'min:60', 'max:3600'],
             'hidden_at' => ['nullable', 'date'],
+            'price' => ['nullable', 'numeric', 'min:0.01', 'max:999999.99'],
+            'image_url' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $event = new Event;
@@ -153,6 +185,14 @@ class AdminController extends Controller
         $event->hold_ttl_seconds = $data['hold_ttl_seconds'] ?? 240;
         $event->hidden_at = isset($data['hidden_at']) ? Carbon::parse($data['hidden_at']) : null;
         $event->tm_sync_paused = true;
+        if (isset($data['price'])) {
+            $event->price = $data['price'];
+        } else {
+            $event->price = (float) Config::get('services.order.fixed_event_price_eur', 20.0);
+        }
+        if (isset($data['image_url'])) {
+            $event->image_url = $data['image_url'];
+        }
         $event->save();
 
         return response()->json([
@@ -162,6 +202,8 @@ class AdminController extends Controller
             'venue_id' => $event->venue_id,
             'starts_at' => $event->starts_at->toIso8601String(),
             'category' => $event->category,
+            'price' => $event->price,
+            'image_url' => $event->image_url,
             'tm_sync_paused' => $event->tm_sync_paused,
             'hidden_at' => $event->hidden_at?->toIso8601String(),
             'created_at' => $event->created_at->toIso8601String(),
@@ -177,11 +219,14 @@ class AdminController extends Controller
 
         $force = $request->query('force') === '1';
         if ($force) {
-            $event->forceDelete();
-        } else {
             $event->delete();
+
+            return response()->json(['message' => 'Esdeveniment eliminat definitivament de la base de dades']);
         }
 
-        return response()->json(['message' => 'Esdeveniment eliminat'.($force ? ' definitivament' : '')]);
+        $event->hidden_at = now();
+        $event->save();
+
+        return response()->json(['message' => 'Esdeveniment ocultat (hidden_at). No es mostra al catàleg públic.']);
     }
 }

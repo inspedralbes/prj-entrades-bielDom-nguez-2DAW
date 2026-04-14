@@ -64,7 +64,15 @@ class Phase6AdminSocialApiTest extends TestCase
             ->getJson('/api/admin/summary');
 
         $res->assertOk();
-        $res->assertJsonPath('stub', true);
+        $res->assertJsonPath('stub', false);
+        $res->assertJsonStructure([
+            'revenue_today',
+            'pending_payment_count',
+            'sync_alerts',
+            'online_users',
+            'events_total',
+            'orders_paid',
+        ]);
         Http::assertSent(fn ($r) => str_contains($r->url(), 'internal/emit'));
     }
 

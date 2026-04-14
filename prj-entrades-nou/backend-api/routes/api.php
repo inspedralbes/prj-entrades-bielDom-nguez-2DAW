@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminDiscoveryController;
+use App\Http\Controllers\Api\AdminMonitorController;
+use App\Http\Controllers\Api\AdminReportsController;
+use App\Http\Controllers\Api\AdminUsersController;
+use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
@@ -44,6 +48,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('jwt.auth')->get('/auth/me', [AuthController::class, 'me']);
+Route::middleware('jwt.auth')->post('/presence/ping', [PresenceController::class, 'ping']);
 Route::middleware('jwt.auth')->get('/user/profile', [UserProfileController::class, 'show']);
 Route::middleware('jwt.auth')->patch('/user/profile', [UserProfileController::class, 'updateProfile']);
 Route::middleware('jwt.auth')->get('/feed/for-you', [FeedController::class, 'forYou']);
@@ -78,10 +83,19 @@ Route::middleware('jwt.auth')->patch('/social/friend-invites/{inviteId}', [Socia
 Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/summary', [AdminController::class, 'summary']);
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
+    Route::get('/discovery/search', [AdminDiscoveryController::class, 'search']);
+    Route::post('/discovery/import', [AdminDiscoveryController::class, 'importByExternalId']);
     Route::get('/events', [AdminController::class, 'index']);
     Route::post('/events', [AdminController::class, 'store']);
     Route::patch('/events/{eventId}', [AdminController::class, 'updateEvent'])->whereNumber('eventId');
     Route::delete('/events/{eventId}', [AdminController::class, 'destroy'])->whereNumber('eventId');
+    Route::get('/events/{eventId}/monitor', [AdminMonitorController::class, 'show'])->whereNumber('eventId');
+    Route::get('/users', [AdminUsersController::class, 'index']);
+    Route::post('/users', [AdminUsersController::class, 'store']);
+    Route::delete('/users/{userId}', [AdminUsersController::class, 'destroy'])->whereNumber('userId');
+    Route::get('/users/{userId}/orders', [AdminUsersController::class, 'orders'])->whereNumber('userId');
+    Route::get('/reports/sales', [AdminReportsController::class, 'salesSeries']);
+    Route::get('/reports/occupancy', [AdminReportsController::class, 'occupancy']);
 });
 
 Route::middleware('jwt.auth')->post('/validation/scan', [ValidationController::class, 'scan']);

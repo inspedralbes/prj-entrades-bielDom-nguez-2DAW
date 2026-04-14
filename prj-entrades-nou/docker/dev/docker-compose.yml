@@ -67,9 +67,10 @@ services:
       REDIS_PORT: 6379
       # Buit: les claus de holds del mapa (event:{id}:seat:…) han de coincidir amb KEYS/GET; el prefix per defecte de Laravel trenca getHoldsForEvent.
       REDIS_PREFIX: ""
+      # JWT_SECRET: NO es defineix aquí — Laravel el llegeix de `backend-api/.env` (volum muntat).
+      # Ha de ser idèntic a `JWT_SECRET` de `socket-server/.env` (firebase/php-jwt HS256: mín. ~32 caràcters).
       # Ha de coincidir amb JWT_SECRET del servei socket-server (només namespace /private: alliberar holds al tancar).
       # SeatStatusUpdated (mapa públic) ve de POST /internal/emit; no depèn del JWT del navegador.
-      JWT_SECRET: dev_jwt_secret_change_me
       # Només Laravel (HTTP server→server dins Docker). NO és la URL del navegador: dins del contenidor
       # backend-api, localhost:3001 apunta al propi contenidor i /internal/emit falla. Cal el nom del servei compose.
       SOCKET_SERVER_INTERNAL_URL: http://socket-server:3001
@@ -119,7 +120,7 @@ services:
     environment:
       PORT: 3001
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: dev_jwt_secret_change_me
+      # JWT_SECRET: del fitxer `socket-server/.env` (volum muntat); mateix valor que `JWT_SECRET` a `backend-api/.env`.
       LARAVEL_INTERNAL_API_URL: http://backend-api:8000
       SOCKET_INTERNAL_SECRET: ""
     depends_on:

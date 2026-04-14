@@ -1,5 +1,5 @@
 <template>
-  <div class="ism-wrap">
+  <div class="ism-wrap" :class="{ 'ism-wrap--readonly': readOnly }">
     <div class="ism-legend">
       <div class="ism-legend__item">
         <span class="ism-swatch ism-swatch--free" />
@@ -36,6 +36,11 @@ const props = defineProps({
   eventId: {
     type: String,
     required: true,
+  },
+  /** Mode panell admin: sense clic ni reserva. */
+  readOnly: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -116,17 +121,20 @@ function render () {
     const y = vy * CELL;
     const cls = classForSeat(seatId);
 
-    g.append('rect')
+    const rect = g
+      .append('rect')
       .attr('x', x)
       .attr('y', y)
       .attr('width', CELL - 1)
       .attr('height', CELL - 1)
       .attr('rx', 1)
       .attr('data-seat-id', seatId)
-      .attr('class', `ism-seat ${cls}`)
-      .on('click', () => {
+      .attr('class', `ism-seat ${cls}`);
+    if (!props.readOnly) {
+      rect.on('click', () => {
         emit('seat-click', { seatId, row, col });
       });
+    }
 
     if (cls === 'seat-sold') {
       g.append('text')
@@ -194,6 +202,10 @@ onMounted(() => {
   border-radius: 12px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ism-wrap--readonly :deep(.ism-seat) {
+  cursor: default;
 }
 
 .ism-legend {

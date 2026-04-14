@@ -1,0 +1,2 @@
+# Scripts shell dins Docker: han ser LF (dash falla amb CRLF: "set: Illegal option -").
+docker/**/*.sh text eol=lf

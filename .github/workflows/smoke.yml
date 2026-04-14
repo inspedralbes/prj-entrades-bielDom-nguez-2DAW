@@ -146,12 +146,12 @@ jobs:
         run: |
           cd socket-server
           npm ci
-          JWT_SECRET=dev_jwt_secret_change_me npm run test:intent-broadcast -- http://127.0.0.1:3001
+          JWT_SECRET=tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok npm run test:intent-broadcast -- http://127.0.0.1:3001
 
       - name: Realtime — POST /internal/emit (held + sold)
         run: |
           cd socket-server
-          JWT_SECRET=dev_jwt_secret_change_me npm run test:realtime -- http://127.0.0.1:3001
+          JWT_SECRET=tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok npm run test:realtime -- http://127.0.0.1:3001
 
       - name: Pinia — store interactiveSeatmap (applySocketUpdate / bootstrap)
         run: |

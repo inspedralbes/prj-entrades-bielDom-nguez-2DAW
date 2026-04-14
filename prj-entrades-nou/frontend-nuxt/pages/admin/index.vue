@@ -5,7 +5,40 @@
     <section class="adm-dash__panel">
       <h2 class="adm-dash__h2">Resum (API)</h2>
       <p v-if="summaryErr" class="adm-dash__err">{{ summaryErr }}</p>
-      <pre v-else class="adm-dash__pre">{{ summaryText }}</pre>
+      <template v-else>
+        <dl v-if="summary" class="adm-dash__dl">
+          <div class="adm-dash__row">
+            <dt>Ingressos avui (EUR)</dt>
+            <dd>{{ summary.revenue_today }}</dd>
+          </div>
+          <div class="adm-dash__row">
+            <dt>Comandes pending_payment</dt>
+            <dd>{{ summary.pending_payment_count }}</dd>
+          </div>
+          <div class="adm-dash__row">
+            <dt>Usuaris en línia (API + ping)</dt>
+            <dd>{{ summary.online_users }}</dd>
+          </div>
+          <div class="adm-dash__row">
+            <dt>Esdeveniments totals</dt>
+            <dd>{{ summary.events_total }}</dd>
+          </div>
+          <div class="adm-dash__row">
+            <dt>Comandes pagades (tot el temps)</dt>
+            <dd>{{ summary.orders_paid }}</dd>
+          </div>
+        </dl>
+        <div v-if="summary && syncAlertLines.length > 0" class="adm-dash__alerts">
+          <p class="adm-dash__h2">Alertes sincronització TM</p>
+          <ul class="adm-dash__alert-list">
+            <li v-for="(line, idx) in syncAlertLines" :key="idx">{{ line }}</li>
+          </ul>
+        </div>
+        <p v-if="summary && syncAlertLines.length === 0" class="adm-dash__muted">
+          Sense alertes de l’última sincronització Discovery.
+        </p>
+        <pre class="adm-dash__pre adm-dash__pre--json">{{ summaryText }}</pre>
+      </template>
       <p class="adm-dash__muted">Actualització cada {{ pollSec }}s · crida <code>GET /api/admin/summary</code></p>
     </section>
 
@@ -31,7 +64,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useAdminDashboard } from '~/composables/useAdminDashboard';
-import { resolvePublicSocketUrl } from '~/utils/apiBase';
+import { useAdminDashboardStore } from '~/stores/adminDashboard';
 
 definePageMeta({
   layout: 'admin',
@@ -41,6 +74,7 @@ definePageMeta({
 const config = useRuntimeConfig();
 const { getJson } = useAuthorizedApi();
 const { connectSocket } = useAdminDashboard();
+const adminDashStore = useAdminDashboardStore();
 
 const summary = ref(null);
 const summaryErr = ref('');
@@ -51,13 +85,38 @@ let stopSocket;
 
 const socketUrl = computed(() => resolvePublicSocketUrl(config.public.socketUrl));
 
-const summaryText = computed(() =>
-  summary.value ? JSON.stringify(summary.value, null, 2) : '—',
-);
+const summaryText = computed(() => {
+  if (!summary.value) {
+    return '—';
+  }
+  return JSON.stringify(summary.value, null, 2);
+});
 
-const metricsText = computed(() =>
-  lastMetrics.value ? JSON.stringify(lastMetrics.value, null, 2) : '(esperant admin:metrics…)',
-);
+const syncAlertLines = computed(() => {
+  const out = [];
+  if (!summary.value) {
+    return out;
+  }
+  const alerts = summary.value.sync_alerts;
+  if (!alerts || !Array.isArray(alerts)) {
+    return out;
+  }
+  for (let i = 0; i < alerts.length; i++) {
+    const a = alerts[i];
+    if (!a || typeof a.message !== 'string') {
+      continue;
+    }
+    out.push(a.message);
+  }
+  return out;
+});
+
+const metricsText = computed(() => {
+  if (!lastMetrics.value) {
+    return '(esperant admin:metrics…)';
+  }
+  return JSON.stringify(lastMetrics.value, null, 2);
+});
 
 async function refreshSummary () {
   summaryErr.value = '';
@@ -74,6 +133,7 @@ onMounted(() => {
   stopPoll = setInterval(refreshSummary, pollSec * 1000);
   stopSocket = connectSocket((payload) => {
     lastMetrics.value = payload;
+    adminDashStore.setLiveMetrics(payload);
   });
 });
 
@@ -108,11 +168,42 @@ onUnmounted(() => {
   border: 1px solid #2a2a2a;
   border-radius: 8px;
 }
+.adm-dash__dl {
+  margin: 0 0 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.adm-dash__row {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
+.adm-dash__row dt {
+  min-width: 12rem;
+  color: #888;
+}
+.adm-dash__row dd {
+  margin: 0;
+}
+.adm-dash__alerts {
+  margin-bottom: 0.75rem;
+}
+.adm-dash__alert-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  color: #ffb347;
+  font-size: 0.85rem;
+}
 .adm-dash__pre {
   margin: 0;
   font-size: 0.8rem;
   overflow: auto;
   color: #ddd;
+}
+.adm-dash__pre--json {
+  margin-top: 0.75rem;
+  opacity: 0.85;
 }
 .adm-dash__muted {
   font-size: 0.8rem;

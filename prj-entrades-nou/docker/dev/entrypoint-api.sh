@@ -10,7 +10,7 @@ export REDIS_HOST=redis
 # Laravel (dins Docker) crida el socket per HTTP intern; ha de ser el nom DNS del servei, no localhost.
 export SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001
 
-# Volums Postgres buits (sense init d’entrada): carregar init.sql + inserts del repo.
+# Volums Postgres buits (sense init d'entrada): carregar init.sql + inserts del repo.
 # Si falta `events` però ja hi ha altres taules, cal esborrar el volum (`docker compose down -v`).
 export PGPASSWORD="${DB_PASSWORD:-esdeveniments}"
 
@@ -47,6 +47,12 @@ php artisan config:clear
 if [ "${APP_ENV:-local}" = "local" ] && [ -f /var/www/database/docker-dev-ensure-admin.sql ]; then
   echo "Sincronitzant usuari admin de desenvolupament (docker-dev-ensure-admin.sql) ..."
   run_psql -f /var/www/database/docker-dev-ensure-admin.sql
+fi
+
+# Si admin@example.com es va registrar abans via API, només tenia rol «user»; cal «admin» per /api/admin/* i /admin.
+if [ "${APP_ENV:-local}" = "local" ]; then
+  echo "Sincronitzant rols Spatie (admin+user) per admin@example.com ..."
+  php artisan db:ensure-dev-admin-roles || true
 fi
 
 # Volums Postgres antics: no tornen a executar init.sql; columnes TM poden faltar.

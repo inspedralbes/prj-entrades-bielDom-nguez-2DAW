@@ -393,7 +393,11 @@ io.on('connection', (socket) => {
     });
   });
 
-  /** Panell admin (T052): el client es subscriu per rebre `admin:metrics` emès al room `admin:dashboard`. */
+  /**
+   * Panell admin: `join:admin-dashboard` → room `admin:dashboard` per `admin:metrics` (presència / Redis).
+   * El mapa d’esdeveniment admin usa el mateix socket de namespace per defecte amb `query.eventId` + JWT
+   * que la vista usuari: rep `SeatStatusUpdated` als rooms `event:{eventId}` (paritat de mapa).
+   */
   socket.on('join:admin-dashboard', () => {
     socket.join('admin:dashboard');
   });
