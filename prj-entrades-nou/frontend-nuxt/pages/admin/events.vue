@@ -77,7 +77,10 @@
             <td>{{ row.name }}</td>
             <td>{{ formatIso(row.starts_at) }}</td>
             <td>{{ row.price }}</td>
-            <td>{{ row.hidden_at ? 'sí' : 'no' }}</td>
+            <td>
+              <span v-if="row.hidden_at">sí</span>
+              <span v-else>no</span>
+            </td>
             <td class="adm-ev__actions">
               <NuxtLink class="adm-ev__link" :to="`/admin/events/${row.id}/monitor`">Monitor</NuxtLink>
               <button type="button" class="adm-ev__btn adm-ev__btn--sm" @click="startEdit(row)">Editar</button>
@@ -346,7 +349,11 @@ function startEdit (row) {
   editForm.name = row.name || '';
   editForm.starts_at = toDatetimeLocal(row.starts_at);
   editForm.venue_id = row.venue_id || 1;
-  editForm.price = row.price ? Number(row.price) : 0;
+  if (row.price) {
+    editForm.price = Number(row.price);
+  } else {
+    editForm.price = 0;
+  }
   editForm.image_url = row.image_url || '';
   editForm.category = row.category || '';
 }

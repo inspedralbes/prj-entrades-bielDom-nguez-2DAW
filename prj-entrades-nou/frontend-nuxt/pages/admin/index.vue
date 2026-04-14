@@ -85,9 +85,12 @@ let stopSocket;
 
 const socketUrl = computed(() => config.public.socketUrl || '');
 
-const summaryText = computed(() =>
-  summary.value ? JSON.stringify(summary.value, null, 2) : '—',
-);
+const summaryText = computed(() => {
+  if (!summary.value) {
+    return '—';
+  }
+  return JSON.stringify(summary.value, null, 2);
+});
 
 const syncAlertLines = computed(() => {
   const out = [];
@@ -108,9 +111,12 @@ const syncAlertLines = computed(() => {
   return out;
 });
 
-const metricsText = computed(() =>
-  lastMetrics.value ? JSON.stringify(lastMetrics.value, null, 2) : '(esperant admin:metrics…)',
-);
+const metricsText = computed(() => {
+  if (!lastMetrics.value) {
+    return '(esperant admin:metrics…)';
+  }
+  return JSON.stringify(lastMetrics.value, null, 2);
+});
 
 async function refreshSummary () {
   summaryErr.value = '';

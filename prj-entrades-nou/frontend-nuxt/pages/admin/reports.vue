@@ -152,7 +152,13 @@ const salesPolylinePoints = computed(() => {
   const maxY = salesMaxAmount.value;
   const parts = [];
   for (let i = 0; i < n; i++) {
-    const x = pad + (n === 1 ? innerW / 2 : (innerW * i) / (n - 1));
+    let xFrac = 0;
+    if (n === 1) {
+      xFrac = innerW / 2;
+    } else {
+      xFrac = (innerW * i) / (n - 1);
+    }
+    const x = pad + xFrac;
     const amt = Number(s[i].amount_eur);
     let y = pad + innerH;
     if (maxY > 0) {
@@ -171,7 +177,13 @@ const salesPointLabels = computed(() => {
   const innerH = chartH - pad * 2;
   const maxY = salesMaxAmount.value;
   for (let i = 0; i < n; i++) {
-    const x = pad + (n === 1 ? innerW / 2 : (innerW * i) / (n - 1));
+    let xFrac = 0;
+    if (n === 1) {
+      xFrac = innerW / 2;
+    } else {
+      xFrac = (innerW * i) / (n - 1);
+    }
+    const x = pad + xFrac;
     const amt = Number(s[i].amount_eur);
     let y = pad + innerH;
     if (maxY > 0) {

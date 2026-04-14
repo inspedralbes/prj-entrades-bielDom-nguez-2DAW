@@ -127,7 +127,10 @@ async function loadMonitor () {
     const sm = data.seatmap;
     if (sm && typeof sm === 'object') {
       seatmapStore.bootstrapFromApi(sm, id);
-      const uid = auth.user && auth.user.id !== undefined ? auth.user.id : null;
+      let uid = null;
+      if (auth.user && auth.user.id !== undefined) {
+        uid = auth.user.id;
+      }
       seatmapStore.setCurrentUserId(uid);
     }
   } catch (e) {
