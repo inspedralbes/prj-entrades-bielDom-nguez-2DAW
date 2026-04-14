@@ -739,12 +739,23 @@ paths:
       security:
         - bearerAuth: []
     post:
-      summary: Crear usuari amb rols
+      summary: Crear usuari amb un sol rol (user o admin)
       tags: [Admin]
       security:
         - bearerAuth: []
 
   /api/admin/users/{userId}:
+    patch:
+      summary: Actualitzar usuari (nom, email, rol user o admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
     delete:
       summary: Eliminar usuari (restriccions negoci)
       tags: [Admin]
@@ -770,47 +781,65 @@ paths:
           schema:
             type: integer
 
-  /api/admin/reports/sales:
+  /api/admin/analytics/summary:
     get:
-      summary: Sèrie temporal de vendes
+      summary: Analítiques — total ingressos al període
       tags: [Admin]
       security:
         - bearerAuth: []
       parameters:
-        - name: from
+        - name: date_from
           in: query
           required: true
           schema:
             type: string
             format: date
-        - name: to
+        - name: date_to
           in: query
           required: true
           schema:
             type: string
             format: date
-        - name: event_id
-          in: query
-          schema:
-            type: integer
-        - name: bucket
-          in: query
-          schema:
-            type: string
-            enum: [hour, day]
 
-  /api/admin/reports/occupancy:
+  /api/admin/analytics/events:
     get:
-      summary: Ocupació venuts vs aforament
+      summary: Analítiques — rendiment per esdeveniment
       tags: [Admin]
       security:
         - bearerAuth: []
       parameters:
-        - name: event_id
+        - name: date_from
           in: query
           required: true
           schema:
-            type: integer
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+
+  /api/admin/analytics/categories/occupancy:
+    get:
+      summary: Analítiques — ocupació agregada per categoria
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date_from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
 
   /api/health:
     get:

@@ -202,7 +202,25 @@ const handleSubmit = async () => {
       const auth = useAuthStore()
       auth.setSession({ token: res.token, user: res.user })
       
-      const redirect = route.query.redirect || '/tickets'
+      let redirect = route.query.redirect
+      if (typeof redirect !== 'string' || redirect.length === 0) {
+        let isAdmin = false
+        const r = res.user && res.user.roles
+        if (r && Array.isArray(r)) {
+          let i = 0
+          for (; i < r.length; i++) {
+            if (r[i] === 'admin') {
+              isAdmin = true
+              break
+            }
+          }
+        }
+        if (isAdmin) {
+          redirect = '/admin'
+        } else {
+          redirect = '/tickets'
+        }
+      }
       router.push(redirect)
     }
   } catch (err) {

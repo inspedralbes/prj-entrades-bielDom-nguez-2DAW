@@ -19,8 +19,15 @@
         <input v-model="createForm.email" type="email" class="adm-us__input">
         <label class="adm-us__lbl">Contrasenya</label>
         <input v-model="createForm.password" type="password" class="adm-us__input" autocomplete="new-password">
-        <label class="adm-us__lbl">Rols (comma)</label>
-        <input v-model="createForm.rolesText" type="text" class="adm-us__input" placeholder="user, admin">
+        <label class="adm-us__lbl" for="create-role">Rol</label>
+        <select id="create-role" v-model="createForm.role" class="adm-us__input">
+          <option value="user">
+            Usuari
+          </option>
+          <option value="admin">
+            Administrador
+          </option>
+        </select>
       </div>
       <p v-if="createErr" class="adm-us__err">{{ createErr }}</p>
       <button type="button" class="adm-us__btn" :disabled="createPending" @click="submitCreate">Crear</button>
@@ -36,7 +43,7 @@
             <th>ID</th>
             <th>Nom</th>
             <th>Email</th>
-            <th>Rols</th>
+            <th>Rol</th>
             <th>Accions</th>
           </tr>
         </thead>
@@ -45,8 +52,9 @@
             <td>{{ u.id }}</td>
             <td>{{ u.name }}</td>
             <td>{{ u.email }}</td>
-            <td>{{ formatRoles(u) }}</td>
+            <td>{{ singleRoleLabel(u) }}</td>
             <td class="adm-us__actions">
+              <button type="button" class="adm-us__btn adm-us__btn--sm" @click="openEdit(u)">Editar</button>
               <button type="button" class="adm-us__btn adm-us__btn--sm" @click="openOrders(u.id)">Comandes</button>
               <button type="button" class="adm-us__btn adm-us__btn--sm adm-us__btn--danger" @click="removeUser(u.id)">Eliminar</button>
             </td>
@@ -54,6 +62,30 @@
         </tbody>
       </table>
     </section>
+
+    <div v-if="editUserId !== null" class="adm-us__panel adm-us__modal" role="dialog" aria-labelledby="edit-title">
+      <h2 id="edit-title" class="adm-us__h2">Editar usuari #{{ editUserId }}</h2>
+      <p v-if="editErr" class="adm-us__err">{{ editErr }}</p>
+      <div class="adm-us__grid">
+        <label class="adm-us__lbl">Nom</label>
+        <input v-model="editForm.name" type="text" class="adm-us__input" autocomplete="name">
+        <label class="adm-us__lbl">Email</label>
+        <input v-model="editForm.email" type="email" class="adm-us__input" autocomplete="email">
+        <label class="adm-us__lbl" for="edit-role">Rol</label>
+        <select id="edit-role" v-model="editForm.role" class="adm-us__input">
+          <option value="user">
+            Usuari
+          </option>
+          <option value="admin">
+            Administrador
+          </option>
+        </select>
+      </div>
+      <div class="adm-us__row">
+        <button type="button" class="adm-us__btn" :disabled="editPending" @click="submitEdit">Desar</button>
+        <button type="button" class="adm-us__btn adm-us__btn--ghost" :disabled="editPending" @click="closeEdit">Tancar</button>
+      </div>
+    </div>
 
     <div v-if="ordersUserId !== null" class="adm-us__panel adm-us__modal" role="dialog" aria-labelledby="ord-title">
       <h2 id="ord-title" class="adm-us__h2">Comandes usuari #{{ ordersUserId }}</h2>
@@ -92,7 +124,7 @@ definePageMeta({
   middleware: ['auth', 'admin'],
 });
 
-const { getJson, postJson, deleteJson } = useAuthorizedApi();
+const { getJson, postJson, patchJson, deleteJson } = useAuthorizedApi();
 
 const searchQ = ref('');
 const listPending = ref(false);
@@ -105,7 +137,16 @@ const createForm = reactive({
   name: '',
   email: '',
   password: '',
-  rolesText: 'user',
+  role: 'user',
+});
+
+const editUserId = ref(null);
+const editPending = ref(false);
+const editErr = ref('');
+const editForm = reactive({
+  name: '',
+  email: '',
+  role: 'user',
 });
 
 const ordersUserId = ref(null);
@@ -139,19 +180,32 @@ const ordersList = computed(() => {
   return out;
 });
 
-function formatRoles (u) {
-  if (!u || !u.roles) {
-    return '—';
+function singleRoleFromUser (u) {
+  if (u && u.role && (u.role === 'admin' || u.role === 'user')) {
+    return u.role;
   }
-  const r = u.roles;
-  const parts = [];
-  for (let i = 0; i < r.length; i++) {
-    const name = r[i].name;
-    if (name) {
-      parts.push(name);
+  if (!u || !u.roles || u.roles.length === 0) {
+    return 'user';
+  }
+  let i = 0;
+  for (; i < u.roles.length; i++) {
+    if (u.roles[i].name === 'admin') {
+      return 'admin';
     }
   }
-  return parts.join(', ');
+  const n0 = u.roles[0].name;
+  if (n0 === 'admin' || n0 === 'user') {
+    return n0;
+  }
+  return 'user';
+}
+
+function singleRoleLabel (u) {
+  const r = singleRoleFromUser(u);
+  if (r === 'admin') {
+    return 'Administrador';
+  }
+  return 'Usuari';
 }
 
 function formatIso (iso) {
@@ -184,18 +238,6 @@ async function loadUsers () {
   }
 }
 
-function parseRoles (text) {
-  const out = [];
-  const parts = text.split(',');
-  for (let i = 0; i < parts.length; i++) {
-    const s = parts[i].trim();
-    if (s !== '') {
-      out.push(s);
-    }
-  }
-  return out;
-}
-
 async function submitCreate () {
   createErr.value = '';
   if (!createForm.name.trim() || !createForm.email.trim() || createForm.password.length < 8) {
@@ -204,16 +246,12 @@ async function submitCreate () {
   }
   createPending.value = true;
   try {
-    const roles = parseRoles(createForm.rolesText);
-    const body = {
+    await postJson('/api/admin/users', {
       name: createForm.name.trim(),
       email: createForm.email.trim(),
       password: createForm.password,
-    };
-    if (roles.length > 0) {
-      body.roles = roles;
-    }
-    await postJson('/api/admin/users', body);
+      role: createForm.role,
+    });
     createForm.name = '';
     createForm.email = '';
     createForm.password = '';
@@ -227,6 +265,47 @@ async function submitCreate () {
     console.error(e);
   } finally {
     createPending.value = false;
+  }
+}
+
+function openEdit (u) {
+  ordersUserId.value = null;
+  editErr.value = '';
+  editUserId.value = u.id;
+  editForm.name = u.name || '';
+  editForm.email = u.email || '';
+  editForm.role = singleRoleFromUser(u);
+}
+
+function closeEdit () {
+  editUserId.value = null;
+  editErr.value = '';
+}
+
+async function submitEdit () {
+  editErr.value = '';
+  if (!editForm.name.trim() || !editForm.email.trim()) {
+    editErr.value = 'Nom i email obligatoris.';
+    return;
+  }
+  editPending.value = true;
+  try {
+    await patchJson(`/api/admin/users/${editUserId.value}`, {
+      name: editForm.name.trim(),
+      email: editForm.email.trim(),
+      role: editForm.role,
+    });
+    closeEdit();
+    await loadUsers();
+  } catch (e) {
+    let msg = 'No s’ha pogut desar.';
+    if (e && e.data && e.data.message) {
+      msg = e.data.message;
+    }
+    editErr.value = msg;
+    console.error(e);
+  } finally {
+    editPending.value = false;
   }
 }
 
@@ -248,6 +327,7 @@ async function removeUser (id) {
 }
 
 async function openOrders (id) {
+  editUserId.value = null;
   ordersUserId.value = id;
   ordersErr.value = '';
   ordersPending.value = true;

@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminDiscoveryController;
 use App\Http\Controllers\Api\AdminLogController;
 use App\Http\Controllers\Api\AdminMonitorController;
-use App\Http\Controllers\Api\AdminReportsController;
+use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminUsersController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\FeedController;
@@ -95,10 +95,12 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::get('/events/{eventId}/monitor', [AdminMonitorController::class, 'show'])->whereNumber('eventId');
     Route::get('/users', [AdminUsersController::class, 'index']);
     Route::post('/users', [AdminUsersController::class, 'store']);
+    Route::patch('/users/{userId}', [AdminUsersController::class, 'update'])->whereNumber('userId');
     Route::delete('/users/{userId}', [AdminUsersController::class, 'destroy'])->whereNumber('userId');
     Route::get('/users/{userId}/orders', [AdminUsersController::class, 'orders'])->whereNumber('userId');
-    Route::get('/reports/sales', [AdminReportsController::class, 'salesSeries']);
-    Route::get('/reports/occupancy', [AdminReportsController::class, 'occupancy']);
+    Route::get('/analytics/summary', [AdminAnalyticsController::class, 'summary']);
+    Route::get('/analytics/events', [AdminAnalyticsController::class, 'events']);
+    Route::get('/analytics/categories/occupancy', [AdminAnalyticsController::class, 'categoryOccupancy']);
 });
 
 Route::middleware('jwt.auth')->post('/validation/scan', [ValidationController::class, 'scan']);

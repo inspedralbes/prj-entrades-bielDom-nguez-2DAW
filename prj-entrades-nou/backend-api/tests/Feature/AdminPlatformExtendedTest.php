@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AdminLog;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\Auth\JwtTokenService;
@@ -54,25 +55,81 @@ class AdminPlatformExtendedTest extends TestCase
             ->assertOk();
     }
 
-    public function test_admin_reports_sales_and_occupancy (): void
+    public function test_admin_delete_user_writes_audit_log (): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $victim = User::factory()->create();
+        $victim->assignRole('user');
+        $token = app(JwtTokenService::class)->issueForUser($admin->fresh());
+        $victimId = (int) $victim->id;
+
+        $this->withHeaders(['Authorization' => 'Bearer '.$token])
+            ->deleteJson('/api/admin/users/'.$victimId)
+            ->assertOk();
+
+        $row = AdminLog::query()
+            ->where('action', 'user_deleted')
+            ->where('entity_type', 'User')
+            ->where('entity_id', $victimId)
+            ->orderByDesc('id')
+            ->first();
+        $this->assertNotNull($row);
+        $this->assertSame((int) $admin->id, (int) $row->admin_user_id);
+        $this->assertStringContainsString((string) $victim->name, (string) $row->summary);
+    }
+
+    public function test_admin_create_user_writes_audit_log (): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $token = app(JwtTokenService::class)->issueForUser($admin->fresh());
 
-        $from = now()->subDays(2)->toDateString();
-        $to = now()->toDateString();
+        $res = $this->withHeaders(['Authorization' => 'Bearer '.$token])
+            ->postJson('/api/admin/users', [
+                'name' => 'Usuari prova audit',
+                'email' => 'audit_create_'.uniqid('', true).'@test.local',
+                'password' => 'password123',
+                'role' => 'user',
+            ]);
+        $res->assertStatus(201);
+        $newId = (int) $res->json('id');
+
+        $row = AdminLog::query()
+            ->where('action', 'user_created')
+            ->where('entity_type', 'User')
+            ->where('entity_id', $newId)
+            ->orderByDesc('id')
+            ->first();
+        $this->assertNotNull($row);
+        $this->assertSame((int) $admin->id, (int) $row->admin_user_id);
+        $this->assertStringContainsString('Usuari prova audit', (string) $row->summary);
+    }
+
+    public function test_admin_update_user_writes_audit_log (): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $target = User::factory()->create();
+        $target->assignRole('user');
+        $token = app(JwtTokenService::class)->issueForUser($admin->fresh());
+        $targetId = (int) $target->id;
 
         $this->withHeaders(['Authorization' => 'Bearer '.$token])
-            ->getJson('/api/admin/reports/sales?from='.$from.'&to='.$to.'&bucket=day')
-            ->assertOk()
-            ->assertJsonStructure(['bucket', 'series']);
+            ->patchJson('/api/admin/users/'.$targetId, [
+                'name' => 'Nom actualitzat audit',
+            ])
+            ->assertOk();
 
-        $event = Event::factory()->create();
-        $this->withHeaders(['Authorization' => 'Bearer '.$token])
-            ->getJson('/api/admin/reports/occupancy?event_id='.$event->id)
-            ->assertOk()
-            ->assertJsonStructure(['capacity', 'sold', 'remaining', 'occupancy_percent']);
+        $row = AdminLog::query()
+            ->where('action', 'user_updated')
+            ->where('entity_type', 'User')
+            ->where('entity_id', $targetId)
+            ->orderByDesc('id')
+            ->first();
+        $this->assertNotNull($row);
+        $this->assertSame((int) $admin->id, (int) $row->admin_user_id);
+        $this->assertStringContainsString('actualitzat', strtolower((string) $row->summary));
     }
 
     public function test_admin_monitor_returns_json (): void

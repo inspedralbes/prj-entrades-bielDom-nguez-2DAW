@@ -6,15 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\TicketTransfer;
 use App\Models\User;
+use App\Services\Admin\AdminAuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 /**
  * Gestió d’usuaris (rol admin).
  */
 class AdminUsersController extends Controller
 {
+    public function __construct (
+        private readonly AdminAuditLogService $adminAuditLog,
+    ) {}
+
     public function index (Request $request): JsonResponse
     {
         $q = User::query()->with('roles');
@@ -45,8 +51,7 @@ class AdminUsersController extends Controller
             'username' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'roles' => ['sometimes', 'array'],
-            'roles.*' => ['string', 'max:50'],
+            'role' => ['required', 'string', 'in:user,admin'],
         ]);
 
         $username = isset($data['username']) ? trim((string) $data['username']) : '';
@@ -61,32 +66,140 @@ class AdminUsersController extends Controller
         $user->password = Hash::make($data['password']);
         $user->save();
 
-        if (isset($data['roles']) && is_array($data['roles'])) {
-            $roles = $data['roles'];
-            $n = count($roles);
-            for ($i = 0; $i < $n; $i++) {
-                $rn = $roles[$i];
-                if (! is_string($rn)) {
-                    continue;
-                }
-                if ($rn === '') {
-                    continue;
-                }
-                $user->assignRole($rn);
-            }
-        } else {
-            $user->assignRole('user');
-        }
+        $user->syncRoles([$data['role']]);
 
         $user->load('roles');
+
+        $actor = $request->user();
+        if ($actor !== null) {
+            $this->adminAuditLog->record(
+                (int) $actor->id,
+                'user_created',
+                'User',
+                (int) $user->id,
+                'S\'ha creat l\'usuari «'.$user->name.'» ('.$user->email.'). Rol: '.$data['role'].'.',
+                $request->ip()
+            );
+        }
 
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'username' => $user->username,
+            'role' => $data['role'],
             'roles' => $this->roleNamesForUser($user),
         ], 201);
+    }
+
+    public function update (Request $request, int $userId): JsonResponse
+    {
+        $actor = $request->user();
+        if (! $actor instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            return response()->json(['message' => 'Usuari no trobat'], 404);
+        }
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'username' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'password' => ['sometimes', 'nullable', 'string', 'min:8'],
+            'role' => ['sometimes', 'string', 'in:user,admin'],
+        ]);
+
+        if (count($data) === 0) {
+            return response()->json(['message' => 'Envia almenys un camp editable.'], 422);
+        }
+
+        if (array_key_exists('role', $data)) {
+            $newRole = $data['role'];
+            $willHaveAdmin = $newRole === 'admin';
+            if ($user->hasRole('admin') && ! $willHaveAdmin) {
+                $adminCount = User::query()->role('admin')->count();
+                if ($adminCount <= 1) {
+                    return response()->json(['message' => 'No es pot treure el rol admin a l’últim administrador.'], 422);
+                }
+            }
+            $user->syncRoles([$newRole]);
+        }
+
+        if (array_key_exists('name', $data)) {
+            $user->name = $data['name'];
+        }
+        if (array_key_exists('email', $data)) {
+            $user->email = $data['email'];
+        }
+        if (array_key_exists('username', $data)) {
+            $un = $data['username'];
+            if ($un === null || (is_string($un) && trim($un) === '')) {
+                $user->username = 'u_'.substr(sha1($user->email.(string) microtime(true)), 0, 12);
+            } else {
+                $user->username = trim((string) $un);
+            }
+        }
+        if (array_key_exists('password', $data)) {
+            $pw = $data['password'];
+            if (is_string($pw) && trim($pw) !== '') {
+                $user->password = $pw;
+            }
+        }
+
+        $user->save();
+        $user->load('roles');
+
+        $summaryParts = [];
+        if (array_key_exists('name', $data)) {
+            $summaryParts[] = 'nom';
+        }
+        if (array_key_exists('email', $data)) {
+            $summaryParts[] = 'email';
+        }
+        if (array_key_exists('username', $data)) {
+            $summaryParts[] = 'usuari';
+        }
+        if (array_key_exists('password', $data)) {
+            $pw = $data['password'];
+            if (is_string($pw) && trim($pw) !== '') {
+                $summaryParts[] = 'contrasenya';
+            }
+        }
+        if (array_key_exists('role', $data)) {
+            $summaryParts[] = 'rol';
+        }
+        $summaryJoin = '';
+        $spi = 0;
+        for (; $spi < count($summaryParts); $spi++) {
+            if ($spi > 0) {
+                $summaryJoin = $summaryJoin.', ';
+            }
+            $summaryJoin = $summaryJoin.$summaryParts[$spi];
+        }
+        if ($summaryJoin === '') {
+            $summaryJoin = 'dades';
+        }
+
+        $this->adminAuditLog->record(
+            (int) $actor->id,
+            'user_updated',
+            'User',
+            (int) $user->id,
+            'S\'ha actualitzat l\'usuari «'.$user->name.'» (id '.$user->id.'): '.$summaryJoin.'.',
+            $request->ip()
+        );
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'username' => $user->username,
+            'role' => $this->primaryRoleName($user),
+            'roles' => $this->roleNamesForUser($user),
+        ]);
     }
 
     public function destroy (Request $request, int $userId): JsonResponse
@@ -112,7 +225,20 @@ class AdminUsersController extends Controller
             }
         }
 
+        $deletedId = (int) $user->id;
+        $deletedName = (string) $user->name;
+        $deletedEmail = (string) $user->email;
+
         $user->delete();
+
+        $this->adminAuditLog->record(
+            (int) $actor->id,
+            'user_deleted',
+            'User',
+            $deletedId,
+            'S\'ha eliminat l\'usuari id '.$deletedId.' («'.$deletedName.'», '.$deletedEmail.').',
+            $request->ip()
+        );
 
         return response()->json(['message' => 'Usuari eliminat']);
     }
@@ -189,6 +315,22 @@ class AdminUsersController extends Controller
             'user_id' => $user->id,
             'orders' => $outOrders,
         ]);
+    }
+
+    /**
+     * Un sol rol per usuari (admin o user, preferència admin si coexistissin dades antigues).
+     */
+    private function primaryRoleName (User $user): string
+    {
+        if ($user->hasRole('admin')) {
+            return 'admin';
+        }
+        $names = $this->roleNamesForUser($user);
+        if (count($names) > 0) {
+            return $names[0];
+        }
+
+        return 'user';
     }
 
     /**
