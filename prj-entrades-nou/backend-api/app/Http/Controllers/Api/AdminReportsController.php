@@ -65,7 +65,7 @@ class AdminReportsController extends Controller
             } else {
                 $key = $u->format('Y-m-d H:00:00');
             }
-            if (!array_key_exists($key, $buckets)) {
+            if (! array_key_exists($key, $buckets)) {
                 $buckets[$key] = 0.0;
             }
             $buckets[$key] = $buckets[$key] + (float) $o->total_amount;

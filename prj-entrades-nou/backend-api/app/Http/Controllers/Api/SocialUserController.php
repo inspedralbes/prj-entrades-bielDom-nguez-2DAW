@@ -16,9 +16,7 @@ class SocialUserController extends Controller
 {
     public function __construct(
         private readonly FriendshipQuery $friendshipQuery,
-    )
-    {
-    }
+    ) {}
 
     /**
      * GET /api/social/discover/search?q= — per nom o nom d’usuari (mín. 2 caràcters).
@@ -26,12 +24,12 @@ class SocialUserController extends Controller
     public function search(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
         $raw = $request->query('q', '');
-        if (!is_string($raw)) {
+        if (! is_string($raw)) {
             return response()->json(['users' => []], 200);
         }
 
@@ -75,7 +73,7 @@ class SocialUserController extends Controller
     public function publicProfile(Request $request, string $userId): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

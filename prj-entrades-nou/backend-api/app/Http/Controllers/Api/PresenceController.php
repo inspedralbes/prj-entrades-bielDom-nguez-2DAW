@@ -16,14 +16,12 @@ class PresenceController extends Controller
 {
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
-    )
-    {
-    }
+    ) {}
 
     public function ping(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

@@ -19,14 +19,12 @@ class SocialController extends Controller
     public function __construct(
         private readonly FriendshipQuery $friendshipQuery,
         private readonly SocialNotificationService $socialNotificationService,
-    )
-    {
-    }
+    ) {}
 
     public function friends(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -44,7 +42,7 @@ class SocialController extends Controller
     public function shareEvent(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -58,7 +56,7 @@ class SocialController extends Controller
             return response()->json(['message' => 'No et pots enviar l’esdeveniment a tu mateix.'], 422);
         }
 
-        if (!$this->friendshipQuery->areFriends($user, $to)) {
+        if (! $this->friendshipQuery->areFriends($user, $to)) {
             return response()->json(['message' => 'Cal una amistat acceptada per compartir.'], 403);
         }
 
@@ -75,12 +73,12 @@ class SocialController extends Controller
     public function invitesIndex(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
         $direction = $request->query('direction', 'all');
-        if (!in_array($direction, ['sent', 'received', 'all'], true)) {
+        if (! in_array($direction, ['sent', 'received', 'all'], true)) {
             $direction = 'all';
         }
 
@@ -120,7 +118,7 @@ class SocialController extends Controller
     public function invitesStore(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -141,13 +139,13 @@ class SocialController extends Controller
             ]);
         }
 
-        if (!empty($validated['receiver_id']) && (int) $validated['receiver_id'] === (int) $user->id) {
+        if (! empty($validated['receiver_id']) && (int) $validated['receiver_id'] === (int) $user->id) {
             throw ValidationException::withMessages([
                 'receiver_id' => ['No et pots convidar a tu mateix.'],
             ]);
         }
 
-        if (!empty($validated['receiver_email'])
+        if (! empty($validated['receiver_email'])
             && strcasecmp((string) $validated['receiver_email'], (string) $user->email) === 0) {
             throw ValidationException::withMessages([
                 'receiver_email' => ['No et pots convidar a tu mateix.'],
@@ -158,7 +156,7 @@ class SocialController extends Controller
             ->where('sender_id', $user->id)
             ->where('status', FriendInvite::STATUS_PENDING);
 
-        if (!empty($validated['receiver_id'])) {
+        if (! empty($validated['receiver_id'])) {
             $dup->where('receiver_id', (int) $validated['receiver_id']);
         } else {
             $dup->where('receiver_email', $validated['receiver_email']);
@@ -183,7 +181,7 @@ class SocialController extends Controller
     public function invitesPatch(Request $request, string $inviteId): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -207,7 +205,7 @@ class SocialController extends Controller
             $isReceiver = strcasecmp((string) $invite->receiver_email, (string) $user->email) === 0;
         }
 
-        if (!$isReceiver) {
+        if (! $isReceiver) {
             return response()->json(['message' => 'No autoritzat'], 403);
         }
 

@@ -43,12 +43,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || !$response->successful()) {
+        if ($response === null || ! $response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return null;
         }
 
@@ -114,12 +114,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || !$response->successful()) {
+        if ($response === null || ! $response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return null;
         }
 
@@ -180,12 +180,12 @@ class TicketmasterDiscoveryEventsClient
             return null;
         }
 
-        if ($response === null || !$response->successful()) {
+        if ($response === null || ! $response->successful()) {
             return null;
         }
 
         $data = $response->json();
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return null;
         }
 

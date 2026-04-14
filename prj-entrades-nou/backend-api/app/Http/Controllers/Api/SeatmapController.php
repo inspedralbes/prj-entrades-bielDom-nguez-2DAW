@@ -17,9 +17,7 @@ class SeatmapController extends Controller
         private readonly TicketmasterSeatmapClient $ticketmasterSeatmapClient,
         private readonly PostgresSeatmapFallbackService $postgresSeatmapFallbackService,
         private readonly EventSeatHoldService $eventSeatHoldService,
-    )
-    {
-    }
+    ) {}
 
     public function show(string $eventId): JsonResponse
     {
@@ -80,7 +78,7 @@ class SeatmapController extends Controller
     public function holdSeat(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -121,7 +119,7 @@ class SeatmapController extends Controller
     public function releaseSeat(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -154,7 +152,7 @@ class SeatmapController extends Controller
     public function releaseAllMyHolds(Request $request, string $eventId): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -177,7 +175,7 @@ class SeatmapController extends Controller
     private function extractSoldSeatLayout(Event $event): array
     {
         $layout = $event->seat_layout;
-        if (!is_array($layout)) {
+        if (! is_array($layout)) {
             return [];
         }
 

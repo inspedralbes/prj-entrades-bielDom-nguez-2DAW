@@ -17,9 +17,7 @@ class AdminDiscoveryController extends Controller
     public function __construct(
         private readonly TicketmasterDiscoveryEventsClient $discoveryClient,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
-    )
-    {
-    }
+    ) {}
 
     public function search(Request $request): JsonResponse
     {

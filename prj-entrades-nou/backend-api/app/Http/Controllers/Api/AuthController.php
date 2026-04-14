@@ -15,9 +15,7 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly JwtTokenService $jwtTokenService
-    )
-    {
-    }
+    ) {}
 
     public function register(Request $request): JsonResponse
     {
@@ -40,7 +38,7 @@ class AuthController extends Controller
         ]);
 
         $usernameInput = $validated['username'] ?? '';
-        if (!is_string($usernameInput)) {
+        if (! is_string($usernameInput)) {
             $usernameInput = '';
         }
         $usernameTrim = trim($usernameInput);
@@ -81,7 +79,7 @@ class AuthController extends Controller
         $user = User::query()->whereRaw('LOWER(email) = ?', [$validated['email']])->first();
 
         $hashFromDb = $user !== null ? $user->getRawOriginal('password') : '';
-        if ($user === null || $hashFromDb === '' || !Hash::check($validated['password'], $hashFromDb)) {
+        if ($user === null || $hashFromDb === '' || ! Hash::check($validated['password'], $hashFromDb)) {
             throw ValidationException::withMessages([
                 'email' => ['Credencials incorrectes.'],
             ]);
@@ -172,7 +170,7 @@ class AuthController extends Controller
             if (strlen($candidate) > 255) {
                 $candidate = substr($candidate, 0, 255);
             }
-            if (!User::query()->where('username', $candidate)->exists()) {
+            if (! User::query()->where('username', $candidate)->exists()) {
                 return $candidate;
             }
             $n = $n + 1;

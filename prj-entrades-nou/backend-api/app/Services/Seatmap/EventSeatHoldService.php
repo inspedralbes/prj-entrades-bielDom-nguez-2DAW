@@ -14,9 +14,7 @@ class EventSeatHoldService
 {
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
-    )
-    {
-    }
+    ) {}
 
     public function redisSeatKey(int|string $eventId, string $seatId): string
     {
@@ -36,12 +34,12 @@ class EventSeatHoldService
      */
     public function holdSeat(Event $event, string $seatId, int $userId): array
     {
-        if (!CinemaVenueLayout::isValidSeatId($seatId)) {
+        if (! CinemaVenueLayout::isValidSeatId($seatId)) {
             return ['ok' => false, 'reason' => 'invalid_seat', 'message' => 'Seient no vàlid per al mapa'];
         }
 
         $layout = $event->seat_layout;
-        if (!is_array($layout)) {
+        if (! is_array($layout)) {
             $layout = [];
         }
 
@@ -91,7 +89,7 @@ class EventSeatHoldService
 
         $pattern = 'user:'.(string) $userId.':event:*:held_seats';
         $keys = $conn->keys($pattern);
-        if (!is_array($keys)) {
+        if (! is_array($keys)) {
             return [];
         }
 
@@ -99,7 +97,7 @@ class EventSeatHoldService
         for ($i = 0; $i < $n; $i++) {
             $indexKey = $keys[$i];
             $seatIds = $conn->smembers($indexKey);
-            if (!is_array($seatIds)) {
+            if (! is_array($seatIds)) {
                 continue;
             }
             $evId = $this->parseEventIdFromUserIndexKey($indexKey);
@@ -168,7 +166,7 @@ class EventSeatHoldService
             $conn = Redis::connection();
             $pattern = 'event:'.(string) $eventId.':seat:*';
             $keys = $conn->keys($pattern);
-            if (!is_array($keys)) {
+            if (! is_array($keys)) {
                 return $out;
             }
 
@@ -202,7 +200,7 @@ class EventSeatHoldService
         $indexKey = $this->userEventHoldsKey($userId, $eventId);
         $seatIds = $conn->smembers($indexKey);
         $released = [];
-        if (!is_array($seatIds)) {
+        if (! is_array($seatIds)) {
             return $released;
         }
 
@@ -243,7 +241,7 @@ class EventSeatHoldService
      */
     private function isSeatSoldInLayout(array $layout, string $seatId): bool
     {
-        if (!array_key_exists($seatId, $layout)) {
+        if (! array_key_exists($seatId, $layout)) {
             return false;
         }
 

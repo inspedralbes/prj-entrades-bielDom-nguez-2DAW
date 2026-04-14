@@ -17,9 +17,7 @@ class TicketmasterEventImportService
 {
     public function __construct(
         private readonly TicketmasterDiscoveryEventsClient $discoveryClient,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return array{
@@ -60,7 +58,7 @@ class TicketmasterEventImportService
 
             $eventRows = $payload['events'];
             foreach ($eventRows as $item) {
-                if (!is_array($item)) {
+                if (! is_array($item)) {
                     continue;
                 }
 
@@ -103,7 +101,7 @@ class TicketmasterEventImportService
                     continue;
                 }
 
-                if (!$this->isLargeEvent($item)) {
+                if (! $this->isLargeEvent($item)) {
                     $skippedExisting++;
 
                     continue;
@@ -112,7 +110,7 @@ class TicketmasterEventImportService
                 $posterUrl = $this->extractPosterImageUrl($item);
                 $existing = Event::query()->where('external_tm_id', $extEventId)->first();
                 if ($existing !== null) {
-                    if (!$existing->tm_sync_paused && $posterUrl !== null && $existing->image_url !== $posterUrl) {
+                    if (! $existing->tm_sync_paused && $posterUrl !== null && $existing->image_url !== $posterUrl) {
                         $existing->image_url = $posterUrl;
                         $existing->save();
                     }
@@ -218,7 +216,7 @@ class TicketmasterEventImportService
         $posterUrl = $this->extractPosterImageUrl($item);
         $existing = Event::query()->where('external_tm_id', $externalId)->first();
         if ($existing !== null) {
-            if (!$existing->tm_sync_paused && $posterUrl !== null && $existing->image_url !== $posterUrl) {
+            if (! $existing->tm_sync_paused && $posterUrl !== null && $existing->image_url !== $posterUrl) {
                 $existing->image_url = $posterUrl;
                 $existing->save();
             }
@@ -260,18 +258,18 @@ class TicketmasterEventImportService
      */
     private function extractFirstVenue(array $item): ?array
     {
-        if (!isset($item['_embedded']['venues'])) {
+        if (! isset($item['_embedded']['venues'])) {
             return null;
         }
         $venues = $item['_embedded']['venues'];
-        if (!is_array($venues)) {
+        if (! is_array($venues)) {
             return null;
         }
         if (count($venues) === 0) {
             return null;
         }
         $first = $venues[0];
-        if (!is_array($first)) {
+        if (! is_array($first)) {
             return null;
         }
 
@@ -375,11 +373,11 @@ class TicketmasterEventImportService
      */
     private function extractStartsAt(array $item): ?Carbon
     {
-        if (!isset($item['dates']) || !is_array($item['dates'])) {
+        if (! isset($item['dates']) || ! is_array($item['dates'])) {
             return null;
         }
         $dates = $item['dates'];
-        if (!isset($dates['start']) || !is_array($dates['start'])) {
+        if (! isset($dates['start']) || ! is_array($dates['start'])) {
             return null;
         }
         $start = $dates['start'];
@@ -407,15 +405,15 @@ class TicketmasterEventImportService
 
     private function extractCategory(array $item): ?string
     {
-        if (!isset($item['classifications']) || !is_array($item['classifications'])) {
+        if (! isset($item['classifications']) || ! is_array($item['classifications'])) {
             return null;
         }
         $list = $item['classifications'];
         foreach ($list as $c) {
-            if (!is_array($c)) {
+            if (! is_array($c)) {
                 continue;
             }
-            if (!isset($c['segment']) || !is_array($c['segment'])) {
+            if (! isset($c['segment']) || ! is_array($c['segment'])) {
                 continue;
             }
             $seg = $c['segment'];
@@ -435,7 +433,7 @@ class TicketmasterEventImportService
      */
     private function extractAndMapCategory(array $item): ?string
     {
-        if (!isset($item['classifications']) || !is_array($item['classifications'])) {
+        if (! isset($item['classifications']) || ! is_array($item['classifications'])) {
             return null;
         }
 
@@ -452,7 +450,7 @@ class TicketmasterEventImportService
 
         $list = $item['classifications'];
         foreach ($list as $c) {
-            if (!is_array($c)) {
+            if (! is_array($c)) {
                 continue;
             }
 
@@ -473,11 +471,11 @@ class TicketmasterEventImportService
                 }
             }
 
-            if (!isset($c['segment']) || !is_array($c['segment'])) {
+            if (! isset($c['segment']) || ! is_array($c['segment'])) {
                 continue;
             }
             $seg = $c['segment'];
-            if (!isset($seg['name']) || !is_string($seg['name'])) {
+            if (! isset($seg['name']) || ! is_string($seg['name'])) {
                 continue;
             }
 
@@ -520,7 +518,7 @@ class TicketmasterEventImportService
             }
         }
 
-        if (!isset($item['info']) && !isset($item['pleaseNote'])) {
+        if (! isset($item['info']) && ! isset($item['pleaseNote'])) {
             return true;
         }
 
@@ -535,7 +533,7 @@ class TicketmasterEventImportService
      */
     private function extractPosterImageUrl(array $item): ?string
     {
-        if (!isset($item['images']) || !is_array($item['images']) || $item['images'] === []) {
+        if (! isset($item['images']) || ! is_array($item['images']) || $item['images'] === []) {
             return null;
         }
 
@@ -543,11 +541,11 @@ class TicketmasterEventImportService
         $bestArea = -1;
 
         foreach ($item['images'] as $img) {
-            if (!is_array($img) || !isset($img['url']) || !is_string($img['url'])) {
+            if (! is_array($img) || ! isset($img['url']) || ! is_string($img['url'])) {
                 continue;
             }
             $url = trim($img['url']);
-            if ($url === '' || !str_starts_with($url, 'http')) {
+            if ($url === '' || ! str_starts_with($url, 'http')) {
                 continue;
             }
 
@@ -593,7 +591,7 @@ class TicketmasterEventImportService
      */
     private function extractPrice(array $item): ?float
     {
-        if (!isset($item['priceRanges']) || !is_array($item['priceRanges'])) {
+        if (! isset($item['priceRanges']) || ! is_array($item['priceRanges'])) {
             return null;
         }
 
@@ -603,7 +601,7 @@ class TicketmasterEventImportService
         }
 
         $first = $ranges[0];
-        if (!is_array($first) || !isset($first['min'])) {
+        if (! is_array($first) || ! isset($first['min'])) {
             return null;
         }
 
