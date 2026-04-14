@@ -27,7 +27,7 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -88,7 +88,7 @@ class OrderController extends Controller
     public function confirmPayment(Request $request, Order $order): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -145,7 +145,7 @@ class OrderController extends Controller
     public function storeQuantity(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -196,7 +196,7 @@ class OrderController extends Controller
     public function storeCinemaSeats(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -253,7 +253,7 @@ class OrderController extends Controller
     public function storeSeats(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

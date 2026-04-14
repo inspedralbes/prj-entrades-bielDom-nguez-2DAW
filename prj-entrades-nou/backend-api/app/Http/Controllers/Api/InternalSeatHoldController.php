@@ -11,7 +11,9 @@ class InternalSeatHoldController extends Controller
 {
     public function __construct(
         private readonly EventSeatHoldService $eventSeatHoldService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * POST /api/internal/seat-holds/release-user — cridat pel socket-server en desconnexió.

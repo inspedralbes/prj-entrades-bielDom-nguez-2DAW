@@ -39,7 +39,7 @@ class SocketTicketSvgClient
                 'text' => $qrText,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
 

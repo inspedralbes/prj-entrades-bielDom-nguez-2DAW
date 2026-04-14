@@ -25,7 +25,7 @@ class LocalTicketSvgQrService
 
         try {
             $builder = new Builder(
-                writer: new SvgWriter,
+                writer: new SvgWriter(),
                 writerOptions: [
                     SvgWriter::WRITER_OPTION_EXCLUDE_XML_DECLARATION => true,
                 ],

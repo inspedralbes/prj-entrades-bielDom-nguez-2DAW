@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\SeatmapController;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
@@ -20,7 +19,8 @@ class AdminMonitorController extends Controller
 {
     public function __construct(
         private readonly EventSeatHoldService $eventSeatHoldService,
-    ) {}
+    ) {
+    }
 
     public function show(Request $request, string $eventId): JsonResponse
     {

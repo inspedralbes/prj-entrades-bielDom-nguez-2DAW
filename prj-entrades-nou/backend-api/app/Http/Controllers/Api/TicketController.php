@@ -20,7 +20,9 @@ class TicketController extends Controller
         private readonly JwtTicketService $jwtTicketService,
         private readonly SocketTicketSvgClient $socketTicketSvgClient,
         private readonly LocalTicketSvgQrService $localTicketSvgQrService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * GET /api/tickets — historial d’entrades de l’usuari autenticat (T028).
@@ -28,7 +30,7 @@ class TicketController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -91,7 +93,7 @@ class TicketController extends Controller
     public function showQr(Request $request, string $ticketId): Response|JsonResponse
     {
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

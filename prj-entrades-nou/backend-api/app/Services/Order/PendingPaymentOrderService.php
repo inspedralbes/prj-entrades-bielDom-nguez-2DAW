@@ -16,7 +16,9 @@ class PendingPaymentOrderService
     public function __construct(
         private readonly SeatHoldService $seatHoldService,
         private readonly PaymentStubService $paymentStubService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * @return array{

@@ -16,7 +16,9 @@ class HoldController extends Controller
     public function __construct(
         private readonly SeatHoldService $seatHoldService,
         private readonly JwtTokenService $jwtTokenService,
-    ) {}
+    )
+    {
+    }
 
     public function store(Request $request, string $eventId): JsonResponse
     {
@@ -156,7 +158,7 @@ class HoldController extends Controller
     private function optionalUserId(Request $request): ?int
     {
         $header = $request->header('Authorization', '');
-        if (!str_starts_with($header, 'Bearer ')) {
+        if (! str_starts_with($header, 'Bearer ')) {
             return null;
         }
 

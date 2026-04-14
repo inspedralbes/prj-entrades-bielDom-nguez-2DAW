@@ -50,7 +50,7 @@ class UserProfileController extends Controller
         }
         if ($wantsPasswordChange) {
             $current = $request->input('current_password');
-            if (!is_string($current) || !Hash::check($current, $user->password)) {
+            if (! is_string($current) || ! Hash::check($current, $user->password)) {
                 throw ValidationException::withMessages([
                     'current_password' => ['La contrasenya actual no és correcta.'],
                 ]);

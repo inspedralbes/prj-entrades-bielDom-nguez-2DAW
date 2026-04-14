@@ -13,7 +13,9 @@ class AuthenticateJwt
 {
     public function __construct(
         private readonly JwtTokenService $jwtTokenService
-    ) {}
+    )
+    {
+    }
 
     public function handle(Request $request, Closure $next): Response
     {

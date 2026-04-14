@@ -15,7 +15,9 @@ class SocialNotificationService
 {
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
-    ) {}
+    )
+    {
+    }
 
     public function recordEventShare(User $actor, User $recipient, Event $event): void
     {

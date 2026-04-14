@@ -22,8 +22,7 @@ class AdminController extends Controller
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
         private readonly AdminDashboardMetricsService $adminDashboardMetrics,
-    ) {
-    }
+    ) {}
 
     public function summary(Request $request): JsonResponse
     {

@@ -20,7 +20,9 @@ class OrderPaymentConfirmationService
         private readonly SeatHoldService $seatHoldService,
         private readonly JwtTicketService $jwtTicketService,
         private readonly EventSeatHoldService $eventSeatHoldService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Confirmació final (stub passarel·la): SoT PostgreSQL; si falla, missatge fix i alliberament de hold.
@@ -81,7 +83,7 @@ class OrderPaymentConfirmationService
                         && (string) $seat->current_hold_id === (string) $holdUuid
                         && ($seat->held_until === null || $seat->held_until->isFuture());
 
-                    if (!$heldOk) {
+                    if (! $heldOk) {
                         throw new \RuntimeException('seat_unavailable');
                     }
                 }
@@ -194,7 +196,7 @@ class OrderPaymentConfirmationService
                 }
 
                 $layout = $event->seat_layout;
-                if (!is_array($layout)) {
+                if (! is_array($layout)) {
                     $layout = [];
                 }
 
@@ -281,7 +283,7 @@ class OrderPaymentConfirmationService
      */
     private function isSeatMarkedSoldInLayout(array $layout, string $seatId): bool
     {
-        if (!array_key_exists($seatId, $layout)) {
+        if (! array_key_exists($seatId, $layout)) {
             return false;
         }
 

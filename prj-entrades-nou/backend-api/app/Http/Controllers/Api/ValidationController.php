@@ -12,7 +12,9 @@ class ValidationController extends Controller
 {
     public function __construct(
         private readonly TicketScanValidationService $ticketScanValidationService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * POST /api/validation/scan — JWT d’API (validador) + cos amb JWT de l’entrada (QR).
@@ -24,7 +26,7 @@ class ValidationController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

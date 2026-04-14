@@ -13,7 +13,9 @@ class QuantityPurchaseService
 {
     public function __construct(
         private readonly PaymentStubService $paymentStubService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Create an order for quantity-based purchase (no seat selection).

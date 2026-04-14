@@ -13,14 +13,16 @@ class TicketScanValidationService
     public function __construct(
         private readonly JwtTicketService $jwtTicketService,
         private readonly InternalSocketNotifier $socketNotifier,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Valida el JWT llegit del QR, marca l’entrada com a utilitzada i notifica el titular per Socket (T030–T031).
      */
     public function validateAndMarkUsed(User $validator, string $ticketJwt): Ticket
     {
-        if (!$validator->hasRole('validator')) {
+        if (! $validator->hasRole('validator')) {
             abort(403, 'Només el personal validador pot escanejar entrades.');
         }
 
@@ -30,7 +32,7 @@ class TicketScanValidationService
             abort(400, 'Token d’entrada invàlid o caducat.');
         }
 
-        if (!isset($claims->typ) || (string) $claims->typ !== 'ticket') {
+        if (! isset($claims->typ) || (string) $claims->typ !== 'ticket') {
             abort(400, 'Token d’entrada invàlid.');
         }
 
