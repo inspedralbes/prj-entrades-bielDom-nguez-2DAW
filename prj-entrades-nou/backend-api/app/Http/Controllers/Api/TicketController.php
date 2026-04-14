@@ -30,7 +30,7 @@ class TicketController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -93,7 +93,7 @@ class TicketController extends Controller
     public function showQr(Request $request, string $ticketId): Response|JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

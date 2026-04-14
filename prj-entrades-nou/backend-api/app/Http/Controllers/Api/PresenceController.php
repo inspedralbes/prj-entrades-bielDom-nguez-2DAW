@@ -23,7 +23,7 @@ class PresenceController extends Controller
     public function ping(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

@@ -13,7 +13,7 @@ class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 
@@ -42,7 +42,7 @@ class NotificationController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

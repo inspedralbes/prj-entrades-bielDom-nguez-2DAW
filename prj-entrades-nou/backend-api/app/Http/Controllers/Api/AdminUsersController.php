@@ -54,7 +54,7 @@ class AdminUsersController extends Controller
             $username = 'u_'.substr(sha1($data['email'].microtime(true)), 0, 12);
         }
 
-        $user = new User();
+        $user = new User;
         $user->name = $data['name'];
         $user->username = $username;
         $user->email = $data['email'];
@@ -66,7 +66,7 @@ class AdminUsersController extends Controller
             $n = count($roles);
             for ($i = 0; $i < $n; $i++) {
                 $rn = $roles[$i];
-                if (! is_string($rn)) {
+                if (!is_string($rn)) {
                     continue;
                 }
                 if ($rn === '') {
@@ -92,7 +92,7 @@ class AdminUsersController extends Controller
     public function destroy(Request $request, int $userId): JsonResponse
     {
         $actor = $request->user();
-        if (! $actor instanceof User) {
+        if (!$actor instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

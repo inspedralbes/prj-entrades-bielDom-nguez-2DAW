@@ -19,8 +19,7 @@ class AdminMonitorController extends Controller
 {
     public function __construct(
         private readonly EventSeatHoldService $eventSeatHoldService,
-    ) {
-    }
+    ) {}
 
     public function show(Request $request, string $eventId): JsonResponse
     {

@@ -34,7 +34,7 @@ class TicketTransferService
             return ['ok' => false, 'http_status' => 422, 'message' => 'El destinatari ha de ser un altre usuari.'];
         }
 
-        if (! $this->friendshipQuery->areFriends($from, $to)) {
+        if (!$this->friendshipQuery->areFriends($from, $to)) {
             return ['ok' => false, 'http_status' => 403, 'message' => 'Cal una amistat acceptada per transferir l’entrada.'];
         }
 

@@ -34,11 +34,11 @@ class InternalSocketNotifierTest extends TestCase
         Http::assertSentCount(1);
         Http::assertSent(function ($request) {
             $url = $request->url();
-            if (! str_contains($url, 'fake-socket.test') || ! str_contains($url, '/internal/emit')) {
+            if (!str_contains($url, 'fake-socket.test') || !str_contains($url, '/internal/emit')) {
                 return false;
             }
             $ct = $request->header('Content-Type');
-            if ($ct === null || ! str_contains(implode('', $ct), 'application/json')) {
+            if ($ct === null || !str_contains(implode('', $ct), 'application/json')) {
                 return false;
             }
             $data = $request->data();
@@ -49,7 +49,7 @@ class InternalSocketNotifierTest extends TestCase
                 return false;
             }
             $pl = $data['payload'] ?? null;
-            if (! is_array($pl)) {
+            if (!is_array($pl)) {
                 return false;
             }
             if (($pl['status'] ?? null) !== 'held') {

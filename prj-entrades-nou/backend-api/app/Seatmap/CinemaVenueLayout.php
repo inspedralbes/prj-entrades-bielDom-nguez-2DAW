@@ -64,7 +64,7 @@ final class CinemaVenueLayout
 
     public static function isValidSeatId(string $seatId): bool
     {
-        if (! preg_match('/^section_1-row_(\d+)-seat_(\d+)$/', $seatId, $m)) {
+        if (!preg_match('/^section_1-row_(\d+)-seat_(\d+)$/', $seatId, $m)) {
             return false;
         }
 

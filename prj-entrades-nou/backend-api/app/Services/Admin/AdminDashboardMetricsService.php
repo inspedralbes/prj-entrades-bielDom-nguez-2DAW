@@ -108,7 +108,7 @@ class AdminDashboardMetricsService
     private function buildSyncAlertsFromCache(): array
     {
         $cached = Cache::get(self::CACHE_KEY_LAST_DISCOVERY);
-        if (! is_array($cached)) {
+        if (!is_array($cached)) {
             return [];
         }
 
@@ -120,7 +120,7 @@ class AdminDashboardMetricsService
         $out = [];
         if (isset($cached['errors']) && is_array($cached['errors'])) {
             foreach ($cached['errors'] as $msg) {
-                if (! is_string($msg)) {
+                if (!is_string($msg)) {
                     continue;
                 }
                 if ($msg === '') {

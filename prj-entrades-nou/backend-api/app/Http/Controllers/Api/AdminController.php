@@ -176,7 +176,7 @@ class AdminController extends Controller
             'image_url' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $event = new Event();
+        $event = new Event;
         $event->external_tm_id = $data['external_tm_id'];
         $event->name = $data['name'];
         $event->venue_id = $data['venue_id'];

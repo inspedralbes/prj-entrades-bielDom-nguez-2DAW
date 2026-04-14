@@ -14,9 +14,7 @@ class SeatHoldService
 {
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
-    )
-    {
-    }
+    ) {}
 
     public function cacheKeyForHold(string $holdUuid): string
     {
@@ -166,7 +164,7 @@ class SeatHoldService
         }
 
         $payload = json_decode((string) $raw, true);
-        if (! is_array($payload)) {
+        if (!is_array($payload)) {
             return ['ok' => false, 'reason' => 'hold_not_found'];
         }
 
@@ -174,7 +172,7 @@ class SeatHoldService
             return ['ok' => false, 'reason' => 'session_mismatch'];
         }
 
-        if (! empty($payload['login_grace_applied'])) {
+        if (!empty($payload['login_grace_applied'])) {
             return ['ok' => false, 'reason' => 'grace_already_applied'];
         }
 
@@ -221,7 +219,7 @@ class SeatHoldService
         }
 
         $payload = json_decode((string) $raw, true);
-        if (! is_array($payload)) {
+        if (!is_array($payload)) {
             Cache::forget($cacheKey);
             $this->releaseSeatsInDb($holdUuid);
 
@@ -234,7 +232,7 @@ class SeatHoldService
             $userOk = true;
         }
 
-        if (! $sessionOk && ! $userOk) {
+        if (!$sessionOk && !$userOk) {
             return ['ok' => false, 'reason' => 'forbidden'];
         }
 
@@ -281,7 +279,7 @@ class SeatHoldService
         }
 
         $payload = json_decode((string) $raw, true);
-        if (! is_array($payload)) {
+        if (!is_array($payload)) {
             return null;
         }
 
@@ -310,7 +308,7 @@ class SeatHoldService
         }
 
         $payload = json_decode((string) $raw, true);
-        if (! is_array($payload)) {
+        if (!is_array($payload)) {
             return ['ok' => false, 'reason' => 'hold_not_found'];
         }
 
@@ -318,7 +316,7 @@ class SeatHoldService
             return ['ok' => false, 'reason' => 'session_mismatch'];
         }
 
-        if (empty($payload['expires_at']) || empty($payload['seat_ids']) || ! is_array($payload['seat_ids'])) {
+        if (empty($payload['expires_at']) || empty($payload['seat_ids']) || !is_array($payload['seat_ids'])) {
             return ['ok' => false, 'reason' => 'hold_not_found'];
         }
 

@@ -21,7 +21,7 @@ class TicketTransferController extends Controller
     public function store(Request $request, string $ticketId): JsonResponse
     {
         $user = $request->user();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticat'], 401);
         }
 

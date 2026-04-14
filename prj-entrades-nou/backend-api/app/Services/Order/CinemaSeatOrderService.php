@@ -40,7 +40,7 @@ class CinemaSeatOrderService
             if ($k === '') {
                 return ['ok' => false, 'reason' => 'invalid_seat', 'http_status' => 422, 'message' => 'Seient no vàlid'];
             }
-            if (! CinemaVenueLayout::isValidSeatId($k)) {
+            if (!CinemaVenueLayout::isValidSeatId($k)) {
                 return ['ok' => false, 'reason' => 'invalid_seat', 'http_status' => 422, 'message' => 'Seient no vàlid'];
             }
             if (isset($seen[$k])) {
@@ -56,7 +56,7 @@ class CinemaSeatOrderService
         }
 
         $layout = $event->seat_layout;
-        if (! is_array($layout)) {
+        if (!is_array($layout)) {
             $layout = [];
         }
 
@@ -113,7 +113,7 @@ class CinemaSeatOrderService
      */
     private function isSeatSoldInLayout(array $layout, string $seatId): bool
     {
-        if (! array_key_exists($seatId, $layout)) {
+        if (!array_key_exists($seatId, $layout)) {
             return false;
         }
 
