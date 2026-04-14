@@ -8,7 +8,6 @@
         <NuxtLink to="/admin/events">Esdeveniments</NuxtLink>
         <NuxtLink to="/admin/reports">Informes</NuxtLink>
         <NuxtLink to="/admin/users">Usuaris</NuxtLink>
-        <NuxtLink to="/validator/scan">Control d’accés / escàner</NuxtLink>
       </nav>
     </aside>
     <div class="admin-main">

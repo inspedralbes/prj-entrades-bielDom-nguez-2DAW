@@ -40,12 +40,9 @@ L’equip i els agents han de seguir el document **`WORKFLOW.md`** (mateix direc
 
 ### D2: Comptador global d’usuaris “connectats”
 
-**Decisió**: Implementar **presència** amb una definició explícita triada al desenvolupament, p. ex.:
+**Decisió**: **Presència** via `POST /api/presence/ping` (JWT) cada ~30 s des del client (`plugins/presence-ping.client.js`): Laravel escriu `user_id` al ZSET Redis `presence:online_ts` amb score = timestamp; es netegen membres més antics que la finestra (TTL lògic). El recompte `online_users` del dashboard ve del **mateix ZSET** (`zcard` després de neteja). El socket emet `admin:metrics` després del ping (i des del resum) per refrescar el panell en temps real.
 
-- connexió al **namespace públic o autenticat** del socket amb **heartbeat** (p. ex. cada 30 s), i recompte en **Redis** (`INCR`/`DECR` o set amb TTL), o
-- recompte derivat de **sessions** actives (més costós).
-
-**Pendent**: concretar en implementació (vegeu *Open Questions*).
+**Rationale**: No cal `INCR` global de connexions Socket: el ping REST funciona també sense WebSocket i tolera fallades de Redis (try/catch al controlador).
 
 ### D3: Ingressos del dia
 
@@ -69,7 +66,7 @@ L’equip i els agents han de seguir el document **`WORKFLOW.md`** (mateix direc
 
 ### D8: Eliminació d’usuaris
 
-**Decisió**: **Hard delete** només si les FK ho permeten (o cascade documentada); si no, **policy** explícita (bloqueig, missatge) o **anonimització** — decisió de dades abans d’implementar el botó “Eliminar”.
+**Decisió**: **Hard delete** via `DELETE /api/admin/users/{id}` si les FK ho permeten; no es pot eliminar l’últim `admin` ni l’usuari autenticat que fa la petició (vegeu `AdminUsersController::destroy`).
 
 ## Risks / Trade-offs
 

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint": "node --check composables/useAdminDashboard.js && node --check plugins/presence-ping.client.js && node --check stores/adminDashboard.js",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",

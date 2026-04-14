@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use DateTimeZone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Redis;
 
 /**
  * Mètriques agregades per al dashboard d’administració (font: PostgreSQL via Eloquent).
@@ -76,13 +77,29 @@ class AdminDashboardMetricsService
 
         $syncAlerts = $this->buildSyncAlertsFromCache();
 
+        $online = $this->countOnlineUsersFromPresenceZset();
+
         return [
             'stub' => false,
             'revenue_today' => $revenueStr,
             'pending_payment_count' => $pendingPaymentCount,
             'sync_alerts' => $syncAlerts,
-            'online_users' => 0,
+            'online_users' => $online,
         ];
+    }
+
+    private function countOnlineUsersFromPresenceZset (): int
+    {
+        try {
+            $conn = Redis::connection();
+            $now = time();
+            $cutoff = $now - 120;
+            $conn->zremrangebyscore('presence:online_ts', '-inf', $cutoff);
+
+            return (int) $conn->zcard('presence:online_ts');
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 
     /**

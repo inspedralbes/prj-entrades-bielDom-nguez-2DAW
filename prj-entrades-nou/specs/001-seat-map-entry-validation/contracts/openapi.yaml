@@ -577,274 +577,497 @@ paths:
         '403':
           description: Rol Administrador requerit
 
-/api/admin/discovery/sync:
+  /api/admin/discovery/sync:
     post:
       summary: Disparar sincronització amb Ticketmaster Discovery Feed (Administrador)
       tags: [Admin]
       security:
         - bearerAuth: []
       responses:
-        '202':
-          description: Job d'importació acceptat
+        '200':
+          description: Sincronització completada (resposta JSON amb recomptes)
         '403':
           description: Rol Administrador requerit
 
-/api/health:
-  get:
-    summary: Health check del servei
-    tags: [Health]
-    responses:
-      '200':
-        description: Servei operatiu
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: ok
+  /api/presence/ping:
+    post:
+      summary: Heartbeat de presència (ZSET Redis; alimenta recompte online_users)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: No autenticat
 
-/api/feed/featured:
-  get:
-    summary: Events destacats (públic)
-    tags: [Feed]
-    responses:
-      '200':
-        description: Llista d'esdeveniments destacats
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/EventSummary'
-
-/api/feed/for-you:
-  get:
-    summary: Events recomanats per a l'usuari (autenticat)
-    tags: [Feed]
-    security:
-      - bearerAuth: []
-    responses:
-      '200':
-        description: Llista d'esdeveniments personalitzats
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/EventSummary'
-
-/api/search/events:
-  get:
-    summary: Cercador d'esdeveniments (públic)
-    tags: [Search]
-    parameters:
-      - name: q
-        in: query
-        description: Terme de cerca
-        schema:
-          type: string
-      - name: date
-        in: query
-        description: Filtre per data (YYYY-MM-DD)
-        schema:
-          type: string
-      - name: location
-        in: query
-        description: Filtre per localització
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Resultats de cerca
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/EventSummary'
-                pagination:
-                  $ref: '#/components/schemas/Pagination'
-      '400':
-        description: Paràmetres de cerca invàlids
-
-/api/saved-events:
-  get:
-    summary: Esdeveniments guardats per l'usuari (autenticat)
-    tags: [SavedEvents]
-    security:
-      - bearerAuth: []
-    responses:
-      '200':
-        description: Llista d'esdeveniments guardats
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/EventSummary'
-  post:
-    summary: Guardar un esdeveniment (autenticat)
-    tags: [SavedEvents]
-    security:
-      - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
+  /api/admin/discovery/search:
+    get:
+      summary: Cerca Discovery Ticketmaster (keyword, paginació)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: keyword
+          in: query
+          required: true
           schema:
-            type: object
-            required: [event_id]
-            properties:
-              event_id:
-                type: string
-    responses:
-      '201':
-        description: Esdeveniment guardat
-      '409':
-        description: Ja guardat anteriorment
-
-/api/saved-events/{eventId}:
-  delete:
-    summary: Eliminar esdeveniment guardat (autenticat)
-    tags: [SavedEvents]
-    security:
-      - bearerAuth: []
-    parameters:
-      - name: eventId
-        in: path
-        required: true
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Esdeveniment eliminat dels guardats
-      '404':
-        description: No estava guardat
-
-/api/user/profile:
-  get:
-    summary: Perfil complet de l'usuari (autenticat)
-    tags: [User]
-    security:
-      - bearerAuth: []
-    responses:
-      '200':
-        description: Dades completes del perfil
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProfileFull'
-      '401':
-        description: No autenticat
-  patch:
-    summary: Actualitzar perfil de l'usuari (autenticat)
-    tags: [User]
-    security:
-      - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
+            type: string
+        - name: page
+          in: query
           schema:
-            $ref: '#/components/schemas/UserProfileUpdateRequest'
-    responses:
-      '200':
-        description: Perfil actualitzat
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserProfileFull'
-      '400':
-        description: Dades invàlides
-
-/api/user/settings:
-  patch:
-    summary: Actualitzar configuració de l'usuari (autenticat)
-    tags: [User]
-    security:
-      - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
+            type: integer
+            default: 0
+        - name: size
+          in: query
           schema:
-            $ref: '#/components/schemas/UserSettingsUpdateRequest'
-    responses:
-      '200':
-        description: Configuració actualitzada
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserSettings'
-      '400':
-        description: Configuració invàlida
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Llista TM normalitzada
+        '422':
+          description: Falta keyword
+        '503':
+          description: Discovery no disponible
 
-/api/holds/{holdId}/time:
-  get:
-    summary: Obtenir temps restant d'un hold (autenticat o anònim)
-    tags: [Holds]
-    parameters:
-      - name: holdId
-        in: path
+  /api/admin/discovery/import:
+    post:
+      summary: Importar esdeveniment TM per external_tm_id
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      requestBody:
         required: true
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Temps restant del hold
         content:
           application/json:
             schema:
               type: object
+              required: [external_tm_id]
               properties:
-                hold_id:
+                external_tm_id:
                   type: string
-                expires_at:
-                  type: string
-                  format: date-time
-                remaining_seconds:
-                  type: integer
-      '404':
-        description: Hold inexistent o expirat
+      responses:
+        '201':
+          description: Importat
+        '422':
+          description: Error d’importació
 
-/api/orders/{order}/confirm-payment:
-  post:
-    summary: Confirmar pagament d'una comanda (autenticat)
-    tags: [Orders]
-    security:
-      - bearerAuth: []
-    parameters:
-      - name: order
-        in: path
+  /api/admin/events:
+    get:
+      summary: Llista esdeveniments (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: hidden
+          in: query
+          schema:
+            type: string
+            enum: [include, only]
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginació Laravel
+    post:
+      summary: Crear esdeveniment manual
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Creat
+
+  /api/admin/events/{eventId}:
+    patch:
+      summary: Actualitzar esdeveniment
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Actualitzat
+    delete:
+      summary: Ocultar (sense force) o eliminar (force=1)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: force
+          in: query
+          schema:
+            type: string
+            enum: ['1']
+      responses:
+        '200':
+          description: Ocultat o eliminat
+
+  /api/admin/events/{eventId}/monitor:
+    get:
+      summary: Mètriques i mapa fusionat per monitor admin
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: capacity, venuts, holds, seatmap
+
+  /api/admin/users:
+    get:
+      summary: Llista usuaris (paginat)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+    post:
+      summary: Crear usuari amb rols
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+
+  /api/admin/users/{userId}:
+    delete:
+      summary: Eliminar usuari (restriccions negoci)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+  /api/admin/users/{userId}/orders:
+    get:
+      summary: Comandes i línies de tiquet (validació, transferència)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+  /api/admin/reports/sales:
+    get:
+      summary: Sèrie temporal de vendes
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: event_id
+          in: query
+          schema:
+            type: integer
+        - name: bucket
+          in: query
+          schema:
+            type: string
+            enum: [hour, day]
+
+  /api/admin/reports/occupancy:
+    get:
+      summary: Ocupació venuts vs aforament
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: event_id
+          in: query
+          required: true
+          schema:
+            type: integer
+
+  /api/health:
+    get:
+      summary: Health check del servei
+      tags: [Health]
+      responses:
+        '200':
+          description: Servei operatiu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  
+  /api/feed/featured:
+    get:
+      summary: Events destacats (públic)
+      tags: [Feed]
+      responses:
+        '200':
+          description: Llista d'esdeveniments destacats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventSummary'
+  
+  /api/feed/for-you:
+    get:
+      summary: Events recomanats per a l'usuari (autenticat)
+      tags: [Feed]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Llista d'esdeveniments personalitzats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventSummary'
+  
+  /api/search/events:
+    get:
+      summary: Cercador d'esdeveniments (públic)
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          description: Terme de cerca
+          schema:
+            type: string
+        - name: date
+          in: query
+          description: Filtre per data (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filtre per localització
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resultats de cerca
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          description: Paràmetres de cerca invàlids
+  
+  /api/saved-events:
+    get:
+      summary: Esdeveniments guardats per l'usuari (autenticat)
+      tags: [SavedEvents]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Llista d'esdeveniments guardats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventSummary'
+    post:
+      summary: Guardar un esdeveniment (autenticat)
+      tags: [SavedEvents]
+      security:
+        - bearerAuth: []
+      requestBody:
         required: true
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Pagament confirmat
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderConfirmedResponse'
-      '400':
-        description: Comanda no vàlida o ja pagada
-      '409':
-        description: Estat incompatible
-
+              type: object
+              required: [event_id]
+              properties:
+                event_id:
+                  type: string
+      responses:
+        '201':
+          description: Esdeveniment guardat
+        '409':
+          description: Ja guardat anteriorment
+  
+  /api/saved-events/{eventId}:
+    delete:
+      summary: Eliminar esdeveniment guardat (autenticat)
+      tags: [SavedEvents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Esdeveniment eliminat dels guardats
+        '404':
+          description: No estava guardat
+  
+  /api/user/profile:
+    get:
+      summary: Perfil complet de l'usuari (autenticat)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dades completes del perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileFull'
+        '401':
+          description: No autenticat
+    patch:
+      summary: Actualitzar perfil de l'usuari (autenticat)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: Perfil actualitzat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileFull'
+        '400':
+          description: Dades invàlides
+  
+  /api/user/settings:
+    patch:
+      summary: Actualitzar configuració de l'usuari (autenticat)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettingsUpdateRequest'
+      responses:
+        '200':
+          description: Configuració actualitzada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+        '400':
+          description: Configuració invàlida
+  
+  /api/holds/{holdId}/time:
+    get:
+      summary: Obtenir temps restant d'un hold (autenticat o anònim)
+      tags: [Holds]
+      parameters:
+        - name: holdId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Temps restant del hold
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hold_id:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+                  remaining_seconds:
+                    type: integer
+        '404':
+          description: Hold inexistent o expirat
+  
+  /api/orders/{order}/confirm-payment:
+    post:
+      summary: Confirmar pagament d'una comanda (autenticat)
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: order
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pagament confirmat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderConfirmedResponse'
+        '400':
+          description: Comanda no vàlida o ja pagada
+        '409':
+          description: Estat incompatible
+  
 components:
   securitySchemes:
     bearerAuth:

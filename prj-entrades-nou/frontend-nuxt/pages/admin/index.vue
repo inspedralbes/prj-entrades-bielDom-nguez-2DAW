@@ -16,7 +16,7 @@
             <dd>{{ summary.pending_payment_count }}</dd>
           </div>
           <div class="adm-dash__row">
-            <dt>Usuaris en línia (socket)</dt>
+            <dt>Usuaris en línia (API + ping)</dt>
             <dd>{{ summary.online_users }}</dd>
           </div>
           <div class="adm-dash__row">
@@ -64,6 +64,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useAdminDashboard } from '~/composables/useAdminDashboard';
+import { useAdminDashboardStore } from '~/stores/adminDashboard';
 
 definePageMeta({
   layout: 'admin',
@@ -73,6 +74,7 @@ definePageMeta({
 const config = useRuntimeConfig();
 const { getJson } = useAuthorizedApi();
 const { connectSocket } = useAdminDashboard();
+const adminDashStore = useAdminDashboardStore();
 
 const summary = ref(null);
 const summaryErr = ref('');
@@ -125,6 +127,7 @@ onMounted(() => {
   stopPoll = setInterval(refreshSummary, pollSec * 1000);
   stopSocket = connectSocket((payload) => {
     lastMetrics.value = payload;
+    adminDashStore.setLiveMetrics(payload);
   });
 });
 

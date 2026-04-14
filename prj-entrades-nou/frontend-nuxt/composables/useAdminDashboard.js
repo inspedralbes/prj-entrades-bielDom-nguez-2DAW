@@ -18,8 +18,14 @@ export function useAdminDashboard () {
     if (!url) {
       return () => {};
     }
+    const authPayload = {};
+    if (auth.token) {
+      authPayload.token = `Bearer ${auth.token}`;
+    }
+
     socket = io(url, {
       transports: ['websocket', 'polling'],
+      auth: authPayload,
     });
     socket.on('connect', () => {
       socket.emit('join:admin-dashboard');
