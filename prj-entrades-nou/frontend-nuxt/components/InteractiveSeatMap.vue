@@ -1,24 +1,11 @@
 <template>
-  <div class="ism-wrap" :class="{ 'ism-wrap--readonly': readOnly }">
-    <div class="ism-legend">
-      <div class="ism-legend__item">
-        <span class="ism-swatch ism-swatch--free" />
-        <span>Libre</span>
-      </div>
-      <div class="ism-legend__item">
-        <span class="ism-swatch ism-swatch--held-other" />
-        <span>Reservat</span>
-      </div>
-      <div class="ism-legend__item">
-        <span class="ism-swatch ism-swatch--sold" />
-        <span>Ocupado</span>
-      </div>
-    </div>
-
+  <div
+    class="ism-root"
+    :class="{ 'ism-root--admin': readOnly }"
+  >
     <div class="ism-stage" aria-hidden="true">
-      <span class="ism-stage__deco">🎭</span>
-      <span class="ism-stage__label">ESCENARIO</span>
-      <span class="ism-stage__deco">🎭</span>
+      <span class="ism-stage__label">Escenari</span>
+      <div class="ism-stage__glow" />
     </div>
 
     <div ref="mapRoot" class="ism-map-root" />
@@ -29,7 +16,7 @@
 import { select } from 'd3-selection';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
-import { allSeatCells, columnsForRow } from '~/utils/cinemaVenueLayout';
+import { allSeatCells } from '~/utils/cinemaVenueLayout';
 import { useInteractiveSeatmapStore } from '~/stores/interactiveSeatmap';
 
 const props = defineProps({
@@ -50,17 +37,19 @@ const mapRoot = ref(null);
 const seatmapStore = useInteractiveSeatmapStore();
 const { soldBySeatId, heldBySeatId, selectedSeatIds, currentUserId } = storeToRefs(seatmapStore);
 
-const CELL = 10;
+/* Cel·la més gran → mapa més llegible sense números de fila/columna */
+const CELL = 18;
 const COLS = 39;
 const ROWS = 18;
-const TOP_PAD = 16;
+const TOP_PAD = 0;
+const SEAT_R = 7.2;
 
 const svgWidth = computed(() => {
-  return (COLS + 3) * CELL;
+  return COLS * CELL + 8;
 });
 
 const svgHeight = computed(() => {
-  return TOP_PAD + ROWS * CELL + 8;
+  return TOP_PAD + ROWS * CELL + 12;
 });
 
 function visualColIndex (col) {
@@ -103,11 +92,9 @@ function render () {
     .attr('class', 'ism-svg')
     .attr('viewBox', `0 0 ${w} ${h}`)
     .attr('preserveAspectRatio', 'xMidYMid meet')
-    .attr('width', '100%')
-    /* SVG no admet height="auto" (error al navegador); mateixa alçada lògica que el viewBox */
-    .attr('height', h);
+    .attr('width', '100%');
 
-  const g = svg.append('g').attr('class', 'ism-grid').attr('transform', `translate(0,${TOP_PAD})`);
+  const g = svg.append('g').attr('class', 'ism-grid').attr('transform', 'translate(4,4)');
 
   const n = cells.length;
   for (let i = 0; i < n; i += 1) {
@@ -120,61 +107,24 @@ function render () {
     const x = vx * CELL;
     const y = vy * CELL;
     const cls = classForSeat(seatId);
+    const cx = x + CELL / 2;
+    const cy = y + CELL / 2;
 
-    const rect = g
-      .append('rect')
-      .attr('x', x)
-      .attr('y', y)
-      .attr('width', CELL - 1)
-      .attr('height', CELL - 1)
-      .attr('rx', 1)
+    const circle = g
+      .append('circle')
+      .attr('cx', cx)
+      .attr('cy', cy)
+      .attr('r', SEAT_R)
       .attr('data-seat-id', seatId)
       .attr('class', `ism-seat ${cls}`);
     if (!props.readOnly) {
-      rect.on('click', () => {
+      circle.on('click', () => {
         emit('seat-click', { seatId, row, col });
       });
     }
-
-    if (cls === 'seat-sold') {
-      g.append('text')
-        .attr('x', x + (CELL - 1) / 2)
-        .attr('y', y + (CELL - 1) * 0.72)
-        .attr('text-anchor', 'middle')
-        .attr('class', 'ism-x-mark')
-        .text('×');
-    }
   }
 
-  const labelG = svg.append('g').attr('class', 'ism-row-labels').attr('transform', `translate(0,${TOP_PAD})`);
-  for (let row = 1; row <= ROWS; row += 1) {
-    const y = (row - 1) * CELL + CELL * 0.65;
-    const x = COLS * CELL + CELL * 0.4;
-    labelG
-      .append('text')
-      .attr('x', x)
-      .attr('y', y)
-      .attr('class', 'ism-row-num')
-      .text(String(row));
-  }
-
-  const topNums = svg.append('g').attr('class', 'ism-col-labels');
-  const row1cols = columnsForRow(1);
-  const m = row1cols.length;
-  for (let j = 0; j < m; j += 1) {
-    const col = row1cols[j];
-    const vx = visualColIndex(col);
-    const x = vx * CELL + 2;
-    const y = TOP_PAD * 0.55;
-    topNums
-      .append('text')
-      .attr('x', x)
-      .attr('y', y)
-      .attr('class', 'ism-col-num')
-      .text(String(col));
-  }
-
-  const aisleG = svg.append('g').attr('class', 'ism-aisle').attr('transform', `translate(0,${TOP_PAD})`);
+  const aisleG = svg.append('g').attr('class', 'ism-aisle').attr('transform', 'translate(4,4)');
   const ax = 19.5 * CELL;
   aisleG
     .append('line')
@@ -182,14 +132,11 @@ function render () {
     .attr('y1', 0)
     .attr('x2', ax)
     .attr('y2', ROWS * CELL)
-    .attr('stroke', 'rgba(255,255,255,0.15)')
-    .attr('stroke-dasharray', '3 3');
+    .attr('class', 'ism-aisle-line');
 }
 
 onMounted(() => {
   render();
-  // Pinia: $subscribe notifica qualsevol mutació de l’estat; el watch amb storeToRefs
-  // i objectes reemplaçats de vegades no tornava a pintar el D3.
   seatmapStore.$subscribe(() => {
     render();
   });
@@ -197,134 +144,126 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.ism-wrap {
-  background: rgba(135, 180, 220, 0.12);
-  border-radius: 12px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ism-wrap--readonly :deep(.ism-seat) {
-  cursor: default;
-}
-
-.ism-legend {
+/* Referència TR3: fons #131313, seients circulars, accent #f7e628, sense llegenda ni cap extra al voltant del SVG */
+.ism-root {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
   gap: 1rem;
-  margin-bottom: 10px;
-  font-size: 0.8rem;
-  color: #ccc;
 }
 
-.ism-legend__item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ism-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 2px;
-  display: inline-block;
-  border: 1px solid #444;
-}
-
-.ism-swatch--free {
-  background: #d8d8d8;
-}
-
-.ism-swatch--held-other {
-  background: #e8943a;
-}
-
-.ism-swatch--sold {
-  background: #8b5e3c;
-  position: relative;
-}
-
-.ism-swatch--sold::after {
-  content: '✕';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #111;
+.ism-root--admin {
+  padding-top: 0.25rem;
 }
 
 .ism-stage {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(180deg, #a8d4f0 0%, #7eb8e0 100%);
-  color: #1a3a52;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  background: #0e0e0e;
+  border-top: 4px solid #f7e628;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.ism-stage__label {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.ism-stage__glow {
+  position: absolute;
+  bottom: -0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8rem;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(247, 230, 40, 0.22),
+    transparent
+  );
+  pointer-events: none;
 }
 
 .ism-map-root {
   width: 100%;
+  max-width: none;
   overflow-x: auto;
+  overflow-y: visible;
 }
 
 .ism-svg {
   display: block;
-  min-width: 320px;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.ism-root--admin :deep(.ism-seat) {
+  cursor: default;
 }
 
 :deep(.ism-seat) {
   cursor: pointer;
-  stroke: rgba(0, 0, 0, 0.25);
-  stroke-width: 0.5;
+  transition:
+    fill 0.15s ease,
+    stroke 0.15s ease,
+    filter 0.15s ease;
 }
 
+/* Disponible: vora groga (referència) */
 :deep(.seat-available) {
-  fill: #d0d0d0;
+  fill: none;
+  stroke: #f7e628;
+  stroke-width: 1.5;
 }
 
-:deep(.seat-sold) {
-  fill: #8b5e3c;
+:deep(.seat-available:hover) {
+  fill: rgba(247, 230, 40, 0.18);
 }
 
-:deep(.seat-sold)::after {
-  content: '';
-}
-
-:deep(.seat-held-other) {
-  fill: #e8943a;
-  stroke: rgba(0, 0, 0, 0.45);
-  stroke-width: 1;
-}
-
+/* Seleccionat / hold propi: ple groc + brillantor */
+:deep(.seat-picked),
 :deep(.seat-held) {
-  fill: #3b82f6;
+  fill: #f7e628;
+  stroke: none;
+  filter: drop-shadow(0 0 8px rgba(247, 230, 40, 0.55));
 }
 
-:deep(.seat-picked) {
-  fill: #22c55e;
-  stroke: #fff;
+/* Reservat per un altre */
+:deep(.seat-held-other) {
+  fill: none;
+  stroke: rgba(247, 230, 40, 0.35);
+  stroke-width: 1.4;
+  stroke-dasharray: 3 3;
 }
 
-.ism-row-num {
-  fill: #888;
-  font-size: 7px;
+:deep(.seat-held-other:hover) {
+  fill: rgba(255, 255, 255, 0.04);
 }
 
-.ism-col-num {
-  fill: #888;
-  font-size: 6px;
+/* Venut / ocupat: gris pla (surface-container-highest) */
+:deep(.seat-sold) {
+  fill: #353534;
+  stroke: none;
+  cursor: not-allowed;
 }
 
-:deep(.ism-x-mark) {
-  fill: #1a0f08;
-  font-size: 8px;
-  pointer-events: none;
+:deep(.ism-aisle-line) {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
 }
 </style>

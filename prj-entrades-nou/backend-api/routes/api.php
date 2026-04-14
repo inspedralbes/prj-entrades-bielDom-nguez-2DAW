@@ -88,6 +88,7 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
     Route::get('/discovery/search', [AdminDiscoveryController::class, 'search']);
     Route::post('/discovery/import', [AdminDiscoveryController::class, 'importByExternalId']);
+    Route::get('/events/metrics', [AdminController::class, 'eventsMetrics']);
     Route::get('/events', [AdminController::class, 'index']);
     Route::post('/events', [AdminController::class, 'store']);
     Route::patch('/events/{eventId}', [AdminController::class, 'updateEvent'])->whereNumber('eventId');
@@ -98,6 +99,7 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::patch('/users/{userId}', [AdminUsersController::class, 'update'])->whereNumber('userId');
     Route::delete('/users/{userId}', [AdminUsersController::class, 'destroy'])->whereNumber('userId');
     Route::get('/users/{userId}/orders', [AdminUsersController::class, 'orders'])->whereNumber('userId');
+    Route::get('/orders/recent', [AdminUsersController::class, 'recentOrders']);
     Route::get('/analytics/summary', [AdminAnalyticsController::class, 'summary']);
     Route::get('/analytics/events', [AdminAnalyticsController::class, 'events']);
     Route::get('/analytics/categories/occupancy', [AdminAnalyticsController::class, 'categoryOccupancy']);

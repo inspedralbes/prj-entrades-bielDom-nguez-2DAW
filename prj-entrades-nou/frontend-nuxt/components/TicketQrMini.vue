@@ -55,7 +55,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   background: #111;
-  color: #ff0055;
+  color: var(--accent);
   font-size: 1.25rem;
 }
 .ticket-qr-mini__svg :deep(svg) {

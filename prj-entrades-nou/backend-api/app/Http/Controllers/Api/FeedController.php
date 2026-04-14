@@ -86,7 +86,7 @@ class FeedController extends Controller
     {
         return [
             'venue' => static function ($q) {
-                $q->select('venues.id', 'venues.name');
+                $q->select('venues.id', 'venues.name', 'venues.city');
             },
         ];
     }
@@ -133,9 +133,11 @@ class FeedController extends Controller
             'category' => $e->category,
             'image_url' => $e->image_url,
             'tm_url' => $e->tm_url,
+            'price' => $e->price,
             'venue' => $e->venue ? [
                 'id' => $e->venue->id,
                 'name' => $e->venue->name,
+                'city' => $e->venue->city,
             ] : null,
         ];
     }

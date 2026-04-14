@@ -1,67 +1,93 @@
 <template>
   <div class="adm-mon">
-    <p class="adm-mon__back">
-      <NuxtLink to="/admin/events">← Esdeveniments</NuxtLink>
-    </p>
-    <h1 class="adm-mon__h1">Monitor d’esdeveniment</h1>
-    <p v-if="loadErr" class="adm-mon__err">{{ loadErr }}</p>
-    <div v-else-if="pending" class="adm-mon__muted">Carregant…</div>
-    <template v-else-if="monitor">
-      <section class="adm-mon__panel">
-        <h2 class="adm-mon__h2">{{ monitor.name }}</h2>
-        <dl class="adm-mon__dl">
-          <div class="adm-mon__row">
-            <dt>Aforament</dt>
-            <dd>{{ monitor.capacity }}</dd>
-          </div>
-          <div class="adm-mon__row">
-            <dt>Venuts</dt>
-            <dd>{{ monitor.tickets_sold }}</dd>
-          </div>
-          <div class="adm-mon__row">
-            <dt>Disponibles</dt>
-            <dd>{{ monitor.remaining }}</dd>
-          </div>
-          <div class="adm-mon__row">
-            <dt>Recaptació (EUR)</dt>
-            <dd>{{ monitor.revenue_eur }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="adm-mon__panel">
-        <h2 class="adm-mon__h2">Holds actius (Redis)</h2>
-        <p v-if="holdsRows.length === 0" class="adm-mon__muted">Cap hold.</p>
-        <table v-else class="adm-mon__table" aria-label="Holds">
-          <thead>
-            <tr>
-              <th>Seient</th>
-              <th>Usuari</th>
-              <th>TTL (s)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, idx) in holdsRows" :key="idx">
-              <td>{{ row.seat_id }}</td>
-              <td>{{ row.user_id }}</td>
-              <td>{{ row.ttl_seconds }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section class="adm-mon__panel">
-        <h2 class="adm-mon__h2">Mapa (temps real)</h2>
-        <p class="adm-mon__muted">
-          Mateix canal Socket que la vista de compra; només lectura.
+    <div class="adm-mon__back-row">
+      <NuxtLink prefetch to="/admin/events" class="adm-mon__back">
+        <svg
+          class="adm-mon__back-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M15 18L9 12L15 6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>Enrere</span>
+      </NuxtLink>
+    </div>
+    <header class="adm-mon__hero">
+      <div class="adm-mon__hero-text">
+        <h1 class="adm-mon__title">
+          Monitor d’esdeveniment
+        </h1>
+        <p class="adm-mon__lead">
+          Aforament, vendes i mapa en temps real per a aquest esdeveniment.
         </p>
-        <ClientOnly>
+      </div>
+    </header>
+
+    <p v-if="loadErr" class="adm-mon__err">
+      {{ loadErr }}
+    </p>
+    <div v-else-if="pending" class="adm-mon__muted">
+      Carregant…
+    </div>
+
+    <template v-else-if="monitor">
+      <h2 class="adm-mon__event-name">
+        {{ monitor.name }}
+      </h2>
+
+      <div class="adm-mon__bento">
+        <div class="adm-mon__stat">
+          <p class="adm-mon__stat-label">
+            Aforament
+          </p>
+          <p class="adm-mon__stat-value">
+            {{ monitor.capacity }}
+          </p>
+        </div>
+        <div class="adm-mon__stat">
+          <p class="adm-mon__stat-label">
+            Venuts
+          </p>
+          <p class="adm-mon__stat-value">
+            {{ monitor.tickets_sold }}
+          </p>
+        </div>
+        <div class="adm-mon__stat">
+          <p class="adm-mon__stat-label">
+            Disponibles
+          </p>
+          <p class="adm-mon__stat-value">
+            {{ monitor.remaining }}
+          </p>
+        </div>
+        <div class="adm-mon__stat">
+          <p class="adm-mon__stat-label">
+            Recaptació (EUR)
+          </p>
+          <p class="adm-mon__stat-value adm-mon__stat-value--accent">
+            {{ monitor.revenue_eur }}
+          </p>
+        </div>
+      </div>
+
+      <ClientOnly>
+        <div class="adm-mon__seatmap" aria-label="Mapa de seients">
           <InteractiveSeatMap :event-id="eventIdStr" :read-only="true" />
-          <template #fallback>
-            <p class="adm-mon__muted">Preparant mapa…</p>
-          </template>
-        </ClientOnly>
-      </section>
+        </div>
+        <template #fallback>
+          <p class="adm-mon__muted">Preparant mapa…</p>
+        </template>
+      </ClientOnly>
     </template>
   </div>
 </template>
@@ -96,19 +122,6 @@ const eventIdStr = computed(() => {
 const pending = ref(true);
 const loadErr = ref('');
 const monitor = ref(null);
-
-const holdsRows = computed(() => {
-  const m = monitor.value;
-  if (!m || !m.holds) {
-    return [];
-  }
-  const h = m.holds;
-  const out = [];
-  for (let i = 0; i < h.length; i++) {
-    out.push(h[i]);
-  }
-  return out;
-});
 
 usePrivateSeatmapSocket(eventIdStr);
 
@@ -155,67 +168,136 @@ watch(
 
 <style scoped>
 .adm-mon {
-  max-width: 56rem;
-}
-.adm-mon__back {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-}
-.adm-mon__back a {
-  color: #ff0055;
-}
-.adm-mon__h1 {
-  margin: 0 0 1rem;
-  color: #ff0055;
-  font-size: 1.35rem;
-}
-.adm-mon__h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  color: #bbb;
-}
-.adm-mon__panel {
-  margin-bottom: 1.25rem;
-  padding: 1rem;
-  background: #111;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-}
-.adm-mon__dl {
-  margin: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-.adm-mon__row {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.9rem;
-  color: #e0e0e0;
-}
-.adm-mon__row dt {
-  min-width: 10rem;
-  color: #888;
-}
-.adm-mon__row dd {
-  margin: 0;
-}
-.adm-mon__table {
+  box-sizing: border-box;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  font-family: Inter, system-ui, sans-serif;
+  color: #e5e2e1;
 }
-.adm-mon__table th,
-.adm-mon__table td {
-  border: 1px solid #333;
-  padding: 0.35rem 0.5rem;
-  text-align: left;
+
+.adm-mon__back-row {
+  margin-bottom: 1.25rem;
 }
+
+.adm-mon__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  color: #f7e628;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.adm-mon__back:hover {
+  opacity: 0.88;
+  color: #fff563;
+}
+
+.adm-mon__back-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.adm-mon__hero {
+  margin-bottom: 2rem;
+}
+
+.adm-mon__title {
+  margin: 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #f7e628;
+}
+
+.adm-mon__lead {
+  margin: 0.5rem 0 0;
+  max-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #ccc7ac;
+}
+
+.adm-mon__event-name {
+  margin: 0 0 1.5rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.adm-mon__bento {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .adm-mon__bento {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .adm-mon__bento {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.adm-mon__stat {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(149, 145, 120, 0.2);
+  background: #1c1b1b;
+}
+
+.adm-mon__stat-label {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ccc7ac;
+}
+
+.adm-mon__stat-value {
+  margin: 0.5rem 0 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.adm-mon__stat-value--accent {
+  color: #f7e628;
+}
+
+.adm-mon__seatmap {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
 .adm-mon__muted {
-  font-size: 0.85rem;
-  color: #777;
-  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.45);
 }
+
 .adm-mon__err {
-  color: #ff6b6b;
+  color: #ffb4ab;
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
 }
 </style>

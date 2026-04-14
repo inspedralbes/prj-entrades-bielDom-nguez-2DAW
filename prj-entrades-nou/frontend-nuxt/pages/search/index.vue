@@ -1,5 +1,14 @@
 <template>
-  <div class="search">
+  <div class="search user-page">
+    <header class="user-page-hero user-page-hero--spaced">
+      <h1 class="user-page-title">
+        Cerca
+      </h1>
+      <p class="user-page-lead">
+        Filtra per ciutat, text, categoria i data; obre el mapa per veure resultats geolocalitzats.
+      </p>
+    </header>
+
     <NuxtLink :to="mapSearchHref" class="search__fab" title="Mapa">Mapa</NuxtLink>
 
     <form class="search__form" @submit.prevent="runSearch">
@@ -45,38 +54,14 @@
     <p v-if="error" class="search__err">{{ error }}</p>
     <p v-else-if="loading" class="search__muted">Carregant…</p>
 
-    <ul v-else class="search__list">
-      <li v-for="ev in events" :key="ev.id" class="search__item">
-        <NuxtLink :to="`/events/${ev.id}`" class="search__rowlink">
-          <div
-            class="search__thumb"
-            :class="{ 'search__thumb--empty': !imageSrc(ev) }"
-          >
-            <img
-              v-if="imageSrc(ev)"
-              class="search__thumb-img"
-              :src="imageSrc(ev)"
-              :alt="imageAlt(ev)"
-              loading="lazy"
-              decoding="async"
-              width="120"
-              height="120"
-            />
-          </div>
-          <div class="search__main">
-            <span class="search__title">{{ ev.name }}</span>
-            <p class="search__meta">{{ formatDate(ev.starts_at) }} · {{ ev.venue?.name || '—' }}</p>
-          </div>
-        </NuxtLink>
-        <button
-          v-if="auth.token"
-          type="button"
-          class="search__heart"
-          :aria-pressed="savedIds.has(ev.id)"
-          @click.stop.prevent="toggleSaved(ev.id)"
-        >
-          {{ savedIds.has(ev.id) ? '♥' : '♡' }}
-        </button>
+    <ul v-else class="search__cards">
+      <li v-for="ev in events" :key="ev.id" class="search__card-item">
+        <EventCardTr3
+          :event="ev"
+          :show-heart="!!auth.token"
+          :heart-filled="savedIds.has(ev.id)"
+          @favorite-click="toggleSaved(ev.id)"
+        />
       </li>
     </ul>
   </div>
@@ -87,7 +72,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useApi } from '~/composables/useApi';
-import { useEventImage } from '~/composables/useEventImage';
+import EventCardTr3 from '~/components/EventCardTr3.vue';
 
 const emit = defineEmits(['city-selected']);
 
@@ -98,7 +83,6 @@ definePageMeta({
 const auth = useAuthStore();
 const { fetchApi } = useApi();
 const { getJson, postJson, deleteJson } = useAuthorizedApi();
-const { imageSrc, imageAlt } = useEventImage();
 
 const q = ref('');
 const category = ref('');
@@ -156,24 +140,17 @@ function selectCity(city) {
   cityResults.value = [];
 }
 
-function formatDate (iso) {
-  if (!iso) {
-    return '';
-  }
-  try {
-    return new Date(iso).toLocaleString('ca-ES', { dateStyle: 'medium', timeStyle: 'short' });
-  } catch {
-    return iso;
-  }
-}
-
 async function loadSaved () {
   if (!auth.token) {
     return;
   }
   try {
     const data = await getJson('/api/saved-events');
-    const ids = new Set((data.events || []).map((e) => e.id));
+    const list = data.events || [];
+    const ids = new Set();
+    for (let i = 0; i < list.length; i++) {
+      ids.add(list[i].id);
+    }
     savedIds.value = ids;
   } catch {
     /* ignore */
@@ -244,7 +221,6 @@ onMounted(async () => {
 <style scoped>
 .search {
   position: relative;
-  padding: 0 1rem 2rem;
   max-width: 42rem;
   margin: 0 auto;
 }
@@ -256,14 +232,15 @@ onMounted(async () => {
   width: 3.25rem;
   height: 3.25rem;
   border-radius: 50%;
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 @media (min-width: 900px) {
@@ -299,95 +276,32 @@ onMounted(async () => {
 .search__btn {
   align-self: flex-start;
   padding: 0.55rem 1.2rem;
-  background: #ff0055;
+  background: var(--accent);
   border: none;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: 600;
+  border-radius: 9999px;
+  color: var(--accent-on);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
   cursor: pointer;
 }
 .search__btn:disabled {
   opacity: 0.6;
 }
-.search__list {
+.search__cards {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-.search__item {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #222;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-.search__rowlink {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
+
+.search__card-item {
+  margin: 0;
 }
-.search__rowlink:hover .search__title {
-  color: #ff0055;
-}
-.search__thumb {
-  flex: 0 0 5.5rem;
-  width: 5.5rem;
-  height: 5.5rem;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #222;
-  position: relative;
-}
-.search__thumb--empty {
-  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-}
-.search__thumb--empty::after {
-  content: '—';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: #555;
-}
-.search__thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.search__main {
-  flex: 1;
-  min-width: 0;
-}
-.search__title {
-  display: block;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1.3;
-}
-.search__meta {
-  margin: 0.3rem 0 0;
-  font-size: 0.85rem;
-  color: #888;
-}
-.search__heart {
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  font-size: 1.35rem;
-  cursor: pointer;
-  line-height: 1;
-  color: #ff0055;
-}
+
 .search__muted {
-  color: #888;
+  color: var(--fg-muted);
 }
 .search__err {
   color: #ff6b6b;

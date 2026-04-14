@@ -158,8 +158,8 @@ onUnmounted(() => {
   font-size: 0.65rem;
   font-weight: 700;
   line-height: 1;
-  color: #fff;
-  background: #ff0055;
+  color: var(--accent-on);
+  background: var(--accent);
   border-radius: 999px;
 }
 .app-nav__badge--footer {
@@ -172,6 +172,6 @@ onUnmounted(() => {
 }
 .app-nav__link--admin {
   font-weight: 700;
-  color: #ff0055;
+  color: var(--accent);
 }
 </style>

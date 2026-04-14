@@ -590,8 +590,8 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 .save-btn.saved {
-  color: #ff0055;
-  border-color: #ff0055;
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .save-icon {
   font-size: 1.1rem;
@@ -680,7 +680,7 @@ onMounted(async () => {
 .map-gmaps-link {
   display: inline-block;
   margin-top: 0.75rem;
-  color: #ff0055;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.9rem;
 }
@@ -718,7 +718,7 @@ onMounted(async () => {
 .share-modal__title {
   margin: 0 0 1rem;
   font-size: 1.1rem;
-  color: #ff0055;
+  color: var(--accent);
 }
 .share-modal__search {
   display: flex;
@@ -800,10 +800,11 @@ onMounted(async () => {
 }
 .footer-btn {
   padding: 0.75rem 1.5rem;
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
 }
 </style>

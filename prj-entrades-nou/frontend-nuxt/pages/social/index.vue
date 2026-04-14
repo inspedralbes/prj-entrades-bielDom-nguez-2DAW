@@ -1,6 +1,13 @@
 <template>
-  <div class="social">
-    <h1 class="social__h1">Social</h1>
+  <div class="social user-page">
+    <header class="user-page-hero user-page-hero--spaced">
+      <h1 class="user-page-title">
+        Social
+      </h1>
+      <p class="user-page-lead">
+        Cerca usuaris, invitacions i amistats.
+      </p>
+    </header>
 
     <section class="social__block social__block--search">
       <h2 class="social__h2">Cercar usuaris</h2>
@@ -343,13 +350,8 @@ onUnmounted(() => {
 
 <style scoped>
 .social {
-  padding: 0 1rem 2rem;
   max-width: 36rem;
   margin: 0 auto;
-}
-.social__h1 {
-  color: #ff0055;
-  font-size: 1.35rem;
 }
 .social__h2 {
   font-size: 1rem;
@@ -422,7 +424,7 @@ onUnmounted(() => {
   color: inherit;
 }
 .social__dropdown-link:hover {
-  background: rgba(255, 0, 85, 0.08);
+  background: rgba(247, 230, 40, 0.1);
 }
 .social__dropdown-name {
   font-weight: 600;
@@ -470,7 +472,7 @@ onUnmounted(() => {
   color: #eee;
 }
 .social__friend-link:hover .social__friend-name {
-  color: #ff0055;
+  color: var(--accent);
 }
 .social__friend-name {
   font-weight: 600;
@@ -487,8 +489,8 @@ onUnmounted(() => {
   height: 1.35rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -500,11 +502,12 @@ onUnmounted(() => {
 .social__btn {
   align-self: flex-start;
   padding: 0.45rem 0.9rem;
-  background: #ff0055;
+  background: var(--accent);
   border: none;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: 600;
+  border-radius: 9999px;
+  color: var(--accent-on);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 700;
   cursor: pointer;
 }
 .social__btn--sm {
@@ -524,6 +527,6 @@ onUnmounted(() => {
   color: #666;
 }
 .social__a {
-  color: #ff0055;
+  color: var(--accent);
 }
 </style>

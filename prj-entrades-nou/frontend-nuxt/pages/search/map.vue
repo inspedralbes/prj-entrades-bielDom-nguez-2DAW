@@ -149,7 +149,7 @@ async function renderMarkers () {
         <div style="padding:8px;max-width:200px;">
           <strong style="font-size:14px;">${ev.name}</strong>
           <p style="margin:4px 0;font-size:12px;color:#666;">${venueName}</p>
-          <a href="/events/${ev.id}" style="color:#ff0055;">Veure</a>
+          <a href="/events/${ev.id}" style="color:#f7e628;font-weight:700;">Veure</a>
         </div>
       `);
       infoWindow.setPosition(pos);
@@ -246,14 +246,18 @@ onUnmounted(() => {
   margin-bottom: 0.75rem;
 }
 .map-page__back {
-  color: #888;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.9rem;
+  font-weight: 700;
 }
 .map-page__title {
   margin: 0;
-  font-size: 1.2rem;
-  color: #ff0055;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--accent);
 }
 .map-page__canvas {
   width: 100%;
@@ -281,7 +285,8 @@ onUnmounted(() => {
   cursor: pointer;
 }
 .map-page__link {
-  color: #ff0055;
+  color: var(--accent);
+  font-weight: 700;
   margin-left: 0.25rem;
 }
 .map-page__muted {

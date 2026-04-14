@@ -369,7 +369,8 @@ onUnmounted(() => {
   padding: 1rem;
   padding-bottom: 120px;
   min-height: 100vh;
-  background: #0a0a0a;
+  background: var(--bg);
+  color: var(--fg);
 }
 .seats-header {
   display: flex;
@@ -378,7 +379,7 @@ onUnmounted(() => {
   margin-bottom: 1rem;
 }
 .back-link {
-  color: #ff0055;
+  color: var(--accent);
   text-decoration: none;
   font-size: 1rem;
 }
@@ -465,12 +466,13 @@ onUnmounted(() => {
   align-self: center;
   flex-shrink: 0;
   padding: 0.85rem 1.25rem;
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
   border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -479,6 +481,6 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 .ticket-footer__cta:not(:disabled):hover {
-  background: #ff3377;
+  background: var(--accent-dim);
 }
 </style>

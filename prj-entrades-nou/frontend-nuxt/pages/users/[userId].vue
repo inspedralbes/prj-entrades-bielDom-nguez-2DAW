@@ -1,5 +1,5 @@
 <template>
-  <main class="user-public">
+  <main class="user-public user-page">
     <nav class="user-public__nav" aria-label="Navegació">
       <NuxtLink to="/social" class="user-public__back">← Social</NuxtLink>
       <NuxtLink to="/" class="user-public__back user-public__back--muted">Inici</NuxtLink>
@@ -289,7 +289,6 @@ watch(
 
 <style scoped>
 .user-public {
-  padding: 0 1rem 2.5rem;
   max-width: 26rem;
   margin: 0 auto;
   min-height: 60vh;
@@ -301,13 +300,13 @@ watch(
   margin-bottom: 1.25rem;
 }
 .user-public__back {
-  color: #ff0055;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
 }
 .user-public__back--muted {
-  color: #888;
+  color: var(--fg-muted);
   font-weight: 500;
 }
 .user-public__back:hover {
@@ -351,7 +350,7 @@ watch(
   }
 }
 .user-public__card {
-  background: linear-gradient(165deg, rgba(255, 0, 85, 0.08) 0%, rgba(18, 18, 18, 0.95) 42%);
+  background: linear-gradient(165deg, rgba(247, 230, 40, 0.1) 0%, rgba(18, 18, 18, 0.95) 42%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 1.35rem 1.25rem 1.5rem;
@@ -370,15 +369,15 @@ watch(
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #ff0055 0%, #b3003d 100%);
-  color: #fff;
+  background: linear-gradient(145deg, var(--accent) 0%, #5c5600 100%);
+  color: var(--accent-on);
   font-size: 1.65rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 16px rgba(255, 0, 85, 0.25);
+  box-shadow: 0 4px 16px rgba(247, 230, 40, 0.22);
 }
 .user-public__hero-text {
   min-width: 0;
@@ -392,9 +391,10 @@ watch(
   color: #888;
 }
 .user-public__h1 {
+  font-family: Epilogue, system-ui, sans-serif;
   color: #f8f8f8;
   font-size: 1.45rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0 0 0.25rem;
   line-height: 1.2;
   word-break: break-word;
@@ -412,10 +412,10 @@ watch(
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #ffb3cc;
-  background: rgba(255, 0, 85, 0.15);
+  color: #ccc7ac;
+  background: rgba(247, 230, 40, 0.12);
   border-radius: 6px;
-  border: 1px solid rgba(255, 0, 85, 0.35);
+  border: 1px solid rgba(247, 230, 40, 0.35);
 }
 .user-public__section {
   margin: 0;
@@ -463,11 +463,12 @@ watch(
 }
 .user-public__btn {
   padding: 0.55rem 1.15rem;
-  background: #ff0055;
+  background: var(--accent);
   border: none;
-  border-radius: 10px;
-  color: #fff;
-  font-weight: 600;
+  border-radius: 9999px;
+  color: var(--accent-on);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
   text-decoration: none;

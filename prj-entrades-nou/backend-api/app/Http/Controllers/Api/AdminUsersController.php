@@ -318,6 +318,51 @@ class AdminUsersController extends Controller
     }
 
     /**
+     * Darreres comandes (panell usuaris): mostra flux recents sense filtrar per usuari.
+     */
+    public function recentOrders (Request $request): JsonResponse
+    {
+        $limit = (int) $request->query('limit', 8);
+        if ($limit < 1) {
+            $limit = 8;
+        }
+        if ($limit > 24) {
+            $limit = 24;
+        }
+
+        $orders = Order::query()
+            ->with(['event', 'user'])
+            ->orderByDesc('updated_at')
+            ->limit($limit)
+            ->get();
+
+        $rows = [];
+        foreach ($orders as $order) {
+            $eventName = '';
+            if ($order->event !== null) {
+                $eventName = (string) $order->event->name;
+            }
+            $buyerName = '—';
+            if ($order->user !== null) {
+                $buyerName = (string) $order->user->name;
+            }
+            $rows[] = [
+                'id' => $order->id,
+                'state' => $order->state,
+                'total_amount' => (string) $order->total_amount,
+                'currency' => $order->currency,
+                'updated_at' => $order->updated_at?->toIso8601String(),
+                'event_name' => $eventName,
+                'buyer_name' => $buyerName,
+            ];
+        }
+
+        return response()->json([
+            'orders' => $rows,
+        ]);
+    }
+
+    /**
      * Un sol rol per usuari (admin o user, preferència admin si coexistissin dades antigues).
      */
     private function primaryRoleName (User $user): string

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\Order;
 use App\Services\Admin\AdminAuditLogService;
 use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
@@ -168,9 +169,36 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * KPIs per al panell d’esdeveniments: recompte actius (futurs i visibles) i volum de vendes (ingressos acumulats pagats).
+     */
+    public function eventsMetrics (Request $request): JsonResponse
+    {
+        $now = Carbon::now();
+
+        $activeEventsCount = Event::query()
+            ->whereNull('hidden_at')
+            ->where('starts_at', '>=', $now)
+            ->count();
+
+        $sum = Order::query()
+            ->where('state', Order::STATE_PAID)
+            ->sum('total_amount');
+
+        $salesVolumeEur = '0.00';
+        if ($sum !== null) {
+            $salesVolumeEur = number_format((float) $sum, 2, '.', '');
+        }
+
+        return response()->json([
+            'active_events_count' => $activeEventsCount,
+            'sales_volume_eur' => $salesVolumeEur,
+        ]);
+    }
+
     public function index (Request $request): JsonResponse
     {
-        $query = Event::query()->orderBy('starts_at', 'desc');
+        $query = Event::query()->with('venue')->orderBy('starts_at', 'desc');
 
         // Visibilitat amb `hidden_at` (el model Event no usa SoftDeletes; `withTrashed()` provocava 500).
         // hidden=include: sense filtre (tot el catàleg al panell); only: només ocults; per defecte: només visibles.

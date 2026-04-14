@@ -1,10 +1,17 @@
-/* Shell producte — fase 7 (T045+) */
+/* Shell producte — TR3: mateix llenguatge visual que login / registre / panell admin */
 :root {
-  --bg: #0a0a0a;
-  --fg: #f5f5f5;
-  --muted: #888;
-  --accent: #ff0055;
-  --border: #2a2a2a;
+  --bg: #131313;
+  --fg: #e5e2e1;
+  --fg-muted: #ccc7ac;
+  --muted: #ccc7ac;
+  --accent: #f7e628;
+  --accent-dim: #d9c900;
+  --accent-on: #1f1c00;
+  --surface: #1c1b1b;
+  --surface-low: #0e0e0e;
+  --border: rgba(149, 145, 120, 0.22);
+  --border-strong: rgba(149, 145, 120, 0.35);
+  --error: #ffb4ab;
   --header-h: 56px;
   --footer-mobile-h: 56px;
 }
@@ -14,7 +21,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
 a {
@@ -36,16 +43,19 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
-  background: rgba(10, 10, 10, 0.92);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(8px);
+  background: rgba(19, 19, 19, 0.94);
+  border-bottom: 1px solid rgba(255, 238, 50, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .app-logo {
-  font-weight: 800;
-  color: var(--accent);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #ffee32;
   text-decoration: none;
-  letter-spacing: -0.02em;
 }
 
 .app-nav--desktop {
@@ -57,12 +67,15 @@ a {
 .app-nav--desktop a {
   text-decoration: none;
   font-size: 0.9rem;
-  color: #ccc;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+  transition: color 0.2s ease;
 }
 
 .app-nav--desktop a.router-link-active,
 .app-nav--desktop a:hover {
-  color: #fff;
+  color: var(--accent);
 }
 
 .app-main {
@@ -83,8 +96,8 @@ a {
   right: 0;
   z-index: 40;
   height: var(--footer-mobile-h);
-  background: rgba(10, 10, 10, 0.96);
-  border-top: 1px solid var(--border);
+  background: rgba(19, 19, 19, 0.98);
+  border-top: 1px solid rgba(255, 238, 50, 0.2);
 }
 
 .app-nav--mobile {
@@ -108,7 +121,7 @@ a {
 }
 
 .app-nav--mobile a.router-link-active {
-  color: var(--accent);
+  color: #ffee32;
 }
 
 .app-nav__ico {
@@ -130,55 +143,371 @@ a {
   }
 }
 
-/* Admin */
+/* Admin — shell alineat amb analítiques (fons #131313, accent #FFEE32) */
 .admin-shell {
   min-height: 100vh;
   display: flex;
-  background: #060606;
-  color: var(--fg);
+  background: #131313;
+  color: #e5e2e1;
 }
 
 .admin-sidebar {
-  width: 220px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  box-sizing: border-box;
+  width: 17.5rem;
+  height: 100vh;
   flex-shrink: 0;
-  border-right: 1px solid var(--border);
-  padding: 1rem 0.75rem;
-  background: #0e0e0e;
+  border-right: 1px solid rgba(255, 238, 50, 0.2);
+  padding: 1.5rem;
+  background: #131313;
+}
+
+.admin-sidebar--stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar--stack nav {
+  flex: 1;
 }
 
 .admin-sidebar__title {
-  font-size: 0.75rem;
+  margin: 0 0 2.5rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  margin: 0 0.5rem 0.75rem;
+  color: #ffee32;
 }
 
 .admin-sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
-.admin-sidebar a {
-  display: block;
-  padding: 0.5rem 0.65rem;
-  border-radius: 6px;
+.admin-sidebar a.admin-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 9999px;
   text-decoration: none;
-  color: #ccc;
-  font-size: 0.9rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.78);
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
-.admin-sidebar a.router-link-active,
-.admin-sidebar a:hover {
-  background: #1a1a1a;
-  color: #fff;
+.admin-sidebar__ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.55rem;
+  height: 1.55rem;
+  opacity: 0.92;
+}
+
+.admin-sidebar__ico svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.admin-sidebar a.admin-sidebar__link:hover {
+  background: #1c1b1b;
+  color: #ffee32;
+}
+
+.admin-sidebar a.admin-sidebar__link.router-link-active {
+  background: #ffee32;
+  color: #000;
+  font-weight: 700;
+  transform: scale(0.98);
+}
+
+.admin-sidebar a.admin-sidebar__link.router-link-active .admin-sidebar__ico {
+  opacity: 1;
 }
 
 .admin-main {
   flex: 1;
-  padding: 1.25rem;
+  margin-left: 17.5rem;
   min-width: 0;
+  min-height: 100vh;
+  padding: 1.25rem 2rem 2rem;
+  background: #131313;
+}
+
+/* Panell admin + àrea usuari — mateix hero / títol / lead (TR3) */
+.admin-page-hero,
+.user-page-hero {
+  margin-bottom: 0;
+}
+
+.admin-page-hero--spaced,
+.user-page-hero--spaced {
+  margin-bottom: 2.5rem;
+}
+
+.admin-page-title,
+.user-page-title {
+  margin: 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #f7e628;
+}
+
+.admin-page-lead,
+.user-page-lead {
+  margin: 0.5rem 0 0;
+  max-width: 42rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #ccc7ac;
+}
+
+/* Contenidor pàgines usuari (layout per defecte): amplada i padding coherents */
+.user-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 2rem;
+  color: var(--fg);
+}
+
+/* Botó «Crear…» (blanc + cercle fosc amb +) — mateix aspecte que Crear esdeveniment */
+.admin-cta-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: #fff;
+  color: #000;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.admin-cta-create:hover {
+  opacity: 0.9;
+}
+
+.admin-cta-create__mes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: #131313;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.admin-cta-create__svg {
+  display: block;
+  width: 11px;
+  height: 11px;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: unset;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 238, 50, 0.2);
+  }
+
+  .admin-main {
+    margin-left: 0;
+  }
+}
+
+/* Modals panell admin — formularis creació / edició */
+.admin-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.admin-modal-panel {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 26rem;
+  max-height: min(90vh, 44rem);
+  overflow-y: auto;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background: #1c1b1b;
+  border: 1px solid rgba(149, 145, 120, 0.2);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.admin-modal-panel--wide {
+  max-width: 32rem;
+}
+
+.admin-modal-title {
+  margin: 0 0 0.35rem;
+  padding-right: 2rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #f7e628;
+}
+
+.admin-modal-lead {
+  margin: 0 0 1.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-form-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-form-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(149, 145, 120, 0.25);
+  background: #0e0e0e;
+  color: #e5e2e1;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.9rem;
+}
+
+.admin-form-input:focus {
+  outline: none;
+  border-color: #f7e628;
+}
+
+.admin-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-btn-primary {
+  padding: 0.65rem 1.35rem;
+  border: none;
+  border-radius: 9999px;
+  background: #f7e628;
+  color: #1f1c00;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.admin-btn-ghost {
+  padding: 0.65rem 1.35rem;
+  border: 1px solid rgba(149, 145, 120, 0.35);
+  border-radius: 9999px;
+  background: transparent;
+  color: #e5e2e1;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-form-err {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #ffb4ab;
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.admin-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .page-prose {
@@ -188,12 +517,15 @@ a {
 }
 
 .page-prose h1 {
-  color: var(--accent);
-  font-size: 1.35rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #f7e628;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   margin: 0 0 0.75rem;
 }
 
 .page-prose p {
-  color: #bbb;
+  color: var(--fg-muted);
   line-height: 1.5;
 }

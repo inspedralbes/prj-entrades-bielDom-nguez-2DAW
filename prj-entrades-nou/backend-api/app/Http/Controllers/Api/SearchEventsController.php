@@ -80,6 +80,7 @@ class SearchEventsController extends Controller
                 $venuePayload = [
                     'id' => $e->venue->id,
                     'name' => $e->venue->name,
+                    'city' => $e->venue->city,
                 ];
             }
             $starts = null;

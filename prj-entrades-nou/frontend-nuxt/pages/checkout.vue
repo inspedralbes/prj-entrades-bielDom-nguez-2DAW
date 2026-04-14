@@ -241,17 +241,22 @@ onMounted(runCheckout);
 
 <style scoped>
 .checkout-page {
+  box-sizing: border-box;
   padding: 1rem;
   padding-bottom: 100px;
   max-width: 42rem;
   margin: 0 auto;
+  color: var(--fg);
 }
 .checkout-header {
   margin-bottom: 1.5rem;
 }
 .checkout-title {
-  font-size: 1.5rem;
-  color: #ff0055;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--accent);
   margin: 0;
 }
 .loading, .error {
@@ -315,7 +320,7 @@ onMounted(runCheckout);
   justify-content: center;
 }
 .ticket-card__qr-link {
-  color: #ff0055;
+  color: var(--accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -351,7 +356,7 @@ onMounted(runCheckout);
   line-height: 1.4;
 }
 .event-price {
-  color: #ff0055;
+  color: var(--accent);
   font-weight: 600;
   margin: 0;
   padding-top: 0.75rem;
@@ -377,8 +382,11 @@ onMounted(runCheckout);
   border: 1px solid #444;
 }
 .btn-primary {
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
+  border-radius: 9999px;
 }
 .btn-secondary:hover, .btn-primary:hover {
   filter: brightness(1.1);

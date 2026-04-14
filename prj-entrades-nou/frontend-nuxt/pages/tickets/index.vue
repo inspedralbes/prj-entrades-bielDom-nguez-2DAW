@@ -1,127 +1,156 @@
 <template>
-  <main class="tickets-page">
-    <header class="tickets-page__header">
-      <h1>Les meves entrades</h1>
+  <main class="tk-shell tk-list">
+    <header class="tk-bar tk-bar--list" aria-label="Les meves entrades">
+      <div class="tk-bar__inner">
+        <NuxtLink to="/" class="tk-bar__icon-btn" aria-label="Tornar a l’inici">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+        </NuxtLink>
+        <p class="tk-bar__brand">Les meves entrades</p>
+        <span class="tk-bar__balance" aria-hidden="true" />
+      </div>
     </header>
 
-    <p v-if="error" class="tickets-page__error">{{ error }}</p>
-    <p v-else-if="loading" class="tickets-page__muted">Carregant…</p>
+    <div class="tk-list__body">
+      <p v-if="error" class="tk-err">{{ error }}</p>
+      <p v-else-if="loading" class="tk-muted">Carregant…</p>
 
-    <template v-else>
-      <p v-if="grouped.length === 0" class="tickets-page__muted">Encara no tens cap entrada.</p>
+      <template v-else>
+        <p v-if="grouped.length === 0" class="tk-muted">Encara no tens cap entrada.</p>
 
-      <div v-for="block in grouped" :key="block.eventKey" class="tickets-event">
-        <NuxtLink :to="`/events/${block.eventId}`" class="tickets-event__card">
-          <div class="tickets-event__media" :class="{ 'tickets-event__media--empty': !block.imageUrl }">
-            <img v-if="block.imageUrl" class="tickets-event__img" :src="block.imageUrl" :alt="block.eventName" loading="lazy">
-          </div>
-          <div class="tickets-event__body">
-            <h2 class="tickets-event__title">{{ block.eventName }}</h2>
-            <p class="tickets-event__meta">{{ block.startsAt }} · {{ block.venueName }}</p>
-            <span class="tickets-event__count">{{ block.items.length }} entr{{ block.items.length === 1 ? 'ada' : 'ades' }}</span>
-          </div>
-        </NuxtLink>
-        
-        <div class="tickets-swiper">
-          <div class="tickets-swiper__container" ref="swiperContainer">
-            <div 
-              v-for="t in block.items" 
-              :key="t.id" 
-              class="tickets-swiper__slide"
-              @click="selectTicket(t)"
-            >
-              <div class="ticket-card" :class="{ 'ticket-card--selected': selectedTicket?.id === t.id }">
-                <div class="ticket-card__header">
-                  <span class="ticket-card__seat">Entrada #{{ t.id.slice(0, 8) }}</span>
-                  <span 
-                    class="ticket-card__status"
-                    :data-status="t.displayStatus"
-                  >{{ labelStatus(t.displayStatus) }}</span>
+        <div v-for="block in grouped" :key="block.eventKey" class="tk-block">
+          <NuxtLink :to="`/events/${block.eventId}`" class="tk-event-card">
+            <div class="tk-event-card__hero">
+              <img
+                v-if="block.imageUrl"
+                class="tk-event-card__img"
+                :src="block.imageUrl"
+                :alt="block.eventName"
+                loading="lazy"
+              >
+              <div v-else class="tk-event-card__ph" aria-hidden="true" />
+              <div class="tk-event-card__grad" />
+              <div class="tk-event-card__head">
+                <span class="tk-pill">ESDEVENIMENT</span>
+                <h2 class="tk-event-card__title">{{ block.eventName }}</h2>
+              </div>
+            </div>
+            <div class="tk-event-card__foot">
+              <p class="tk-event-card__meta">{{ block.startsAt }} · {{ block.venueName }}</p>
+              <span class="tk-event-card__count">{{ entradesLabel(block.items.length) }}</span>
+            </div>
+          </NuxtLink>
+
+          <div class="tk-swiper">
+            <div class="tk-swiper__track" ref="swiperContainer">
+              <div
+                v-for="t in block.items"
+                :key="t.id"
+                class="tk-swiper__slide"
+                @click="selectTicket(t)"
+              >
+                <div class="tk-mini" :class="{ 'tk-mini--on': selectedTicket?.id === t.id }">
+                  <div class="tk-mini__row">
+                    <span class="tk-mini__id">Entrada #{{ t.id.slice(0, 8) }}</span>
+                    <span
+                      class="tk-mini__st"
+                      :data-status="t.displayStatus"
+                    >{{ labelStatus(t.displayStatus) }}</span>
+                  </div>
+                  <p class="tk-mini__hint">Toca per veure el QR i les accions</p>
                 </div>
-                <NuxtLink
-                  :to="`/tickets/${t.id}`"
-                  class="ticket-card__qr-link"
-                >
-                  Veure QR
-                </NuxtLink>
-                <button
-                  v-if="t.displayStatus === 'venuda'"
-                  type="button"
-                  class="ticket-card__send"
-                  @click.stop="openTransfer(t)"
-                >
-                  Enviar a un amic
-                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <div v-if="selectedTicket" class="ticket-info">
-          <p class="ticket-info__event">{{ block.eventName }}</p>
-          <p class="ticket-info__date">{{ block.startsAt }}</p>
-          <p v-if="selectedTicket.seat && (selectedTicket.seat.label || selectedTicket.seat.key)" class="ticket-info__seat">
-            Ubicació: {{ selectedTicket.seat.label || selectedTicket.seat.key }}
-          </p>
-          <NuxtLink :to="`/tickets/${selectedTicket.id}`" class="ticket-info__qr">
-            Veure QR complet
-          </NuxtLink>
-        </div>
-      </div>
-    </template>
+          <div v-if="selectedTicket && selectedBlockKey === block.eventKey" class="tk-panel">
+            <p class="tk-panel__ev">{{ block.eventName }}</p>
+            <p class="tk-panel__date">{{ block.startsAt }}</p>
+            <p v-if="selectedTicket.seat && (selectedTicket.seat.label || selectedTicket.seat.key)" class="tk-panel__seat">
+              Ubicació: {{ selectedTicket.seat.label || selectedTicket.seat.key }}
+            </p>
 
-    <footer class="tickets-footer">
-      <NuxtLink to="/" class="tickets-footer__back">← Enrere</NuxtLink>
-      <span v-if="selectedEventTime" class="tickets-footer__time">{{ selectedEventTime }}</span>
-    </footer>
+            <div v-if="selectedTicket.displayStatus === 'venuda' && qrPreview" class="tk-panel__qr" v-html="qrPreview" />
+            <p v-else-if="selectedTicket.displayStatus === 'venuda' && qrPreviewErr" class="tk-err">{{ qrPreviewErr }}</p>
+            <p v-else-if="selectedTicket.displayStatus === 'utilitzada'" class="tk-muted">
+              Entrada utilitzada; el QR ja no és vàlid.
+            </p>
+
+            <div v-if="selectedTicket.displayStatus === 'venuda'" class="tk-panel__valid">
+              <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+              <span>Vàlida per a l’entrada</span>
+            </div>
+            <p class="tk-panel__tid">ID: {{ publicIdFor(selectedTicket.id) }}</p>
+
+            <div class="tk-panel__actions">
+              <button
+                v-if="selectedTicket.displayStatus === 'venuda'"
+                type="button"
+                class="tk-btn tk-btn--primary"
+                @click="openTransfer(selectedTicket)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                Enviar a un amic
+              </button>
+              <NuxtLink
+                v-if="block.eventId != null"
+                :to="`/events/${block.eventId}`"
+                class="tk-btn tk-btn--ghost"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">event</span>
+                Veure esdeveniment
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
 
     <div
       v-if="transferOpen"
-      class="tickets-page__modal-backdrop"
+      class="tk-modal-bg"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="tk-list-transfer-title"
       @click.self="closeTransfer"
     >
-      <div class="tickets-page__modal">
-        <h2 class="tickets-page__modal-title">Enviar entrada</h2>
-        <p class="tickets-page__muted">
+      <div class="tk-modal">
+        <h2 id="tk-list-transfer-title" class="tk-modal__title">Enviar entrada</h2>
+        <p class="tk-muted">
           Només a un amic amb invitació acceptada. Cerca per nom o usuari.
         </p>
-        <div class="tickets-page__search">
-          <span class="tickets-page__search-ico" aria-hidden="true">⌕</span>
+        <div class="tk-search">
+          <span class="tk-search__ico" aria-hidden="true">⌕</span>
           <input
             v-model="transferFriendQuery"
             type="search"
-            class="tickets-page__input tickets-page__input--grow"
+            class="tk-search__input"
             placeholder="Cercar amic…"
             @input="scheduleTransferFriendSearch"
           >
         </div>
-        <ul v-if="transferFriendsLoading" class="tickets-page__friend-list">
-          <li class="tickets-page__muted">Carregant…</li>
+        <ul v-if="transferFriendsLoading" class="tk-friends">
+          <li class="tk-muted">Carregant…</li>
         </ul>
-        <ul v-else class="tickets-page__friend-list">
+        <ul v-else class="tk-friends">
           <li v-for="f in transferFriends" :key="f.id">
-            <button type="button" class="tickets-page__friend-btn" @click="pickTransferFriend(f)">
+            <button type="button" class="tk-friend-btn" @click="pickTransferFriend(f)">
               @{{ f.username }} · {{ f.name }}
             </button>
           </li>
         </ul>
-        <p v-if="transferFriends.length === 0 && !transferFriendsLoading" class="tickets-page__muted">
+        <p v-if="transferFriends.length === 0 && !transferFriendsLoading" class="tk-muted">
           Cap amic coincideix.
         </p>
-        <p v-if="transferSelectedLabel" class="tickets-page__transfer-pick">
-          Destinatari: {{ transferSelectedLabel }}
-        </p>
-        <p v-if="transferErr" class="tickets-page__error">{{ transferErr }}</p>
-        <p v-if="transferOk" class="tickets-page__ok">{{ transferOk }}</p>
-        <div class="tickets-page__modal-actions">
-          <button type="button" class="tickets-page__btn-sec" @click="closeTransfer">
+        <p v-if="transferSelectedLabel" class="tk-pick">Destinatari: {{ transferSelectedLabel }}</p>
+        <p v-if="transferErr" class="tk-err">{{ transferErr }}</p>
+        <p v-if="transferOk" class="tk-ok">{{ transferOk }}</p>
+        <div class="tk-modal__actions">
+          <button type="button" class="tk-btn-sec" @click="closeTransfer">
             Cancel·lar
           </button>
           <button
             type="button"
-            class="tickets-page__link tickets-page__link--btn"
+            class="tk-btn-prim"
             :disabled="transferLoading"
             @click="submitTransfer"
           >
@@ -134,7 +163,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, onUnmounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useEventImage } from '~/composables/useEventImage';
 import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
@@ -145,7 +174,7 @@ definePageMeta({
   middleware: 'auth',
 });
 
-const { getJson, postJson } = useAuthorizedApi();
+const { getJson, postJson, getTicketQrSvg } = useAuthorizedApi();
 const { imageSrc } = useEventImage();
 const ticketsStore = useTicketsStore();
 usePrivateTicketSocket();
@@ -155,6 +184,9 @@ const error = ref('');
 const tickets = ref([]);
 const selectedTicket = ref(null);
 const swiperContainer = ref(null);
+
+const qrPreview = ref('');
+const qrPreviewErr = ref('');
 
 const transferOpen = ref(false);
 const transferTicket = ref(null);
@@ -168,7 +200,57 @@ const transferLoading = ref(false);
 const transferErr = ref('');
 const transferOk = ref('');
 
-function selectTicket(t) {
+function entradesLabel (n) {
+  if (n === 1) {
+    return '1 entrada';
+  }
+  return String(n) + ' entrades';
+}
+
+function publicIdFor (id) {
+  if (typeof id !== 'string' || id.length < 8) {
+    return '—';
+  }
+  const parts = id.split('-');
+  if (parts.length >= 4) {
+    const a = parts[0].slice(0, 3).toUpperCase();
+    const b = parts[1].slice(0, 3).toUpperCase();
+    const c = parts[2].slice(0, 2).toUpperCase();
+    return 'TR3-' + a + '-' + b + '-' + c;
+  }
+  return 'TR3-' + id.slice(0, 12).toUpperCase();
+}
+
+const selectedBlockKey = computed(() => {
+  const t = selectedTicket.value;
+  if (!t || !t.event) {
+    return '';
+  }
+  const id = t.event.id;
+  if (id == null) {
+    return 'unknown';
+  }
+  return String(id);
+});
+
+watch(selectedTicket, async (t) => {
+  qrPreview.value = '';
+  qrPreviewErr.value = '';
+  if (!t) {
+    return;
+  }
+  if (t.displayStatus !== 'venuda') {
+    return;
+  }
+  try {
+    qrPreview.value = await getTicketQrSvg(t.id);
+  } catch (e) {
+    console.error(e);
+    qrPreviewErr.value = 'No s’ha pogut carregar el QR.';
+  }
+});
+
+function selectTicket (t) {
   selectedTicket.value = selectedTicket.value?.id === t.id ? null : t;
 }
 
@@ -201,7 +283,7 @@ async function loadTransferFriends () {
     const q = transferFriendQuery.value.trim();
     let path = '/api/social/friends';
     if (q !== '') {
-      path = `${path}?q=${encodeURIComponent(q)}`;
+      path = path + '?q=' + encodeURIComponent(q);
     }
     const res = await getJson(path);
     transferFriends.value = res.friends || [];
@@ -232,12 +314,15 @@ async function submitTransfer () {
   transferErr.value = '';
   transferOk.value = '';
   try {
-    await postJson(`/api/tickets/${transferTicket.value.id}/transfer`, {
+    await postJson('/api/tickets/' + transferTicket.value.id + '/transfer', {
       to_user_id: transferUserId.value,
     });
     transferOk.value = 'Entrada enviada. El QR anterior deixa de ser vàlid.';
     const data = await getJson('/api/tickets');
     tickets.value = data.tickets || [];
+    qrPreview.value = '';
+    qrPreviewErr.value = '';
+    selectedTicket.value = null;
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('app:notifications-updated'));
     }
@@ -250,8 +335,12 @@ async function submitTransfer () {
 }
 
 function labelStatus (s) {
-  if (s === 'venuda') return 'Vàlida';
-  if (s === 'utilitzada') return 'Utilitzada';
+  if (s === 'venuda') {
+    return 'Vàlida';
+  }
+  if (s === 'utilitzada') {
+    return 'Utilitzada';
+  }
   return s || '—';
 }
 
@@ -263,7 +352,10 @@ const grouped = computed(() => {
   const map = new Map();
   for (const t of tickets.value) {
     const ev = t.event;
-    const key = ev?.id != null ? String(ev.id) : 'unknown';
+    let key = 'unknown';
+    if (ev?.id != null) {
+      key = String(ev.id);
+    }
     if (!map.has(key)) {
       map.set(key, {
         eventKey: key,
@@ -275,21 +367,24 @@ const grouped = computed(() => {
         items: [],
       });
     }
-    map.get(key).items.push({
+    const row = map.get(key);
+    row.items.push({
       ...t,
       displayStatus: statusFor(t),
     });
   }
-  return [...map.values()];
-});
-
-const selectedEventTime = computed(() => {
-  if (!selectedTicket.value?.event?.starts_at) return null;
-  return formatDate(selectedTicket.value.event.starts_at);
+  const out = [];
+  const keys = Array.from(map.keys());
+  for (let i = 0; i < keys.length; i = i + 1) {
+    out.push(map.get(keys[i]));
+  }
+  return out;
 });
 
 function formatDate (iso) {
-  if (!iso) return '';
+  if (!iso) {
+    return '';
+  }
   try {
     return new Date(iso).toLocaleString('ca-ES', {
       dateStyle: 'medium',
@@ -320,233 +415,350 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.tickets-page {
-  min-height: 100vh;
-  background: #0a0a0a;
-  color: #f5f5f5;
-  padding: 1.5rem;
-  padding-bottom: 80px;
-  max-width: 42rem;
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.tk-panel__valid .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  color: #4caf50;
+  font-size: 1rem;
+}
+
+.tk-shell {
+  --tk-bg: #131313;
+  --tk-on-bg: #e5e2e1;
+  --tk-yellow: #f7e628;
+  --tk-yellow-text: #6e6600;
+  --tk-outline: #959178;
+  --tk-surface-high: #2a2a2a;
+  --tk-outline-var: #4a4733;
+  --tk-container-low: #1c1b1b;
+  min-height: min(100dvh, 884px);
+  background: var(--tk-bg);
+  color: var(--tk-on-bg);
+  font-family: Inter, system-ui, sans-serif;
+  padding-bottom: calc(56px + 1rem);
+}
+
+.tk-bar {
+  position: fixed;
+  top: var(--header-h, 56px);
+  left: 0;
+  right: 0;
+  z-index: 45;
+  height: 4rem;
+  background: #131313;
+  border-bottom: 1px solid rgba(255, 238, 50, 0.2);
+}
+.tk-bar__inner {
+  max-width: 80rem;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+.tk-bar__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: transparent;
+  color: #ffee32;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.tk-bar__icon-btn:hover {
+  background: #2a2a2a;
+}
+.tk-bar__icon-btn:active {
+  transform: scale(0.95);
+}
+.tk-bar__brand {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  color: #ffee32;
+}
+.tk-bar__balance {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+
+.tk-list__body {
+  padding: calc(var(--header-h, 56px) + 4rem + 1rem) 1.5rem 2rem;
+  max-width: 28rem;
   margin: 0 auto;
 }
-.tickets-page__header {
-  margin-bottom: 1.5rem;
+
+.tk-muted {
+  color: var(--tk-outline);
 }
-.tickets-page__header h1 {
+.tk-err {
+  color: #ffb4ab;
   margin: 0;
-  font-size: 1.5rem;
-  color: #ff0055;
 }
-.tickets-page__muted {
-  color: #888;
-}
-.tickets-page__error {
-  color: #ff6b6b;
-}
-.tickets-page__ok {
+.tk-ok {
   color: #7bed9f;
   font-size: 0.9rem;
   margin: 0.5rem 0 0;
 }
-.tickets-event {
-  margin-bottom: 2rem;
+
+.tk-block {
+  margin-bottom: 2.5rem;
 }
-.tickets-event__card {
-  display: flex;
-  flex-direction: column;
+
+.tk-event-card {
+  display: block;
   text-decoration: none;
-  color: #f5f5f5;
-  background: #1a1a1a;
-  border-radius: 10px;
+  color: inherit;
+  border-radius: 24px;
   overflow: hidden;
+  border: 1px solid rgba(74, 71, 51, 0.35);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
   margin-bottom: 1rem;
 }
-.tickets-event__media {
+.tk-event-card__hero {
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #222;
+  height: 10rem;
 }
-.tickets-event__media--empty {
-  background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
-}
-.tickets-event__media--empty::after {
-  content: 'Sense imatge';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  color: #666;
-}
-.tickets-event__img {
+.tk-event-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: grayscale(1) contrast(1.1);
+  opacity: 0.7;
 }
-.tickets-event__body {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.tk-event-card__ph {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
 }
-.tickets-event__title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin: 0;
-  color: #f5f5f5;
+.tk-event-card__grad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--tk-surface-high), transparent);
 }
-.tickets-event__meta {
-  font-size: 0.9rem;
-  color: #888;
-  margin: 0;
+.tk-event-card__head {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
 }
-.tickets-event__count {
+.tk-pill {
   display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.35rem 0.65rem;
-  background: #ff0055;
+  background: var(--tk-yellow);
+  color: var(--tk-yellow-text);
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.tk-event-card__title {
+  margin: 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
   color: #fff;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  align-self: flex-start;
+}
+.tk-event-card__foot {
+  padding: 1rem 1.25rem;
+  background: var(--tk-surface-high);
+}
+.tk-event-card__meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--tk-outline);
+}
+.tk-event-card__count {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background: var(--tk-yellow);
+  color: var(--tk-yellow-text);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  font-family: Epilogue, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.tickets-swiper {
+.tk-swiper {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   margin: 0 -1.5rem;
-  padding: 0 1rem;
+  padding: 0 1rem 0.5rem;
 }
-.tickets-swiper__container {
+.tk-swiper__track {
   display: flex;
   gap: 0.75rem;
-  padding-bottom: 0.5rem;
 }
-.tickets-swiper__slide {
-  flex: 0 0 200px;
+.tk-swiper__slide {
+  flex: 0 0 210px;
   scroll-snap-align: start;
 }
 
-.ticket-card {
-  background: #161616;
-  border-radius: 8px;
-  border: 1px solid #2a2a2a;
+.tk-mini {
+  background: #201f1f;
+  border-radius: 16px;
+  border: 1px solid rgba(74, 71, 51, 0.35);
   padding: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.ticket-card:hover {
-  border-color: #444;
+.tk-mini:hover {
+  border-color: rgba(255, 238, 50, 0.35);
 }
-.ticket-card--selected {
-  border-color: #ff0055;
+.tk-mini--on {
+  border-color: #ffee32;
+  box-shadow: 0 0 0 1px rgba(247, 230, 40, 0.35);
 }
-.ticket-card__header {
+.tk-mini__row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
-.ticket-card__seat {
-  font-weight: 600;
-  font-size: 0.9rem;
+.tk-mini__id {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
 }
-.ticket-card__status {
-  font-size: 0.75rem;
+.tk-mini__st {
+  font-size: 0.7rem;
   color: #aaa;
 }
-.ticket-card__status[data-status='venuda'] {
-  color: #7bed9f;
+.tk-mini__st[data-status='venuda'] {
+  color: #4caf50;
 }
-.ticket-card__status[data-status='utilitzada'] {
+.tk-mini__st[data-status='utilitzada'] {
   color: #888;
 }
-.ticket-card__qr-link {
-  display: block;
-  text-align: center;
-  padding: 0.5rem;
-  background: #ff0055;
+.tk-mini__hint {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--tk-outline);
+  line-height: 1.3;
+}
+
+.tk-panel {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+  background: var(--tk-surface-high);
+  border-radius: 24px;
+  border: 1px solid rgba(74, 71, 51, 0.35);
+}
+.tk-panel__ev {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
   color: #fff;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
 }
-.ticket-card__qr-link:hover {
-  filter: brightness(1.1);
-}
-.ticket-card__send {
-  display: block;
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.45rem;
-  background: transparent;
-  border: 1px solid #444;
-  color: #ccc;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-.ticket-card__send:hover {
-  border-color: #ff0055;
-  color: #ff0055;
-}
-
-.ticket-info {
-  background: #1a1a1a;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-.ticket-info__event {
-  font-weight: 600;
+.tk-panel__date {
   margin: 0 0 0.5rem;
-}
-.ticket-info__date {
-  color: #888;
-  font-size: 0.9rem;
-  margin: 0 0 0.25rem;
-}
-.ticket-info__seat {
-  color: #666;
   font-size: 0.85rem;
-  margin: 0 0 0.75rem;
+  color: var(--tk-outline);
 }
-.ticket-info__qr {
-  color: #ff0055;
-  text-decoration: none;
-  font-size: 0.9rem;
+.tk-panel__seat {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #ccc;
 }
-
-.tickets-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.tk-panel__qr {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.tk-panel__qr :deep(svg) {
+  width: 11rem;
+  height: 11rem;
+  max-width: 100%;
+  shape-rendering: crispEdges;
+}
+.tk-panel__valid {
+  display: inline-flex;
   align-items: center;
-  padding: 1rem;
-  background: #1a1a1a;
-  border-top: 1px solid #2a2a2a;
-  max-width: 42rem;
-  margin: 0 auto;
-  left: 50%;
-  transform: translateX(-50%);
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  background: rgba(46, 125, 50, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 900;
+  font-family: Epilogue, system-ui, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4caf50;
+  margin-bottom: 0.75rem;
 }
-.tickets-footer__back {
-  color: #ff0055;
+.tk-panel__tid {
+  margin: 0 0 1rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--tk-outline);
+}
+.tk-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.tk-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.25rem;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  letter-spacing: -0.02em;
+  transition: transform 0.15s ease;
 }
-.tickets-footer__time {
-  color: #888;
-  font-size: 0.9rem;
+.tk-btn:active {
+  transform: scale(0.98);
+}
+.tk-btn--primary {
+  background: var(--tk-yellow);
+  color: var(--tk-yellow-text);
+}
+.tk-btn--ghost {
+  background: var(--tk-bg);
+  color: #fff;
+  border: 1px solid rgba(74, 71, 51, 0.45);
+}
+.tk-btn--ghost:hover {
+  background: #3a3939;
 }
 
-.tickets-page__modal-backdrop {
+.tk-modal-bg {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
@@ -556,60 +768,50 @@ onMounted(async () => {
   justify-content: center;
   padding: 1rem;
 }
-.tickets-page__modal {
-  background: #141414;
-  border: 1px solid #333;
-  border-radius: 10px;
+.tk-modal {
+  background: #1c1b1b;
+  border: 1px solid var(--tk-outline-var);
+  border-radius: 1rem;
   padding: 1.25rem;
   max-width: 22rem;
   width: 100%;
 }
-.tickets-page__modal-title {
+.tk-modal__title {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
-  color: #ff0055;
+  color: var(--tk-yellow);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
 }
-.tickets-page__label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  color: #aaa;
-  margin-top: 0.75rem;
-}
-.tickets-page__search {
+.tk-search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding: 0.45rem 0.6rem;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #0a0a0a;
+  border: 1px solid var(--tk-outline-var);
+  border-radius: 0.5rem;
+  background: #0e0e0e;
 }
-.tickets-page__search-ico {
+.tk-search__ico {
   color: #666;
 }
-.tickets-page__input {
-  padding: 0.45rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background: #0a0a0a;
-  color: #fff;
-}
-.tickets-page__input--grow {
+.tk-search__input {
   flex: 1;
   border: none;
   background: transparent;
+  color: #fff;
+  font-size: 0.9rem;
+  min-width: 0;
 }
-.tickets-page__friend-list {
+.tk-friends {
   list-style: none;
   padding: 0;
   margin: 0.5rem 0 0;
   max-height: 180px;
   overflow-y: auto;
 }
-.tickets-page__friend-btn {
+.tk-friend-btn {
   width: 100%;
   text-align: left;
   padding: 0.5rem;
@@ -620,39 +822,35 @@ onMounted(async () => {
   font-size: 0.85rem;
   cursor: pointer;
 }
-.tickets-page__friend-btn:hover {
-  background: #1a1a1a;
+.tk-friend-btn:hover {
+  background: #2a2a2a;
 }
-.tickets-page__transfer-pick {
+.tk-pick {
   margin: 0.75rem 0 0;
   font-size: 0.9rem;
   color: #7bed9f;
 }
-.tickets-page__modal-actions {
+.tk-modal__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
 }
-.tickets-page__btn-sec {
-  background: #333;
+.tk-btn-sec {
+  background: #444;
   border: none;
   color: #fff;
   padding: 0.45rem 0.85rem;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   cursor: pointer;
 }
-.tickets-page__link {
-  flex-shrink: 0;
-  padding: 0.4rem 0.85rem;
-  background: #ff0055;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-.tickets-page__link--btn {
+.tk-btn-prim {
+  background: var(--tk-yellow);
+  color: var(--tk-yellow-text);
   border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
   cursor: pointer;
+  font-weight: 700;
 }
 </style>
