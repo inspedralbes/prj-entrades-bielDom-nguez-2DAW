@@ -157,9 +157,10 @@ jobs:
             echo "All T001 directories verified"
           fi
 
-      # Proves Socket.IO contra 127.0.0.1:3001: és el port que Docker publica al **runner** de GitHub (no és «producció»).
-      # Cal executar-les **abans** de netejar `socket-server/node_modules` al host: el bind mount + `node --watch`
-      # al contenidor pot provocar ECONNRESET / xhr poll error si s’esborra `node_modules` mentre el servei està actiu.
+      # Proves Socket.IO: el servei escolta a 127.0.0.1:3001 des del runner (port publicat).
+      # No fer `chown`/`npm ci` al host sobre `socket-server/` mentre el contenidor corre amb `node --watch`:
+      # actualitza metadates dels `.js` del bind mount i força reinici del procés → ECONNRESET / xhr poll error als clients.
+      # Els scripts s’executen dins del contenidor (`node_modules` al volum anomenat, sense tocar el watch del host).
       - name: Realtime — Socket.IO (intent JWT + /internal/emit)
         run: |
           curl -sf http://127.0.0.1:3001/health >/dev/null || {
@@ -167,13 +168,13 @@ jobs:
             docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs socket-server --tail=80
             exit 1
           }
-          # Docker amb bind mount sovint deixa fitxers com a root al workspace → npm ci del runner (EACCES a node_modules).
-          sudo chown -R "$(id -un):$(id -gn)" socket-server || true
-          sudo rm -rf socket-server/node_modules socket-server/.npm || true
-          cd socket-server
-          npm ci
-          JWT_SECRET=smoke_test_secret npm run test:intent-broadcast -- http://127.0.0.1:3001
-          npm run test:realtime -- http://127.0.0.1:3001
+          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} exec -T \
+            -e JWT_SECRET=smoke_test_secret \
+            socket-server \
+            node scripts/verify-seat-intent-broadcast.mjs http://127.0.0.1:3001
+          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} exec -T \
+            socket-server \
+            node scripts/verify-internal-emit.mjs http://127.0.0.1:3001
 
       # Els bind mounts de Docker poden deixar fitxers com a root al workspace; npm ci al runner
       # falla amb EACCES a node_modules/@* si no es neteja i es restableixen permisos.
