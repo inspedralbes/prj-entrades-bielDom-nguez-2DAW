@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 
 /**
  * Mètriques Socket.IO del panell admin (`admin:metrics`) i reutilització opcional entre vistes.
+ * @description Mètriques Socket.IO del panell admin (`admin:metrics`) i reutilització opcional entre vistes.
  */
 export const useAdminDashboardStore = defineStore('adminDashboard', {
   state: () => ({
