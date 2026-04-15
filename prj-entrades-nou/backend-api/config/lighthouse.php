@@ -1,25 +1,6 @@
 <?php
 
 declare(strict_types=1);
-use GraphQL\Error\DebugFlag;
-use GraphQL\Validator\Rules\DisableIntrospection;
-use GraphQL\Validator\Rules\QueryComplexity;
-use GraphQL\Validator\Rules\QueryDepth;
-use Nuwave\Lighthouse\Execution\AuthenticationErrorHandler;
-use Nuwave\Lighthouse\Execution\AuthorizationErrorHandler;
-use Nuwave\Lighthouse\Execution\ReportingErrorHandler;
-use Nuwave\Lighthouse\Execution\ValidationErrorHandler;
-use Nuwave\Lighthouse\Http\Middleware\AcceptJson;
-use Nuwave\Lighthouse\Schema\Directives\ConvertEmptyStringsToNullDirective;
-use Nuwave\Lighthouse\Schema\Directives\DropArgsDirective;
-use Nuwave\Lighthouse\Schema\Directives\RenameArgsDirective;
-use Nuwave\Lighthouse\Schema\Directives\SanitizeDirective;
-use Nuwave\Lighthouse\Schema\Directives\SpreadDirective;
-use Nuwave\Lighthouse\Schema\Directives\TransformArgsDirective;
-use Nuwave\Lighthouse\Schema\Directives\TrimDirective;
-use Nuwave\Lighthouse\Subscriptions\SubscriptionRouter;
-use Nuwave\Lighthouse\Tracing\ApolloTracing\ApolloTracing;
-use Nuwave\Lighthouse\Validation\ValidateDirective;
 
 return [
     /*
@@ -49,7 +30,6 @@ return [
          * Make sure to return spec-compliant responses in case an error is thrown.
          */
         'middleware' => [
-            AcceptJson::class,
             'jwt.auth',
             'role:admin',
         ],
@@ -239,11 +219,9 @@ return [
     */
 
     'security' => [
-        'max_query_complexity' => QueryComplexity::DISABLED,
-        'max_query_depth' => QueryDepth::DISABLED,
-        'disable_introspection' => (bool) env('LIGHTHOUSE_SECURITY_DISABLE_INTROSPECTION', false)
-            ? DisableIntrospection::ENABLED
-            : DisableIntrospection::DISABLED,
+        'max_query_complexity' => PHP_INT_MAX,
+        'max_query_depth' => PHP_INT_MAX,
+        'disable_introspection' => (bool) env('LIGHTHOUSE_SECURITY_DISABLE_INTROSPECTION', false),
     ],
 
     /*
@@ -298,7 +276,7 @@ return [
     |
     */
 
-    'debug' => env('LIGHTHOUSE_DEBUG', DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE),
+    'debug' => env('LIGHTHOUSE_DEBUG', 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -312,10 +290,10 @@ return [
     */
 
     'error_handlers' => [
-        AuthenticationErrorHandler::class,
-        AuthorizationErrorHandler::class,
-        ValidationErrorHandler::class,
-        ReportingErrorHandler::class,
+        // AuthenticationErrorHandler::class,
+        // AuthorizationErrorHandler::class,
+        // ValidationErrorHandler::class,
+        // ReportingErrorHandler::class,
     ],
 
     /*

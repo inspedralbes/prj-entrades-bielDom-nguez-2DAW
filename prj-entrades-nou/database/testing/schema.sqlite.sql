@@ -86,6 +86,7 @@ CREATE TABLE failed_jobs (
 CREATE TABLE venues (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) NOT NULL,
+    city VARCHAR(255),
     external_tm_id VARCHAR(255),
     location TEXT,
     created_at VARCHAR(255),

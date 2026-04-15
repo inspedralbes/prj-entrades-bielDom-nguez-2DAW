@@ -2,7 +2,10 @@
 # Nginx fa de reverse proxy cap a PHP-FPM (millor rendiment que `php artisan serve`).
 FROM php:8.3-fpm-bookworm
 
-RUN apt-get update \
+RUN echo 'deb http://ftp.debian.org/debian bookworm main' > /etc/apt/sources.list \
+  && echo 'deb http://security.debian.org/debian-security bookworm-security main' >> /etc/apt/sources.list \
+  && echo 'deb http://deb.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list \
+  && apt-get update \
   && apt-get install -y --no-install-recommends \
     libpq-dev git unzip curl ca-certificates nginx postgresql-client \
   && docker-php-ext-install pdo pdo_pgsql opcache \

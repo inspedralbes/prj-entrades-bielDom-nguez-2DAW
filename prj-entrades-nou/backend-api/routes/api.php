@@ -76,6 +76,9 @@ Route::middleware('jwt.auth')->patch('/notifications/{id}', [NotificationControl
 Route::middleware('jwt.auth')->get('/social/friends', [SocialController::class, 'friends']);
 Route::middleware('jwt.auth')->get('/social/discover/search', [SocialUserController::class, 'search']);
 Route::middleware('jwt.auth')->get('/social/users/{userId}', [SocialUserController::class, 'publicProfile']);
+Route::middleware('jwt.auth')->get('/social/users/{userId}/share-thread', [SocialUserController::class, 'shareThread']);
+Route::middleware('jwt.auth')->get('/social/thread-notification-mutes', [SocialUserController::class, 'threadMutesIndex']);
+Route::middleware('jwt.auth')->patch('/social/users/{userId}/thread-notification-mute', [SocialUserController::class, 'threadMutePatch']);
 Route::middleware('jwt.auth')->post('/social/share-event', [SocialController::class, 'shareEvent']);
 Route::middleware('jwt.auth')->get('/social/friend-invites', [SocialController::class, 'invitesIndex']);
 Route::middleware('jwt.auth')->post('/social/friend-invites', [SocialController::class, 'invitesStore']);
