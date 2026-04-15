@@ -12,7 +12,12 @@ export default defineNuxtConfig({
         },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0',
+          href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap',
+        },
+        /* Pes 400: ha de coincidir amb font-weight del CSS; l’URL amb wght@600 només registrava 600 i els icones es veien com a text */
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap',
         },
       ],
     },
@@ -36,6 +41,8 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    // Només servidor (middleware SSR, server routes): dins Docker «localhost:8000» no és backend-api.
+    apiInternalUrl: process.env.NUXT_API_INTERNAL_URL || '',
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000',
       socketUrl: process.env.NUXT_PUBLIC_SOCKET_URL || 'http://localhost:3001',
@@ -46,5 +53,6 @@ export default defineNuxtConfig({
   routeRules: {
     '/admin/adminlogs': { redirect: '/admin/logs' },
     '/admin/perfil': { redirect: '/admin/profile' },
+    '/checkout': { redirect: '/tickets' },
   },
 });

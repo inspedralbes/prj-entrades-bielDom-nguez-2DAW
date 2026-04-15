@@ -167,14 +167,21 @@ watch(
 </script>
 
 <style scoped>
+/* Pantalla completa dins l’àrea admin: amplada màxima i mapa amb alçada gran (ResizeObserver del D3). */
 .adm-mon {
   box-sizing: border-box;
   width: 100%;
-  max-width: 90rem;
-  margin: 0 auto;
-  padding-bottom: 2rem;
+  min-width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-bottom: 1.25rem;
   font-family: Inter, system-ui, sans-serif;
   color: #e5e2e1;
+  display: flex;
+  flex-direction: column;
+  /* Omple el viewport sota el padding del layout admin */
+  min-height: calc(100vh - 5rem);
+  min-height: calc(100dvh - 5rem);
 }
 
 .adm-mon__back-row {
@@ -208,7 +215,7 @@ watch(
 }
 
 .adm-mon__hero {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .adm-mon__title {
@@ -230,7 +237,7 @@ watch(
 }
 
 .adm-mon__event-name {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   font-family: Epilogue, system-ui, sans-serif;
   font-size: 1.35rem;
   font-weight: 800;
@@ -242,7 +249,8 @@ watch(
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
@@ -286,8 +294,30 @@ watch(
 }
 
 .adm-mon__seatmap {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 100%;
   margin-top: 0.5rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  /* Espai vertical gran: el mapa escala amb el contenidor (no cal zoom al navegador) */
+  min-height: max(28rem, calc(100vh - 20rem));
+  min-height: max(28rem, calc(100dvh - 20rem));
+}
+
+.adm-mon__seatmap :deep(.ism-root) {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+}
+
+.adm-mon__seatmap :deep(.ism-map-root) {
+  flex: 1 1 auto;
+  min-height: max(22rem, calc(100vh - 21rem));
+  min-height: max(22rem, calc(100dvh - 21rem));
 }
 
 .adm-mon__muted {

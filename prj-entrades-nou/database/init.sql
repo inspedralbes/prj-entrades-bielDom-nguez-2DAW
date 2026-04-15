@@ -121,6 +121,7 @@ CREATE TABLE events (
     tm_url VARCHAR(1024),
     price DECIMAL(10, 2),
     image_url VARCHAR(1024),
+    description TEXT,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
@@ -246,6 +247,18 @@ CREATE TABLE social_notifications (
 );
 
 CREATE INDEX social_notifications_user_created_index ON social_notifications (user_id, created_at DESC);
+
+-- Silenci de toasts per fil compartit amb un amic (el xat segueix en temps real).
+CREATE TABLE social_thread_notification_mutes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    peer_user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    UNIQUE (user_id, peer_user_id)
+);
+
+CREATE INDEX social_thread_notification_mutes_user_index ON social_thread_notification_mutes (user_id);
 
 CREATE TABLE tm_discovery_sync (
     id BIGSERIAL PRIMARY KEY,

@@ -1,5 +1,6 @@
 import { useAuthStore } from '~/stores/auth';
-import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
+import { resolveApiBaseUrlForFetch } from '~/utils/apiBase';
+import { getForbiddenRedirectPath } from '~/utils/routeForbiddenRedirect';
 
 /**
  * Comprova si la llista de rols (p. ex. des de /api/auth/me) inclou «admin».
@@ -18,39 +19,51 @@ function rolesIncludeAdmin (roles) {
 
 /**
  * Només rols amb «admin» (Spatie) poden accedir a /admin/*.
- * Després del login cal tornar a la mateixa ruta: mateix patró que `authGate` (query `redirect`).
- * Si el Pinia ja té `user.roles` des de `auth-session` o login, no cal repetir GET /api/auth/me a cada canvi de pàgina (navegació client ràpida).
+ * Sense sessió → login amb `redirect` cap a la ruta demanada.
+ * Amb sessió sense rol → tornada a la pàgina anterior (from) quan sigui segur; si no, «/».
+ * La comprovació corre també en SSR (cookie + GET /api/auth/me) per no servir HTML del panell sense permís.
  */
-export default defineNuxtRouteMiddleware(async (to) => {
-  if (import.meta.server) {
-    return;
-  }
+export default defineNuxtRouteMiddleware(async (to, from) => {
   const auth = useAuthStore();
-  if (!auth.token) {
+  auth.init();
+
+  const authToken = useCookie('auth_token');
+  const rawCookie = authToken.value;
+  const cookieToken = typeof rawCookie === 'string' ? rawCookie.trim() : '';
+  if (!cookieToken && !auth.token) {
     return navigateTo({
       path: '/login',
       query: { redirect: to.fullPath },
     });
   }
+
   if (auth.user && rolesIncludeAdmin(auth.user.roles)) {
     return;
   }
+
   const config = useRuntimeConfig();
-  const base = resolvePublicApiBaseUrl(config.public.apiUrl);
+  const base = resolveApiBaseUrlForFetch(config);
+  const bearer = auth.token || cookieToken;
   try {
     const me = await $fetch(`${base}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${auth.token}` },
+      headers: { Authorization: `Bearer ${bearer}` },
       timeout: 20000,
     });
-    auth.setSession({ token: auth.token, user: me });
+    auth.setSession({ token: bearer, user: me });
     const roles = me.roles || [];
     if (!rolesIncludeAdmin(roles)) {
-      return navigateTo('/');
+      const target = getForbiddenRedirectPath(to, from, '/admin');
+      return navigateTo(target);
     }
-  } catch {
-    return navigateTo({
-      path: '/login',
-      query: { redirect: to.fullPath },
-    });
+  } catch (err) {
+    const status = err?.statusCode || err?.status;
+    if (status === 401) {
+      return navigateTo({
+        path: '/login',
+        query: { redirect: to.fullPath },
+      });
+    }
+    const target = getForbiddenRedirectPath(to, from, '/admin');
+    return navigateTo(target);
   }
 });

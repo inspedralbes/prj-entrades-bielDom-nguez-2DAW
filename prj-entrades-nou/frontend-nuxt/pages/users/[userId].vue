@@ -1,19 +1,104 @@
 <template>
-  <main class="user-public user-page">
+  <main v-if="loading" class="user-public user-page">
     <nav class="user-public__nav" aria-label="Navegació">
-      <NuxtLink to="/social" class="user-public__back">← Social</NuxtLink>
-      <NuxtLink to="/" class="user-public__back user-public__back--muted">Inici</NuxtLink>
+      <button
+        type="button"
+        class="user-public__back-btn"
+        aria-label="Tornar enrere"
+        @click="goBack"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </button>
     </nav>
-
-    <div v-if="loading" class="user-public__skeleton" aria-busy="true">
+    <div class="user-public__skeleton" aria-busy="true">
       <div class="user-public__sk-avatar" />
       <div class="user-public__sk-line user-public__sk-line--lg" />
       <div class="user-public__sk-line user-public__sk-line--sm" />
     </div>
+  </main>
 
-    <p v-else-if="err" class="user-public__err" role="alert">{{ err }}</p>
+  <main v-else-if="err" class="user-public user-page">
+    <nav class="user-public__nav" aria-label="Navegació">
+      <button
+        type="button"
+        class="user-public__back-btn"
+        aria-label="Tornar enrere"
+        @click="goBack"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </button>
+    </nav>
+    <p class="user-public__err" role="alert">{{ err }}</p>
+  </main>
 
-    <article v-else-if="profile" class="user-public__card">
+  <main
+    v-else-if="profile && profile.relationship === 'friend'"
+    class="friend-chat-page user-page"
+  >
+    <header class="friend-chat-page__bar">
+      <button
+        type="button"
+        class="user-public__back-btn friend-chat-page__back"
+        aria-label="Tornar enrere"
+        @click="goBack"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </button>
+      <div class="friend-chat-page__peer">
+        <div class="friend-chat-page__miniava" aria-hidden="true">
+          {{ avatarInitials }}
+        </div>
+        <div class="friend-chat-page__who">
+          <span class="friend-chat-page__n">{{ profile.name }}</span>
+          <span class="friend-chat-page__u">@{{ profile.username }}</span>
+        </div>
+      </div>
+      <div class="friend-chat-page__menuslot">
+        <button
+          type="button"
+          class="friend-chat-page__kebab"
+          aria-label="Opcions del xat amb aquest amic"
+          :aria-expanded="menuOpen"
+          @click="menuOpen = !menuOpen"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+        </button>
+        <div
+          v-if="menuOpen"
+          class="friend-chat-page__dropdown"
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            class="friend-chat-page__menu-item"
+            @click="toggleThreadMute"
+          >
+            {{ threadMuteMenuLabel }}
+          </button>
+        </div>
+      </div>
+    </header>
+    <FriendShareChat
+      :peer-id="String(profile.id)"
+      :peer-username="profile.username"
+      @meta="onFriendChatMeta"
+    />
+  </main>
+
+  <main v-else-if="profile" class="user-public user-page">
+    <nav class="user-public__nav" aria-label="Navegació">
+      <button
+        type="button"
+        class="user-public__back-btn"
+        aria-label="Tornar enrere"
+        @click="goBack"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </button>
+    </nav>
+
+    <article class="user-public__card">
       <header class="user-public__hero">
         <div class="user-public__avatar" aria-hidden="true">
           {{ avatarInitials }}
@@ -28,7 +113,10 @@
         </div>
       </header>
 
-      <section class="user-public__section" aria-label="Accions">
+      <section
+        class="user-public__section"
+        aria-label="Accions"
+      >
         <div v-if="profile.relationship === 'self'" class="user-public__actions">
           <p class="user-public__muted">
             Aquest és el teu perfil. Pots editar el nom i l’usuari des del teu compte.
@@ -39,11 +127,7 @@
         </div>
 
         <div v-else class="user-public__actions">
-          <p v-if="profile.relationship === 'friend'" class="user-public__ok">
-            Sou amics. Pots compartir entrades des de «Les meves entrades».
-          </p>
-
-          <template v-else-if="profile.relationship === 'none'">
+          <template v-if="profile.relationship === 'none'">
             <p class="user-public__lead">
               Envia una sol·licitud d’amistat per connectar i compartir esdeveniments i entrades.
             </p>
@@ -94,8 +178,10 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import FriendShareChat from '~/components/FriendShareChat.vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { useSocialThreadMutesStore } from '~/stores/socialThreadMutes';
 
 definePageMeta({
   layout: 'default',
@@ -103,7 +189,57 @@ definePageMeta({
 });
 
 const route = useRoute();
+const router = useRouter();
 const { getJson, postJson, patchJson } = useAuthorizedApi();
+const socialThreadMutes = useSocialThreadMutesStore();
+
+const menuOpen = ref(false);
+const threadMuted = ref(false);
+
+const threadMuteMenuLabel = computed(() => {
+  if (threadMuted.value) {
+    return 'Activar notificacions emergents';
+  }
+  return 'Silenciar notificacions emergents';
+});
+
+function onFriendChatMeta (payload) {
+  if (payload && typeof payload.thread_notifications_muted === 'boolean') {
+    threadMuted.value = payload.thread_notifications_muted;
+  }
+}
+
+async function toggleThreadMute () {
+  menuOpen.value = false;
+  if (!profile.value) {
+    return;
+  }
+  const next = !threadMuted.value;
+  try {
+    await patchJson(
+      '/api/social/users/' + encodeURIComponent(String(profile.value.id)) + '/thread-notification-mute',
+      { muted: next },
+    );
+    threadMuted.value = next;
+    socialThreadMutes.setPeerMuted(String(profile.value.id), next);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function goBack () {
+  const fromRaw = route.query.from;
+  const from = fromRaw === undefined || fromRaw === null ? '' : String(fromRaw).toLowerCase().trim();
+  if (from === 'social') {
+    router.push('/social');
+    return;
+  }
+  if (import.meta.client && typeof window !== 'undefined' && window.history.length > 1) {
+    router.back();
+    return;
+  }
+  router.push('/social');
+}
 
 const loading = ref(true);
 const err = ref('');
@@ -176,7 +312,7 @@ const relationshipChipText = computed(() => {
     return 'Sol·licitud enviada';
   }
   if (rel === 'pending_received') {
-    return 'T’han convidat';
+    return 'Sol·licitud rebuda';
   }
   return '';
 });
@@ -223,6 +359,16 @@ async function load () {
     const p = await getJson(`/api/social/users/${encodeURIComponent(id)}`);
     profile.value = p;
     applySeo(p);
+    if (p.relationship === 'friend') {
+      try {
+        await postJson('/api/notifications/mark-read-for-actor/' + encodeURIComponent(String(p.id)), {});
+      } catch (markErr) {
+        console.error(markErr);
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:notifications-updated'));
+      }
+    }
   } catch (e) {
     profile.value = null;
     const st = httpStatusFromError(e);
@@ -293,24 +439,160 @@ watch(
   margin: 0 auto;
   min-height: 60vh;
 }
+
+.friend-chat-page {
+  max-width: 32rem;
+  margin: 0 auto;
+  width: 100%;
+  min-height: calc(100dvh - var(--footer-stack) - 0.75rem);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.5rem 0.35rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 900px) {
+  .friend-chat-page {
+    min-height: calc(100dvh - var(--header-h) - 2rem);
+  }
+}
+
+.friend-chat-page__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  padding: 0.25rem 0 0.55rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.friend-chat-page__peer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.friend-chat-page__miniava {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--accent) 0%, #5c5600 100%);
+  color: var(--accent-on);
+  font-size: 0.82rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(247, 230, 40, 0.2);
+}
+
+.friend-chat-page__who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.friend-chat-page__n {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #f5f5f5;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-chat-page__u {
+  font-size: 0.76rem;
+  color: #8a8a8a;
+}
+
+.friend-chat-page__menuslot {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.friend-chat-page__kebab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.45rem;
+  height: 2.45rem;
+  padding: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 30, 30, 0.92);
+  color: #c8c8c8;
+  cursor: pointer;
+}
+
+.friend-chat-page__kebab:hover {
+  opacity: 0.92;
+}
+
+.friend-chat-page__dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 13rem;
+  padding: 0.35rem 0;
+  background: #1c1b1b;
+  border: 1px solid rgba(74, 71, 51, 0.55);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.friend-chat-page__menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.84rem;
+  color: #e8e8e8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.friend-chat-page__menu-item:hover {
+  background: rgba(247, 230, 40, 0.08);
+}
+
 .user-public__nav {
   display: flex;
   align-items: center;
-  gap: 1rem;
   margin-bottom: 1.25rem;
 }
-.user-public__back {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
+
+/* Mateix patró que `map-tr3__back` / seients: botó rodó, només icona. */
+.user-public__back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 9999px;
+  background: rgba(42, 42, 42, 0.9);
+  border: 1px solid rgba(74, 71, 51, 0.35);
+  color: #f7e628;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
-.user-public__back--muted {
-  color: var(--fg-muted);
-  font-weight: 500;
+
+.user-public__back-btn:hover {
+  opacity: 0.88;
 }
-.user-public__back:hover {
-  text-decoration: underline;
+
+.user-public__back-btn .material-symbols-outlined {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 .user-public__skeleton {
   padding: 1rem 0;
@@ -356,6 +638,7 @@ watch(
   padding: 1.35rem 1.25rem 1.5rem;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
+
 .user-public__hero {
   display: flex;
   gap: 1.1rem;
@@ -364,6 +647,7 @@ watch(
   padding-bottom: 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 .user-public__avatar {
   flex-shrink: 0;
   width: 88px;

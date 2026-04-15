@@ -1,37 +1,39 @@
 <template>
-  <main class="tk-shell tk-detail">
-    <header class="tk-bar" aria-label="Capçalera entrada">
+  <div class="tk-shell">
+    <header class="tk-bar" aria-label="Entrades de l'esdeveniment">
       <div class="tk-bar__inner">
         <NuxtLink to="/tickets" class="tk-bar__icon-btn" aria-label="Tornar a les entrades">
           <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
         </NuxtLink>
-        <p class="tk-bar__brand">TR3-ENTRADES</p>
+        <p class="tk-bar__brand">Les meves entrades</p>
         <span class="tk-bar__balance" aria-hidden="true" />
       </div>
     </header>
 
-    <div class="tk-detail__body">
-      <p v-if="loading" class="tk-muted">Carregant…</p>
-      <p v-else-if="error" class="tk-err">{{ error }}</p>
-
-      <template v-else-if="ticket">
-        <TicketCardFull
-          :ticket="ticket"
-          :qr-svg="qrSvg"
-          :qr-error="qrError"
-          :display-status="displayStatus"
-          heading-is-h1
-          @transfer="openTransfer"
-        />
-
-        <div class="tk-legal">
-          <span class="material-symbols-outlined tk-legal__ico" aria-hidden="true">lock</span>
-          <p class="tk-legal__txt">
-            Aquesta entrada està protegida amb tecnologia TR3-Secure™. No comparteixis el codi QR abans de l’entrada.
-          </p>
+    <section class="tk-body">
+      <template v-if="loading">
+        <p class="tk-muted">Carregant…</p>
+      </template>
+      <template v-else-if="error">
+        <p class="tk-err">{{ error }}</p>
+      </template>
+      <template v-else-if="items.length === 0">
+        <p class="tk-muted">No tens entrades per aquest esdeveniment.</p>
+      </template>
+      <template v-else>
+        <div class="tk-event-tickets">
+          <TicketCardFull
+            v-for="(item, idx) in items"
+            :key="'ent-' + String(item.ticket.id) + '-' + String(idx)"
+            :ticket="item.ticket"
+            :qr-svg="item.qrSvg"
+            :qr-error="item.qrError"
+            :display-status="item.displayStatus"
+            @transfer="() => openTransfer(String(item.ticket.id))"
+          />
         </div>
       </template>
-    </div>
+    </section>
 
     <div
       v-if="transferOpen"
@@ -43,9 +45,7 @@
     >
       <div class="tk-modal">
         <h2 id="tk-transfer-title" class="tk-modal__title">Enviar entrada</h2>
-        <p class="tk-muted">
-          Només a un amic amb invitació acceptada. Cerca per nom o usuari.
-        </p>
+        <p class="tk-muted">Només a un amic amb invitació acceptada. Cerca per nom o usuari.</p>
         <div class="tk-search">
           <span class="tk-search__ico" aria-hidden="true">⌕</span>
           <input
@@ -66,32 +66,23 @@
             </button>
           </li>
         </ul>
-        <p v-if="transferFriends.length === 0 && !transferFriendsLoading" class="tk-muted">
-          Cap amic coincideix.
-        </p>
+        <p v-if="transferFriends.length === 0 && !transferFriendsLoading" class="tk-muted">Cap amic coincideix.</p>
         <p v-if="transferSelectedLabel" class="tk-pick">Destinatari: {{ transferSelectedLabel }}</p>
         <p v-if="transferErr" class="tk-err">{{ transferErr }}</p>
         <p v-if="transferOk" class="tk-ok">{{ transferOk }}</p>
         <div class="tk-modal__actions">
-          <button type="button" class="tk-btn-sec" @click="closeTransfer">
-            Cancel·lar
-          </button>
-          <button
-            type="button"
-            class="tk-btn-prim"
-            :disabled="transferLoading"
-            @click="submitTransfer"
-          >
-            {{ transferLoading ? 'Enviant…' : 'Confirmar' }}
+          <button type="button" class="tk-btn-sec" @click="closeTransfer">Cancel·lar</button>
+          <button type="button" class="tk-btn-prim" :disabled="transferLoading" @click="submitTransfer">
+            {{ transferButtonText }}
           </button>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import TicketCardFull from '~/components/TicketCardFull.vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useTicketsStore } from '~/stores/tickets';
@@ -102,16 +93,16 @@ definePageMeta({
 });
 
 const route = useRoute();
-const { getJson, postJson, getTicketQrSvg } = useAuthorizedApi();
+const { getJson, getTicketQrSvg, postJson } = useAuthorizedApi();
 const ticketsStore = useTicketsStore();
 
 const loading = ref(true);
 const error = ref('');
-const ticket = ref(null);
-const qrSvg = ref('');
-const qrError = ref('');
+const items = ref([]);
+const eventId = computed(() => String(route.params.eventId || ''));
 
 const transferOpen = ref(false);
+const transferTicketId = ref('');
 const transferUserId = ref(null);
 const transferSelectedLabel = ref('');
 const transferFriendQuery = ref('');
@@ -122,24 +113,95 @@ const transferLoading = ref(false);
 const transferErr = ref('');
 const transferOk = ref('');
 
-const ticketId = computed(() => String(route.params.ticketId || ''));
-
-const displayStatus = computed(() => {
-  const t = ticket.value;
-  if (!t) {
-    return '';
+const transferButtonText = computed(() => {
+  if (transferLoading.value) {
+    return 'Enviant…';
   }
-  return ticketsStore.effectiveStatus(t.id, t.status);
+  return 'Confirmar';
 });
 
-function openTransfer () {
+async function loadTickets () {
+  loading.value = true;
+  error.value = '';
+  items.value = [];
+  try {
+    const data = await getJson('/api/tickets');
+    const list = data.tickets || [];
+    const eventRows = [];
+    for (let i = 0; i < list.length; i = i + 1) {
+      const row = list[i];
+      const rowEventId = row?.event?.id;
+      if (String(rowEventId) === eventId.value) {
+        eventRows.push(row);
+      }
+    }
+
+    const normalized = [];
+    for (let i = 0; i < eventRows.length; i = i + 1) {
+      const row = eventRows[i];
+      let effective = ticketsStore.effectiveStatus(row.id, row.status);
+      if (effective !== 'venuda' && effective !== 'utilitzada') {
+        if (typeof row.status === 'string' && row.status !== '') {
+          effective = row.status;
+        } else {
+          effective = 'venuda';
+        }
+      }
+      let qrSvg = '';
+      let qrError = '';
+      if (effective === 'venuda') {
+        try {
+          qrSvg = await getTicketQrSvg(row.id);
+        } catch (e) {
+          const st = e?.status;
+          if (st === 409) {
+            qrError = 'L’entrada ja no és vàlida per al QR.';
+          } else if (st === 503) {
+            qrError = 'El servei de QR no està disponible ara mateix.';
+          } else {
+            qrError = 'No s’ha pogut generar el QR.';
+          }
+        }
+      }
+      normalized.push({
+        ticket: row,
+        displayStatus: effective,
+        qrSvg,
+        qrError,
+      });
+    }
+    items.value = normalized;
+  } catch (e) {
+    if (e?.status === 401) {
+      navigateTo('/login');
+      return;
+    }
+    error.value = 'No s\'han pogut carregar les entrades.';
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openTransfer (ticketId) {
+  transferOpen.value = true;
+  transferTicketId.value = ticketId;
   transferUserId.value = null;
   transferSelectedLabel.value = '';
   transferFriendQuery.value = '';
   transferErr.value = '';
   transferOk.value = '';
-  transferOpen.value = true;
   loadTransferFriends();
+}
+
+function closeTransfer () {
+  transferOpen.value = false;
+  transferTicketId.value = '';
+}
+
+function pickTransferFriend (f) {
+  transferUserId.value = f.id;
+  transferSelectedLabel.value = '@' + f.username + ' · ' + f.name;
 }
 
 function scheduleTransferFriendSearch () {
@@ -164,26 +226,15 @@ async function loadTransferFriends () {
     }
     const res = await getJson(path);
     transferFriends.value = res.friends || [];
-  } catch (e) {
-    console.error(e);
+  } catch {
     transferFriends.value = [];
   } finally {
     transferFriendsLoading.value = false;
   }
 }
 
-function pickTransferFriend (f) {
-  transferUserId.value = f.id;
-  transferSelectedLabel.value = '@' + f.username + ' · ' + f.name;
-}
-
-function closeTransfer () {
-  transferOpen.value = false;
-}
-
 async function submitTransfer () {
-  const tid = ticket.value?.id;
-  if (!tid || !transferUserId.value) {
+  if (!transferTicketId.value || !transferUserId.value) {
     transferErr.value = 'Selecciona un amic de la llista.';
     return;
   }
@@ -191,7 +242,7 @@ async function submitTransfer () {
   transferErr.value = '';
   transferOk.value = '';
   try {
-    await postJson('/api/tickets/' + tid + '/transfer', {
+    await postJson('/api/tickets/' + transferTicketId.value + '/transfer', {
       to_user_id: transferUserId.value,
     });
     transferOk.value = 'Entrada enviada. El QR anterior deixa de ser vàlid.';
@@ -200,8 +251,8 @@ async function submitTransfer () {
     }
     setTimeout(() => {
       closeTransfer();
-      loadTicket();
-    }, 1200);
+      loadTickets();
+    }, 1000);
   } catch (e) {
     transferErr.value = e?.data?.message || e?.message || 'No s\'ha pogut transferir.';
   } finally {
@@ -209,79 +260,14 @@ async function submitTransfer () {
   }
 }
 
-async function loadTicket () {
-  loading.value = true;
-  error.value = '';
-  ticket.value = null;
-  qrSvg.value = '';
-  qrError.value = '';
-
-  const id = ticketId.value;
-  if (!id) {
-    error.value = 'Identificador d’entrada no vàlid.';
-    loading.value = false;
-    return;
-  }
-
-  try {
-    const data = await getJson('/api/tickets');
-    const list = data.tickets || [];
-    let found = null;
-    for (let i = 0; i < list.length; i = i + 1) {
-      if (list[i].id === id) {
-        found = list[i];
-        break;
-      }
-    }
-    if (!found) {
-      error.value = 'No s’ha trobat aquesta entrada al teu compte.';
-      return;
-    }
-    ticket.value = found;
-
-    if (ticketsStore.effectiveStatus(found.id, found.status) === 'venuda') {
-      try {
-        qrSvg.value = await getTicketQrSvg(id);
-      } catch (e) {
-        const st = e?.status;
-        if (st === 409) {
-          qrError.value = 'L’entrada ja no és vàlida per al QR.';
-        } else if (st === 503) {
-          qrError.value = 'El servei de QR no està disponible ara mateix.';
-        } else {
-          qrError.value = 'No s’ha pogut generar el QR.';
-        }
-      }
-    }
-  } catch (e) {
-    error.value = 'No s’ha pogut carregar l’entrada.';
-    console.error(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
-onMounted(loadTicket);
-watch(ticketId, () => {
-  loadTicket();
-});
-
-watch(displayStatus, (s) => {
-  if (s === 'utilitzada') {
-    qrSvg.value = '';
-    qrError.value = '';
-  }
-});
+onMounted(loadTickets);
 </script>
 
 <style scoped>
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   line-height: 1;
-}
-.tk-valid .tk-valid__ico {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .tk-shell {
@@ -291,9 +277,7 @@ watch(displayStatus, (s) => {
   --tk-yellow-text: #6e6600;
   --tk-outline: #959178;
   --tk-surface-high: #2a2a2a;
-  --tk-surface-highest: #353534;
   --tk-outline-var: #4a4733;
-  --tk-container-low: #1c1b1b;
   min-height: min(100dvh, 884px);
   background: var(--tk-bg);
   color: var(--tk-on-bg);
@@ -326,19 +310,9 @@ watch(displayStatus, (s) => {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: none;
   border-radius: 9999px;
-  background: transparent;
   color: #ffee32;
   text-decoration: none;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease;
-}
-.tk-bar__icon-btn:hover {
-  background: #2a2a2a;
-}
-.tk-bar__icon-btn:active {
-  transform: scale(0.95);
 }
 .tk-bar__brand {
   margin: 0;
@@ -346,26 +320,35 @@ watch(displayStatus, (s) => {
   text-align: center;
   font-family: Epilogue, system-ui, sans-serif;
   font-weight: 900;
-  letter-spacing: -0.03em;
   text-transform: uppercase;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   color: #ffee32;
 }
 .tk-bar__balance {
   width: 2.5rem;
   height: 2.5rem;
-  flex-shrink: 0;
 }
 
-.tk-detail__body {
-  padding: calc(var(--header-h, 56px) + 4rem + 1.5rem) 1.5rem 2rem;
+.tk-body {
+  box-sizing: border-box;
+  min-height: 45vh;
+  padding: calc(var(--header-h, 56px) + 4rem + 1rem) 1.5rem 2rem;
   max-width: 28rem;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tk-event-tickets {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
 }
 
 .tk-muted {
   color: var(--tk-outline);
-  margin: 0;
 }
 .tk-err {
   color: #ffb4ab;
@@ -373,30 +356,7 @@ watch(displayStatus, (s) => {
 }
 .tk-ok {
   color: #7bed9f;
-  font-size: 0.9rem;
   margin: 0.5rem 0 0;
-}
-
-.tk-legal {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: var(--tk-container-low);
-  border: 1px solid rgba(74, 71, 51, 0.35);
-  border-radius: 0.5rem;
-  text-align: center;
-}
-.tk-legal__ico {
-  display: block;
-  margin: 0 auto 0.5rem;
-  color: var(--tk-outline);
-  font-size: 1.25rem;
-}
-.tk-legal__txt {
-  margin: 0;
-  font-size: 10px;
-  line-height: 1.5;
-  color: var(--tk-outline);
-  padding: 0 0.5rem;
 }
 
 .tk-modal-bg {
@@ -419,10 +379,7 @@ watch(displayStatus, (s) => {
 }
 .tk-modal__title {
   margin: 0 0 0.5rem;
-  font-size: 1.1rem;
   color: var(--tk-yellow);
-  font-family: Epilogue, system-ui, sans-serif;
-  font-weight: 800;
 }
 .tk-search {
   display: flex;
@@ -432,18 +389,12 @@ watch(displayStatus, (s) => {
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--tk-outline-var);
   border-radius: 0.5rem;
-  background: #0e0e0e;
-}
-.tk-search__ico {
-  color: #666;
 }
 .tk-search__input {
   flex: 1;
   border: none;
   background: transparent;
   color: #fff;
-  font-size: 0.9rem;
-  min-width: 0;
 }
 .tk-friends {
   list-style: none;
@@ -460,15 +411,9 @@ watch(displayStatus, (s) => {
   border-bottom: 1px solid #222;
   background: transparent;
   color: #eee;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-.tk-friend-btn:hover {
-  background: #2a2a2a;
 }
 .tk-pick {
   margin: 0.75rem 0 0;
-  font-size: 0.9rem;
   color: #7bed9f;
 }
 .tk-modal__actions {
@@ -483,7 +428,6 @@ watch(displayStatus, (s) => {
   color: #fff;
   padding: 0.45rem 0.85rem;
   border-radius: 0.5rem;
-  cursor: pointer;
 }
 .tk-btn-prim {
   background: var(--tk-yellow);
@@ -491,7 +435,5 @@ watch(displayStatus, (s) => {
   border: none;
   padding: 0.45rem 0.85rem;
   border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 700;
 }
 </style>

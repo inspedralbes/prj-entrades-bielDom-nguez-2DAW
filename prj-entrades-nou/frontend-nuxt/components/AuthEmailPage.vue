@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page">
+  <div class="login-page" :class="{ 'login-page--login-mode': !isRegister }">
     <div class="login-page__backdrop" aria-hidden="true">
       <div class="login-page__glow login-page__glow--tl" />
       <div class="login-page__glow login-page__glow--br" />
@@ -7,7 +7,7 @@
 
     <main class="login-page__main">
       <header class="login-page__brand">
-        <h1 class="login-page__logo">TR3-ENTRADES</h1>
+        <h1 class="login-page__logo">PULSE</h1>
         <div class="login-page__logo-bar" />
       </header>
 
@@ -62,11 +62,7 @@
         </div>
 
         <div class="login-page__field">
-          <div v-if="!isRegister" class="login-page__label-row">
-            <label class="login-page__label login-page__label--inline" :for="fieldId('password')">Contrasenya</label>
-            <a class="login-page__link-muted" href="#" @click.prevent>Has oblidat la contrasenya?</a>
-          </div>
-          <label v-else class="login-page__label" :for="fieldId('password')">Contrasenya</label>
+          <label class="login-page__label" :for="fieldId('password')">Contrasenya</label>
           <div class="login-page__input-wrap">
             <span class="material-symbols-outlined login-page__ico" aria-hidden="true">lock</span>
             <input
@@ -154,12 +150,13 @@
     </main>
 
     <div class="login-page__watermark" aria-hidden="true">
-      <span class="login-page__watermark-text">TR3</span>
+      <span class="login-page__watermark-text">PULSE</span>
     </div>
   </div>
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const props = defineProps({
@@ -178,9 +175,9 @@ const apiUrl = useRuntimeConfig().public?.apiUrl || 'http://localhost:8000'
 
 const headTitle = computed(() => {
   if (props.mode === 'register') {
-    return 'TR3-ENTRADES | Registre'
+    return 'PULSE | Registre'
   }
-  return 'TR3-ENTRADES | Inici de sessió'
+  return 'PULSE | Inici de sessió'
 })
 
 useHead({
@@ -273,6 +270,43 @@ function extract422Payload (err) {
   }
   return null
 }
+
+let unlockBodyScroll = null
+
+onMounted(() => {
+  if (props.mode !== 'login') {
+    return
+  }
+  const html = document.documentElement
+  const body = document.body
+  const prevHtmlOverflow = html.style.overflow
+  const prevBodyOverflow = body.style.overflow
+  const prevHtmlHeight = html.style.height
+  const prevBodyHeight = body.style.height
+  const prevHtmlOverscroll = html.style.overscrollBehavior
+  const prevBodyOverscroll = body.style.overscrollBehavior
+  html.style.overflow = 'hidden'
+  body.style.overflow = 'hidden'
+  html.style.height = '100%'
+  body.style.height = '100%'
+  html.style.overscrollBehavior = 'none'
+  body.style.overscrollBehavior = 'none'
+  unlockBodyScroll = () => {
+    html.style.overflow = prevHtmlOverflow
+    body.style.overflow = prevBodyOverflow
+    html.style.height = prevHtmlHeight
+    body.style.height = prevBodyHeight
+    html.style.overscrollBehavior = prevHtmlOverscroll
+    body.style.overscrollBehavior = prevBodyOverscroll
+  }
+})
+
+onUnmounted(() => {
+  if (unlockBodyScroll !== null) {
+    unlockBodyScroll()
+    unlockBodyScroll = null
+  }
+})
 
 const handleSubmit = async () => {
   loading.value = true
@@ -443,10 +477,11 @@ const handleSubmit = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 40px;
 }
 
 .login-page__brand {
-  margin-bottom: 3rem;
+  margin-bottom: 0;
   text-align: center;
 }
 
@@ -471,7 +506,7 @@ const handleSubmit = async () => {
 
 .login-page__intro {
   width: 100%;
-  margin-bottom: 2.5rem;
+  margin-bottom: 0;
   text-align: center;
 }
 
@@ -486,17 +521,18 @@ const handleSubmit = async () => {
 
 .login-page__lead {
   margin: 0;
-  font-size: 0.875rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--login-on-surface-variant);
+  line-height: 1.5;
 }
 
 .login-page__form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 .login-page__banner {
@@ -519,13 +555,6 @@ const handleSubmit = async () => {
   gap: 0.5rem;
 }
 
-.login-page__label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 0 1rem;
-}
-
 .login-page__label {
   display: block;
   padding: 0 1rem;
@@ -534,24 +563,6 @@ const handleSubmit = async () => {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--login-on-surface-variant);
-}
-
-.login-page__label--inline {
-  padding: 0;
-}
-
-.login-page__link-muted {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--login-primary-fixed-dim);
-  transition: color 0.2s ease;
-}
-
-.login-page__link-muted:hover {
-  color: var(--login-primary-container);
 }
 
 .login-page__input-wrap {
@@ -678,7 +689,7 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 2.5rem 0 0;
+  margin: 0;
 }
 
 .login-page__divider-line {
@@ -697,7 +708,7 @@ const handleSubmit = async () => {
 }
 
 .login-page__footer {
-  margin-top: 3rem;
+  margin-top: 0;
   text-align: center;
 }
 
@@ -732,11 +743,85 @@ const handleSubmit = async () => {
 
 .login-page__watermark-text {
   font-family: Epilogue, system-ui, sans-serif;
-  font-size: 7.5rem;
+  font-size: 6.5rem;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
   color: rgba(149, 145, 120, 0.1);
   user-select: none;
+}
+
+/* Pantalla login mòbil: sense scroll, contingut centrat al mig (viewport fix). */
+@media (max-width: 639px) {
+  .login-page--login-mode {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    justify-content: center;
+    align-items: stretch;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .login-page--login-mode .login-page__main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.5rem 1.5rem 1.75rem;
+    max-width: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .login-page--login-mode .login-page__main {
+    gap: 32px;
+  }
+
+  .login-page--login-mode .login-page__brand {
+    margin-bottom: 0;
+  }
+
+  .login-page--login-mode .login-page__intro {
+    margin-bottom: 0;
+  }
+
+  .login-page--login-mode .login-page__title {
+    font-size: 1.625rem;
+    font-weight: 800;
+  }
+
+  .login-page--login-mode .login-page__form {
+    gap: 20px;
+  }
+
+  .login-page--login-mode .login-page__divider {
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .login-page--login-mode .login-page__footer {
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .login-page--login-mode .login-page__watermark {
+    bottom: 1.25rem;
+  }
+
+  .login-page--login-mode .login-page__watermark-text {
+    font-size: 4.5rem;
+  }
+
+  .login-page--login-mode .login-page__submit {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    height: 3.35rem;
+  }
 }
 </style>

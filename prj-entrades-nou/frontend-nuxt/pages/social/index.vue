@@ -5,26 +5,19 @@
         Social
       </h1>
       <p class="user-page-lead">
-        Cerca usuaris, invitacions i amistats.
+        Cerca usuaris, sol·licituds i amistats.
       </p>
     </header>
 
     <section class="social__block social__block--search">
-      <h2 class="social__h2">Cercar usuaris</h2>
-      <p class="social__lead">
-        Escriu el <strong>nom</strong> o el <strong>nom d’usuari</strong> per trobar persones registrades. Tria un resultat per veure el perfil i enviar una sol·licitud d’amistat.
-      </p>
-      <div class="social__search-wrap">
-        <label class="social__label" for="social-search-input">Cerca</label>
-        <input
-          id="social-search-input"
-          v-model="searchQ"
-          type="search"
-          class="social__input social__input--search"
-          autocomplete="off"
-          placeholder="Ex.: Maria o @maria"
-          @input="onSearchInput"
-        >
+      <UserSearchInput
+        v-model="searchQ"
+        input-id="social-search-input"
+        sr-label="Cerca usuaris"
+        placeholder="Ex.: Maria o @maria"
+        @input="onSearchInput"
+        @clear="onSearchClear"
+      >
         <ul
           v-if="searchDropdownVisible && searchResults.length > 0"
           class="social__dropdown"
@@ -32,7 +25,7 @@
         >
           <li v-for="u in searchResults" :key="u.id" class="social__dropdown-item" role="option">
             <NuxtLink
-              :to="`/users/${u.id}`"
+              :to="'/users/' + String(u.id) + '?from=social'"
               class="social__dropdown-link"
               @click="closeSearchDropdown"
             >
@@ -41,25 +34,38 @@
             </NuxtLink>
           </li>
         </ul>
-        <p v-if="searchLoading" class="social__muted">Cercant…</p>
-        <p v-if="searchHint" class="social__muted">{{ searchHint }}</p>
-        <p v-if="searchErr" class="social__err">{{ searchErr }}</p>
+      </UserSearchInput>
+      <div v-if="searchLoading" class="social__search-state">
+        <span class="social__spinner" aria-hidden="true" />
+        <span class="social__search-label">Cercant…</span>
       </div>
+      <p v-if="searchHint" class="social__muted">{{ searchHint }}</p>
+      <p v-if="searchErr" class="social__err">{{ searchErr }}</p>
     </section>
 
-    <section class="social__block">
-      <h2 class="social__h2">Invitacions</h2>
+    <section class="social__block social__block--invites">
+      <div class="social__section-head">
+        <h2 class="social__section-title">Sol·licituds</h2>
+        <span class="social__pending-pill">{{ pendingInviteLabel }}</span>
+      </div>
       <p v-if="loading" class="social__muted">Carregant…</p>
-      <ul v-else-if="invites.length" class="social__invite-list">
-        <li v-for="inv in invites" :key="inv.id" class="social__invite-card">
+      <ul v-else-if="invitesPendingOnly.length" class="social__invite-list">
+        <li v-for="inv in invitesPendingOnly" :key="inv.id" class="social__invite-card">
+          <div class="social__invite-user">
+            <span class="social__avatar-placeholder">{{ inviteInitial(inv) }}</span>
+            <div class="social__invite-user-text">
+              <p class="social__invite-name">{{ inviteDisplayName(inv) }}</p>
+              <p class="social__invite-userline">{{ inviteDisplayUsername(inv) }}</p>
+            </div>
+          </div>
           <p class="social__invite-text">{{ inviteDescription(inv) }}</p>
           <div v-if="inv.status === 'pending' && canAcceptInvite(inv)" class="social__invite-actions">
-            <button type="button" class="social__btn social__btn--sm" @click="respond(inv.id, 'accept')">
+            <button type="button" class="social__btn social__btn--primary" @click="respond(inv.id, 'accept')">
               Acceptar
             </button>
             <button
               type="button"
-              class="social__btn social__btn--sm social__btn--ghost"
+              class="social__btn social__btn--ghost"
               @click="respond(inv.id, 'reject')"
             >
               Rebutjar
@@ -67,41 +73,51 @@
           </div>
         </li>
       </ul>
-      <p v-else class="social__muted">No tens invitacions recents.</p>
+      <p v-else class="social__muted">No tens sol·licituds recents.</p>
     </section>
 
     <section class="social__block">
-      <h2 class="social__h2">Amics</h2>
+      <h2 class="social__section-title social__section-title--solo">La teva gent</h2>
       <p v-if="loading" class="social__muted">Carregant…</p>
       <ul v-else-if="friends.length" class="social__friend-list">
         <li v-for="f in friends" :key="f.id" class="social__friend-row">
-          <NuxtLink :to="`/users/${f.id}`" class="social__friend-link">
-            <span class="social__friend-name">{{ f.name }}</span>
-            <span class="social__friend-user">@{{ f.username }}</span>
-            <span
-              v-if="unreadCountForFriend(f.id) > 0"
-              class="social__notif-badge"
-              :aria-label="'Notificacions sense llegir: ' + unreadCountForFriend(f.id)"
-            >{{ unreadCountForFriend(f.id) }}</span>
+          <NuxtLink :to="'/users/' + String(f.id) + '?from=social'" class="social__friend-link">
+            <div class="social__friend-main">
+              <span class="social__avatar-placeholder">{{ friendInitial(f) }}</span>
+              <div class="social__friend-copy">
+                <span class="social__friend-name">{{ f.name }}</span>
+                <span class="social__friend-user">@{{ f.username }}</span>
+              </div>
+            </div>
+            <div class="social__friend-right">
+              <span
+                v-if="unreadCountForFriend(f.id) > 0"
+                class="social__notif-badge"
+                :aria-label="'Notificacions sense llegir: ' + unreadCountForFriend(f.id)"
+              >{{ unreadCountForFriend(f.id) }}</span>
+              <span class="material-symbols-outlined social__chev" aria-hidden="true">chevron_right</span>
+            </div>
           </NuxtLink>
-          <p class="social__friend-hint">Notificacions d’aquest amic (entrades i esdeveniments compartits).</p>
         </li>
       </ul>
       <p v-else class="social__muted">Encara no tens amics acceptats.</p>
     </section>
 
-    <p class="social__hint">
-      Per enviar una entrada a un amic, ves a <NuxtLink to="/tickets" class="social__a">Les meves entrades</NuxtLink>
-      i obre el modal «Enviar entrada».
-    </p>
+    <footer class="social__footer">
+      <p>
+        Necessites enviar entrades?
+        <NuxtLink to="/tickets" class="social__a">Ves a Les meves entrades</NuxtLink>
+      </p>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '~/stores/auth';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
-import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
+import UserSearchInput from '~/components/UserSearchInput.vue';
 
 definePageMeta({
   layout: 'default',
@@ -109,6 +125,7 @@ definePageMeta({
 });
 
 const auth = useAuthStore();
+const route = useRoute();
 const { getJson, postJson, patchJson } = useAuthorizedApi();
 
 function emitUnreadRefresh () {
@@ -116,8 +133,6 @@ function emitUnreadRefresh () {
     window.dispatchEvent(new CustomEvent('app:notifications-updated'));
   }
 }
-
-usePrivateTicketSocket();
 
 function canAcceptInvite (inv) {
   if (inv.status !== 'pending') {
@@ -202,6 +217,35 @@ const searchHint = computed(() => {
   return '';
 });
 
+const pendingInvitesCount = computed(() => {
+  let total = 0;
+  for (let i = 0; i < invites.value.length; i++) {
+    if (invites.value[i].status === 'pending') {
+      total = total + 1;
+    }
+  }
+  return total;
+});
+
+const pendingInviteLabel = computed(() => {
+  if (pendingInvitesCount.value === 1) {
+    return '1 pendent';
+  }
+  return String(pendingInvitesCount.value) + ' pendents';
+});
+
+/** Només pendents: acceptades/rebutjades surten d’aquesta llista (no cal veure històric aquí). */
+const invitesPendingOnly = computed(() => {
+  const out = [];
+  for (let i = 0; i < invites.value.length; i++) {
+    const row = invites.value[i];
+    if (row.status === 'pending') {
+      out.push(row);
+    }
+  }
+  return out;
+});
+
 const unreadByFriend = computed(() => {
   const friendIds = {};
   for (let i = 0; i < friends.value.length; i++) {
@@ -242,6 +286,68 @@ function unreadCountForFriend (friendId) {
   return c;
 }
 
+function firstLetter (text) {
+  if (!text) {
+    return '?';
+  }
+  const t = String(text).trim();
+  if (t === '') {
+    return '?';
+  }
+  return t.charAt(0).toUpperCase();
+}
+
+function friendInitial (friend) {
+  if (friend && friend.name) {
+    return firstLetter(friend.name);
+  }
+  if (friend && friend.username) {
+    return firstLetter(friend.username);
+  }
+  return '?';
+}
+
+function inviteDisplayName (inv) {
+  const me = auth.user?.id;
+  if (!me) {
+    return 'Usuari';
+  }
+  if (String(inv.sender_id) === String(me)) {
+    if (inv.receiver_name && String(inv.receiver_name).trim() !== '') {
+      return String(inv.receiver_name);
+    }
+    if (inv.receiver_email && String(inv.receiver_email).trim() !== '') {
+      return String(inv.receiver_email);
+    }
+    return 'Convidat';
+  }
+  if (inv.sender_name && String(inv.sender_name).trim() !== '') {
+    return String(inv.sender_name);
+  }
+  return 'Usuari';
+}
+
+function inviteDisplayUsername (inv) {
+  const me = auth.user?.id;
+  if (!me) {
+    return '';
+  }
+  if (String(inv.sender_id) === String(me)) {
+    if (inv.receiver_username && String(inv.receiver_username).trim() !== '') {
+      return '@' + String(inv.receiver_username);
+    }
+    return 'Sol·licitud enviada';
+  }
+  if (inv.sender_username && String(inv.sender_username).trim() !== '') {
+    return '@' + String(inv.sender_username);
+  }
+  return 'Sol·licitud rebuda';
+}
+
+function inviteInitial (inv) {
+  return firstLetter(inviteDisplayName(inv));
+}
+
 function closeSearchDropdown () {
   searchDropdownVisible.value = false;
 }
@@ -251,6 +357,13 @@ function scheduleSearch () {
     clearTimeout(searchTimer);
   }
   searchTimer = setTimeout(runUserSearch, 320);
+}
+
+function onSearchClear () {
+  searchQ.value = '';
+  searchResults.value = [];
+  searchErr.value = '';
+  searchLoading.value = false;
 }
 
 function onSearchInput () {
@@ -283,8 +396,28 @@ async function runUserSearch () {
   }
 }
 
-function onSocketNotification () {
-  loadNotifications();
+async function markSocialNotificationsSeen () {
+  try {
+    await postJson('/api/notifications/mark-all-read', {});
+  } catch (e) {
+    console.error(e);
+  }
+  await loadNotifications();
+}
+
+async function onSocketNotification (ev) {
+  let nType = '';
+  if (ev && ev.detail && typeof ev.detail.type === 'string') {
+    nType = ev.detail.type;
+  }
+  if (nType === 'friend_request' || nType === 'friend_accepted') {
+    reloadSocialLists();
+  }
+  if (route.path === '/social') {
+    await markSocialNotificationsSeen();
+  } else {
+    await loadNotifications();
+  }
   emitUnreadRefresh();
 }
 
@@ -301,8 +434,7 @@ async function loadNotifications () {
   }
 }
 
-async function load () {
-  loading.value = true;
+async function reloadSocialLists () {
   try {
     const f = await getJson('/api/social/friends');
     friends.value = f.friends || [];
@@ -310,6 +442,13 @@ async function load () {
     invites.value = inv.invites || [];
   } catch (e) {
     console.error(e);
+  }
+}
+
+async function load () {
+  loading.value = true;
+  try {
+    await reloadSocialLists();
   } finally {
     loading.value = false;
   }
@@ -327,14 +466,24 @@ async function respond (inviteId, action) {
   }
 }
 
-onMounted(() => {
-  load();
-  loadNotifications();
+watch(
+  () => route.path,
+  async (path) => {
+    if (path !== '/social') {
+      return;
+    }
+    await markSocialNotificationsSeen();
+    emitUnreadRefresh();
+  },
+  { immediate: true },
+);
+
+onMounted(async () => {
+  await load();
   if (typeof window !== 'undefined') {
     window.addEventListener('app:socket-notification', onSocketNotification);
     window.addEventListener('app:social-invites-updated', onSocialInvitesUpdated);
   }
-  emitUnreadRefresh();
 });
 
 onUnmounted(() => {
@@ -350,183 +499,359 @@ onUnmounted(() => {
 
 <style scoped>
 .social {
-  max-width: 36rem;
+  max-width: 32rem;
   margin: 0 auto;
+  padding-bottom: 2.5rem;
 }
-.social__h2 {
-  font-size: 1rem;
-  color: #ccc;
-  margin: 0 0 0.5rem;
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
 }
-.social__lead {
-  font-size: 0.9rem;
-  color: #999;
-  line-height: 1.45;
-  margin: 0 0 0.75rem;
-}
+
 .social__block {
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
 }
+
 .social__block--search {
   position: relative;
   z-index: 20;
 }
-.social__search-wrap {
-  position: relative;
+
+.social__search-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  padding-left: 0.25rem;
 }
-.social__label {
-  display: block;
-  font-size: 0.85rem;
-  color: #aaa;
-  margin-bottom: 0.35rem;
+
+.social__spinner {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 9999px;
+  border: 2px solid rgba(217, 201, 0, 0.25);
+  border-top-color: #d9c900;
+  animation: social-spin 0.8s linear infinite;
 }
-.social__input {
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #333;
-  background: #111;
-  color: #fff;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+
+.social__search-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d9c900;
 }
-.social__input--search {
-  font-size: 1rem;
-}
+
 .social__dropdown {
   list-style: none;
   padding: 0;
-  margin: 0.35rem 0 0;
+  margin: 0.5rem 0 0;
   position: absolute;
   left: 0;
   right: 0;
   top: 100%;
-  background: #161616;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: #1c1b1b;
+  border: 1px solid rgba(74, 71, 51, 0.5);
+  border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   max-height: 240px;
   overflow-y: auto;
   z-index: 50;
 }
 .social__dropdown-item {
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid rgba(74, 71, 51, 0.4);
 }
+
 .social__dropdown-item:last-child {
   border-bottom: none;
 }
+
 .social__dropdown-link {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.65rem 0.75rem;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
   text-decoration: none;
   color: inherit;
 }
+
 .social__dropdown-link:hover {
-  background: rgba(247, 230, 40, 0.1);
+  background: rgba(247, 230, 40, 0.08);
 }
+
 .social__dropdown-name {
-  font-weight: 600;
-  color: #eee;
+  font-weight: 700;
+  color: #e5e2e1;
 }
+
 .social__dropdown-user {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.82rem;
+  color: #959178;
 }
+
+.social__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.social__section-title {
+  margin: 0;
+  font-size: 0.66rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ccc7ac;
+}
+
+.social__section-title--solo {
+  margin-bottom: 1rem;
+}
+
+.social__pending-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.45rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #f7e628;
+  color: #1f1c00;
+  font-size: 0.62rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .social__invite-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
+
 .social__invite-card {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #222;
+  position: relative;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(74, 71, 51, 0.45);
+  background: #2a2a2a;
+  overflow: hidden;
 }
+
+.social__invite-user {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.social__invite-user-text {
+  min-width: 0;
+}
+
+.social__invite-name {
+  margin: 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #f7e628;
+}
+
+.social__invite-userline {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: #ccc7ac;
+}
+
 .social__invite-text {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
-  color: #ddd;
+  margin: 0.9rem 0 0;
+  font-size: 0.84rem;
+  color: #e5e2e1;
   line-height: 1.4;
 }
+
 .social__invite-actions {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
 }
+
 .social__friend-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
+
 .social__friend-row {
-  padding: 0.65rem 0;
-  border-bottom: 1px solid #222;
+  border-radius: 14px;
+  border: 1px solid rgba(74, 71, 51, 0.24);
+  background: #1c1b1b;
+  overflow: hidden;
 }
+
 .social__friend-link {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.8rem 0.9rem;
   text-decoration: none;
-  color: #eee;
+  color: #e5e2e1;
 }
-.social__friend-link:hover .social__friend-name {
-  color: var(--accent);
+
+.social__friend-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
 }
+
+.social__friend-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .social__friend-name {
-  font-weight: 600;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #e5e2e1;
 }
+
 .social__friend-user {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.78rem;
+  color: #959178;
 }
+
+.social__friend-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.social__chev {
+  font-size: 1.2rem;
+  color: #4a4733;
+}
+
+.social__friend-link:hover .social__chev {
+  color: #d9c900;
+}
+
+.social__avatar-placeholder {
+  width: 2.8rem;
+  height: 2.8rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #2f2e2e, #1f1f1f);
+  border: 1px solid rgba(149, 145, 120, 0.28);
+  color: #e5e2e1;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 0.88rem;
+}
+
 .social__notif-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  padding: 0 0.35rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.32rem;
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-on);
-  font-size: 0.75rem;
-  font-weight: 700;
+  background: #ff4b4b;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
 }
-.social__friend-hint {
-  margin: 0.35rem 0 0;
-  font-size: 0.75rem;
-  color: #666;
-}
+
 .social__btn {
-  align-self: flex-start;
-  padding: 0.45rem 0.9rem;
-  background: var(--accent);
-  border: none;
-  border-radius: 9999px;
-  color: var(--accent-on);
+  flex: 1;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 12px;
   font-family: Epilogue, system-ui, sans-serif;
-  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 900;
   cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease;
 }
-.social__btn--sm {
-  font-size: 0.8rem;
+
+.social__btn:active {
+  transform: scale(0.98);
 }
+
+.social__btn--primary {
+  background: #f7e628;
+  color: #1f1c00;
+}
+
 .social__btn--ghost {
-  background: #333;
+  background: transparent;
+  border-color: rgba(149, 145, 120, 0.4);
+  color: #ccc7ac;
 }
+
 .social__muted {
-  color: #888;
+  margin: 0.45rem 0 0;
+  color: #959178;
+  font-size: 0.84rem;
 }
+
 .social__err {
-  color: #ff6b6b;
+  margin: 0.45rem 0 0;
+  color: #ffb4ab;
+  font-size: 0.84rem;
 }
-.social__hint {
-  font-size: 0.85rem;
-  color: #666;
+
+.social__footer {
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
 }
+
+.social__footer p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #959178;
+}
+
 .social__a {
-  color: var(--accent);
+  margin-left: 0.25rem;
+  color: #d9c900;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.social__a:hover {
+  text-decoration: underline;
+}
+
+@keyframes social-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

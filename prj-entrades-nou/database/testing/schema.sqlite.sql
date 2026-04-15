@@ -110,6 +110,7 @@ CREATE TABLE events (
     tm_url VARCHAR(1024),
     tm_category VARCHAR(100),
     is_large_event INTEGER NOT NULL DEFAULT 0,
+    description TEXT,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),
     FOREIGN KEY (venue_id) REFERENCES venues (id) ON DELETE CASCADE

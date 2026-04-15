@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\SavedEventsController;
 use App\Http\Controllers\Api\SearchEventsController;
+use App\Http\Controllers\Api\PlacesController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
@@ -33,6 +34,8 @@ Route::get('/search/events', [SearchEventsController::class, 'index']);
 
 Route::get('/events/nearby', [SearchEventsController::class, 'nearby']);
 Route::get('/cities/search', [SearchEventsController::class, 'searchCities']);
+Route::get('/places/autocomplete', [PlacesController::class, 'autocomplete']);
+Route::get('/places/details', [PlacesController::class, 'details']);
 Route::get('/events/{eventId}', [SearchEventsController::class, 'show']);
 Route::get('/events/{eventId}/price', [SearchEventsController::class, 'eventPrice']);
 
@@ -72,10 +75,15 @@ Route::middleware('jwt.auth')->post('/tickets/{ticketId}/transfer', [TicketTrans
     ->whereUuid('ticketId');
 
 Route::middleware('jwt.auth')->get('/notifications', [NotificationController::class, 'index']);
+Route::middleware('jwt.auth')->post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+Route::middleware('jwt.auth')->post('/notifications/mark-read-for-actor/{actorUserId}', [NotificationController::class, 'markReadForActor'])->whereNumber('actorUserId');
 Route::middleware('jwt.auth')->patch('/notifications/{id}', [NotificationController::class, 'update'])->whereNumber('id');
 
 Route::middleware('jwt.auth')->get('/social/friends', [SocialController::class, 'friends']);
 Route::middleware('jwt.auth')->get('/social/discover/search', [SocialUserController::class, 'search']);
+Route::middleware('jwt.auth')->get('/social/thread-notification-mutes', [SocialUserController::class, 'threadMutesIndex']);
+Route::middleware('jwt.auth')->get('/social/users/{userId}/share-thread', [SocialUserController::class, 'shareThread']);
+Route::middleware('jwt.auth')->patch('/social/users/{userId}/thread-notification-mute', [SocialUserController::class, 'threadMutePatch']);
 Route::middleware('jwt.auth')->get('/social/users/{userId}', [SocialUserController::class, 'publicProfile']);
 Route::middleware('jwt.auth')->post('/social/share-event', [SocialController::class, 'shareEvent']);
 Route::middleware('jwt.auth')->get('/social/friend-invites', [SocialController::class, 'invitesIndex']);

@@ -3,91 +3,145 @@
     <p v-if="error" class="user-profile-editor__err">{{ error }}</p>
     <p v-else-if="loading" class="user-profile-editor__muted">Carregant…</p>
     <form v-else class="user-profile-editor__form" @submit.prevent="saveProfile">
-      <label class="user-profile-editor__label">
-        Nom
-        <input v-model="name" type="text" class="user-profile-editor__input" required autocomplete="name">
-      </label>
-      <label class="user-profile-editor__label">
-        Correu electrònic
-        <input v-model="email" type="email" class="user-profile-editor__input" required autocomplete="email">
-      </label>
+      <section class="user-profile-editor__section">
+        <div class="user-profile-editor__section-head">
+          <h2 class="user-profile-editor__section-title">
+            Dades del compte
+          </h2>
+          <div class="user-profile-editor__section-bar" aria-hidden="true" />
+        </div>
 
-      <div class="user-profile-editor__section">
-        <p class="user-profile-editor__section-title">Canvi de contrasenya</p>
-        <p class="user-profile-editor__hint">Deixa els tres camps buits si no vols canviar la contrasenya.</p>
-        <label class="user-profile-editor__label">
-          Contrasenya actual
-          <div class="user-profile-editor__password-wrap">
+        <div class="user-profile-editor__field">
+          <label class="user-profile-editor__label-text" for="profile-name">Nom</label>
+          <div class="user-profile-editor__input-wrap">
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">person</span>
             <input
+              id="profile-name"
+              v-model="name"
+              type="text"
+              class="user-profile-editor__input user-profile-editor__input--ico"
+              required
+              autocomplete="name"
+            >
+          </div>
+        </div>
+
+        <div class="user-profile-editor__field">
+          <label class="user-profile-editor__label-text" for="profile-email">Correu electrònic</label>
+          <div class="user-profile-editor__input-wrap">
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">mail</span>
+            <input
+              id="profile-email"
+              v-model="email"
+              type="email"
+              class="user-profile-editor__input user-profile-editor__input--ico"
+              required
+              autocomplete="email"
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="user-profile-editor__section">
+        <div class="user-profile-editor__section-head">
+          <h2 class="user-profile-editor__section-title">
+            Seguretat
+          </h2>
+          <div class="user-profile-editor__section-bar" aria-hidden="true" />
+        </div>
+        <p class="user-profile-editor__hint">Deixa els tres camps buits si no vols canviar la contrasenya.</p>
+
+        <div class="user-profile-editor__field">
+          <label class="user-profile-editor__label-text" for="profile-current-password">Contrasenya actual</label>
+          <div class="user-profile-editor__input-wrap">
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">lock</span>
+            <input
+              id="profile-current-password"
               v-model="currentPassword"
               :type="currentPasswordFieldType"
-              class="user-profile-editor__input user-profile-editor__input--with-toggle"
+              class="user-profile-editor__input user-profile-editor__input--ico user-profile-editor__input--pwd"
               autocomplete="current-password"
             >
             <button
               type="button"
-              class="user-profile-editor__eye"
+              class="user-profile-editor__pwd-toggle"
               :aria-pressed="currentPasswordVisible"
               :aria-label="currentPasswordToggleAriaLabel"
               @click="toggleCurrentPasswordVisible"
             >
-              <span class="user-profile-editor__eye-icon" aria-hidden="true">
-                <svg
-                  v-if="!currentPasswordVisible"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <svg
-                  v-else
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.182 4.182L9.88 9.88" />
-                </svg>
-              </span>
+              <span class="material-symbols-outlined" aria-hidden="true">{{ currentPasswordToggleIcon }}</span>
             </button>
           </div>
-        </label>
-        <label class="user-profile-editor__label">
-          Nova contrasenya
-          <input v-model="newPassword" type="password" class="user-profile-editor__input" autocomplete="new-password">
-        </label>
-        <label class="user-profile-editor__label">
-          Confirma la nova contrasenya
-          <input v-model="newPasswordConfirmation" type="password" class="user-profile-editor__input" autocomplete="new-password">
-        </label>
+        </div>
+
+        <div class="user-profile-editor__field">
+          <label class="user-profile-editor__label-text" for="profile-new-password">Nova contrasenya</label>
+          <div class="user-profile-editor__input-wrap">
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">lock</span>
+            <input
+              id="profile-new-password"
+              v-model="newPassword"
+              :type="newPasswordFieldType"
+              class="user-profile-editor__input user-profile-editor__input--ico user-profile-editor__input--pwd"
+              autocomplete="new-password"
+            >
+            <button
+              type="button"
+              class="user-profile-editor__pwd-toggle"
+              :aria-pressed="newPasswordVisible"
+              aria-label="Mostrar o amagar la nova contrasenya"
+              @click="toggleNewPasswordVisible"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">{{ newPasswordToggleIcon }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="user-profile-editor__field">
+          <label class="user-profile-editor__label-text" for="profile-confirm-password">Confirma la nova contrasenya</label>
+          <div class="user-profile-editor__input-wrap">
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">lock</span>
+            <input
+              id="profile-confirm-password"
+              v-model="newPasswordConfirmation"
+              :type="confirmPasswordFieldType"
+              class="user-profile-editor__input user-profile-editor__input--ico user-profile-editor__input--pwd"
+              autocomplete="new-password"
+            >
+            <button
+              type="button"
+              class="user-profile-editor__pwd-toggle"
+              :aria-pressed="newPasswordConfirmVisible"
+              aria-label="Mostrar o amagar la confirmació"
+              @click="toggleNewPasswordConfirmVisible"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">{{ newPasswordConfirmToggleIcon }}</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="user-profile-editor__form-footer">
+        <p v-if="fieldErrors.general" class="user-profile-editor__err">{{ fieldErrors.general }}</p>
+        <p v-if="fieldErrors.name" class="user-profile-editor__err">{{ fieldErrors.name }}</p>
+        <p v-if="fieldErrors.email" class="user-profile-editor__err">{{ fieldErrors.email }}</p>
+        <p v-if="fieldErrors.current_password" class="user-profile-editor__err">{{ fieldErrors.current_password }}</p>
+        <p v-if="fieldErrors.password" class="user-profile-editor__err">{{ fieldErrors.password }}</p>
+
+        <div class="user-profile-editor__btn-row">
+          <button type="submit" class="user-profile-editor__btn user-profile-editor__btn--primary" :disabled="saving">{{ saving ? 'Desant…' : 'Desar els canvis' }}</button>
+          <button
+            v-if="showLogout"
+            type="button"
+            class="user-profile-editor__btn user-profile-editor__btn--secondary"
+            @click="logout"
+          >
+            Tancar la sessió
+          </button>
+        </div>
+        <p v-if="savedMsg" class="user-profile-editor__ok">{{ savedMsg }}</p>
       </div>
-
-      <p v-if="fieldErrors.general" class="user-profile-editor__err">{{ fieldErrors.general }}</p>
-      <p v-if="fieldErrors.name" class="user-profile-editor__err">{{ fieldErrors.name }}</p>
-      <p v-if="fieldErrors.email" class="user-profile-editor__err">{{ fieldErrors.email }}</p>
-      <p v-if="fieldErrors.current_password" class="user-profile-editor__err">{{ fieldErrors.current_password }}</p>
-      <p v-if="fieldErrors.password" class="user-profile-editor__err">{{ fieldErrors.password }}</p>
-
-      <button type="submit" class="user-profile-editor__btn user-profile-editor__btn--primary" :disabled="saving">
-        {{ saving ? 'Desant…' : 'Desar els canvis' }}
-      </button>
-      <p v-if="savedMsg" class="user-profile-editor__ok">{{ savedMsg }}</p>
     </form>
-
-    <div v-if="!loading" class="user-profile-editor__actions">
-      <button type="button" class="user-profile-editor__btn user-profile-editor__btn--secondary" @click="logout">
-        Tancar la sessió
-      </button>
-    </div>
   </div>
 </template>
 
@@ -95,6 +149,14 @@
 import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import { useAuthorizedApi } from '../composables/useAuthorizedApi.js';
+
+defineProps({
+  /** Al panell admin es mostra sense tancar sessió (ja hi ha el botó al menú lateral). */
+  showLogout: {
+    type: Boolean,
+    default: true,
+  },
+});
 
 const auth = useAuthStore();
 const { getJson, patchJson } = useAuthorizedApi();
@@ -133,6 +195,52 @@ const currentPasswordToggleAriaLabel = computed(() => {
 
 function toggleCurrentPasswordVisible () {
   currentPasswordVisible.value = !currentPasswordVisible.value;
+}
+
+const newPasswordVisible = ref(false);
+const newPasswordConfirmVisible = ref(false);
+
+const newPasswordFieldType = computed(() => {
+  if (newPasswordVisible.value) {
+    return 'text';
+  }
+  return 'password';
+});
+
+const confirmPasswordFieldType = computed(() => {
+  if (newPasswordConfirmVisible.value) {
+    return 'text';
+  }
+  return 'password';
+});
+
+const currentPasswordToggleIcon = computed(() => {
+  if (currentPasswordVisible.value) {
+    return 'visibility';
+  }
+  return 'visibility_off';
+});
+
+const newPasswordToggleIcon = computed(() => {
+  if (newPasswordVisible.value) {
+    return 'visibility';
+  }
+  return 'visibility_off';
+});
+
+const newPasswordConfirmToggleIcon = computed(() => {
+  if (newPasswordConfirmVisible.value) {
+    return 'visibility';
+  }
+  return 'visibility_off';
+});
+
+function toggleNewPasswordVisible () {
+  newPasswordVisible.value = !newPasswordVisible.value;
+}
+
+function toggleNewPasswordConfirmVisible () {
+  newPasswordConfirmVisible.value = !newPasswordConfirmVisible.value;
 }
 
 function clearFieldErrors () {
@@ -277,133 +385,252 @@ onMounted(load);
   padding: 0;
   max-width: 28rem;
 }
+
+.user-profile-editor .material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
 .user-profile-editor__form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
   margin-top: 1rem;
 }
+
+/* Sense caixes: mateix criteri que login/registre (fons pàgina únic) */
 .user-profile-editor__section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(149, 145, 120, 0.2);
-}
-.user-profile-editor__section-title {
+  gap: 1.25rem;
   margin: 0;
-  font-family: Epilogue, system-ui, sans-serif;
-  font-size: 0.95rem;
-  color: #e5e2e1;
-  font-weight: 700;
+  padding: 0;
+  background: none;
+  border: none;
 }
-.user-profile-editor__hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: rgba(204, 199, 172, 0.75);
+
+.user-profile-editor__section + .user-profile-editor__section {
+  margin-top: 1.75rem;
 }
-.user-profile-editor__label {
+
+/* Capçalera de secció: títol + barra groga immediatament sota, alineada amb les etiquetes (1rem) */
+.user-profile-editor__section-head {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-.user-profile-editor__password-wrap {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-.user-profile-editor__input {
-  padding: 0.55rem 0.85rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(149, 145, 120, 0.25);
-  background: #0e0e0e;
-  color: #e5e2e1;
-  font-family: Inter, system-ui, sans-serif;
-  font-size: 0.9rem;
+  align-items: flex-start;
+  gap: 0.45rem;
   width: 100%;
   box-sizing: border-box;
 }
+
+.user-profile-editor__section-title {
+  margin: 0;
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f7e628;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* Barra tipus PULSE: mateix inici que el text del títol (padding 1rem) */
+.user-profile-editor__section-bar {
+  width: 3rem;
+  height: 4px;
+  margin: 0 0 0 1rem;
+  border-radius: 9999px;
+  background: #f7e628;
+  flex-shrink: 0;
+}
+
+.user-profile-editor__hint {
+  margin: 0;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(204, 199, 172, 0.75);
+}
+
+.user-profile-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Mateix patró que `.login-page__label` */
+.user-profile-editor__label-text {
+  display: block;
+  padding: 0 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(204, 199, 172, 0.85);
+}
+
+.user-profile-editor__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.user-profile-editor__ico {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+  color: rgba(204, 199, 172, 0.75);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.user-profile-editor__input {
+  height: 3.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 1rem 0 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(74, 71, 51, 0.2);
+  background: #0e0e0e;
+  color: #e5e2e1;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.user-profile-editor__input--ico {
+  padding-left: 3.5rem;
+}
+
+.user-profile-editor__input--pwd {
+  padding-right: 3.5rem;
+}
+
 .user-profile-editor__input:focus {
   outline: none;
   border-color: #f7e628;
+  box-shadow: none;
 }
-.user-profile-editor__input--with-toggle {
-  padding-right: 2.75rem;
-}
-.user-profile-editor__eye {
+
+.user-profile-editor__pwd-toggle {
   position: absolute;
-  right: 0.25rem;
+  right: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(204, 199, 172, 0.85);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #888;
-  cursor: pointer;
 }
-.user-profile-editor__eye:hover {
-  color: #ccc;
+
+.user-profile-editor__pwd-toggle:hover {
+  color: #e5e2e1;
 }
-.user-profile-editor__eye:focus-visible {
+
+.user-profile-editor__pwd-toggle:focus-visible {
   outline: 2px solid #f7e628;
   outline-offset: 2px;
+  border-radius: 4px;
 }
-.user-profile-editor__eye-icon {
+
+.user-profile-editor__pwd-toggle .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+/* Espai generós entre últim camp i botons; i entre els dos botons */
+.user-profile-editor__form-footer {
+  margin-top: 2.5rem;
   display: flex;
-  line-height: 0;
+  flex-direction: column;
+  gap: 0.65rem;
 }
+
+.user-profile-editor__btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1.85rem;
+}
+
 .user-profile-editor__btn {
-  align-self: flex-start;
-  padding: 0.55rem 1.2rem;
-  border-radius: 6px;
-  font-weight: 600;
+  width: 100%;
+  min-height: 4rem;
+  padding: 0 1rem;
+  font-weight: 700;
   cursor: pointer;
-  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  transition:
+    transform 0.15s ease,
+    opacity 0.2s ease,
+    background 0.2s ease;
 }
+
 .user-profile-editor__btn--primary {
+  border: none;
+  border-radius: 9999px;
   background: #f7e628;
   color: #1f1c00;
   font-family: Epilogue, system-ui, sans-serif;
-  font-weight: 800;
-  border-radius: 9999px;
-  padding: 0.65rem 1.35rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow: 0 16px 36px rgba(247, 230, 40, 0.12);
 }
+
+.user-profile-editor__btn--primary:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.user-profile-editor__btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .user-profile-editor__btn--secondary {
-  background: transparent;
-  color: #e5e2e1;
-  border: 1px solid rgba(149, 145, 120, 0.35);
   border-radius: 9999px;
+  border: 1px solid rgba(74, 71, 51, 0.2);
+  background: #353534;
+  color: #fff;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.78rem;
 }
+
+.user-profile-editor__btn--secondary:hover {
+  background: #3a3939;
+}
+
 .user-profile-editor__btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
-.user-profile-editor__actions {
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(149, 145, 120, 0.2);
-}
+
 .user-profile-editor__muted {
   color: var(--fg-muted, #ccc7ac);
 }
+
 .user-profile-editor__err {
-  color: #ff6b6b;
+  color: #ffb4ab;
   margin: 0;
-  font-size: 0.9rem;
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
 }
+
 .user-profile-editor__ok {
   color: #7bed9f;
-  margin: 0;
+  margin: 0.35rem 0 0;
 }
 </style>

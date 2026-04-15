@@ -26,7 +26,7 @@
           @click.prevent="onFavClick"
         >
           <span
-            class="material-symbols-outlined ec3__fav-ico"
+            class="material-symbols-rounded ec3__fav-ico"
             :class="{ 'ec3__fav-ico--fill': heartFilled }"
             aria-hidden="true"
           >favorite</span>
@@ -43,7 +43,7 @@
             {{ event.name }}
           </h3>
           <div class="ec3__when">
-            <span class="material-symbols-outlined ec3__when-ico" aria-hidden="true">calendar_today</span>
+            <span class="material-symbols-rounded ec3__when-ico" aria-hidden="true">calendar_today</span>
             <span class="ec3__when-txt">{{ whenText }}</span>
           </div>
         </div>
@@ -77,11 +77,16 @@ const props = defineProps({
   },
   showHeart: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   heartFilled: {
     type: Boolean,
     default: false,
+  },
+  /** Per al detall d’esdeveniment: ?from= per marcar el tab del footer (inici, cercar, guardats…). */
+  linkFrom: {
+    type: String,
+    default: '',
   },
 });
 
@@ -101,12 +106,24 @@ const eventIdStr = computed(() => {
   return String(props.event.id);
 });
 
+function pathWithFromQuery (path) {
+  const raw = props.linkFrom;
+  if (raw === undefined || raw === null) {
+    return path;
+  }
+  const s = String(raw).trim();
+  if (s === '') {
+    return path;
+  }
+  return `${path}?from=${encodeURIComponent(s)}`;
+}
+
 const detailHref = computed(() => {
-  return `/events/${eventIdStr.value}`;
+  return pathWithFromQuery(`/events/${eventIdStr.value}`);
 });
 
 const seatsHref = computed(() => {
-  return `/events/${eventIdStr.value}/seats`;
+  return pathWithFromQuery(`/events/${eventIdStr.value}/seats`);
 });
 
 const kickerText = computed(() => {
@@ -170,12 +187,24 @@ function onFavClick () {
   border: 1px solid rgba(74, 71, 51, 0.1);
   background: #1c1b1b;
   transition:
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.18s ease;
 }
 
+/* Mateix llenguatge que la pestanya activa del footer: pastilla groga suau */
 .ec3:hover {
-  border-color: rgba(247, 230, 40, 0.3);
+  border-color: rgba(247, 230, 40, 0.55);
+  box-shadow:
+    0 0 0 3px rgba(247, 230, 40, 0.22),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ec3:active {
+  transform: scale(0.992);
+  box-shadow:
+    0 0 0 4px rgba(247, 230, 40, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 .ec3__inner {
@@ -254,22 +283,57 @@ function onFavClick () {
   background: rgba(19, 19, 19, 0.6);
   backdrop-filter: blur(8px);
   cursor: pointer;
-  color: #ccc7ac;
+  -webkit-tap-highlight-color: transparent;
+  /* Per defecte: contorn blanc; hover / guardat: glif ple (FILL 1) en groc, sense vermell del sistema */
+  color: rgba(255, 255, 255, 0.92);
   transition: color 0.2s ease, background 0.2s ease;
 }
 
-.ec3__fav:hover {
-  background: rgba(19, 19, 19, 0.85);
-  color: #ff2d55;
+.ec3__fav:focus-visible {
+  outline: 2px solid rgba(247, 230, 40, 0.55);
+  outline-offset: 2px;
 }
 
+.ec3__fav:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Hover sense guardar: cor ple, groc una mica més suau que l’actiu */
+.ec3__fav:hover:not([aria-pressed='true']) {
+  background: rgba(19, 19, 19, 0.85);
+  color: rgba(247, 230, 40, 0.88);
+}
+
+.ec3__fav:hover:not([aria-pressed='true']) .ec3__fav-ico {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Guardat: omplert sòlid groc TR3 (interior + forma, no només traç) */
 .ec3__fav[aria-pressed='true'] {
-  color: #ff2d55;
+  color: #f7e628;
+}
+
+.ec3__fav[aria-pressed='true'] .ec3__fav-ico {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Guardat + hover: una mica més intens, sense saltar massa */
+.ec3__fav[aria-pressed='true']:hover {
+  color: #fff563;
+}
+
+.ec3__fav[aria-pressed='true']:hover .ec3__fav-ico {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
 .ec3__fav-ico {
-  font-size: 1.35rem;
+  font-family: 'Material Symbols Rounded', sans-serif;
+  font-size: 1.45rem;
   line-height: 1;
+  font-weight: 400;
+  color: inherit;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
@@ -329,8 +393,13 @@ function onFavClick () {
 }
 
 .ec3__when-ico {
-  font-size: 1rem;
+  font-family: 'Material Symbols Rounded', sans-serif;
+  font-size: 1.05rem;
   line-height: 1;
+  font-weight: 400;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .ec3__when-txt {

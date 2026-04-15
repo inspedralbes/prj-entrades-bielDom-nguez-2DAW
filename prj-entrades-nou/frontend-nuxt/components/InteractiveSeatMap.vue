@@ -4,8 +4,7 @@
     :class="{ 'ism-root--admin': readOnly }"
   >
     <div class="ism-stage" aria-hidden="true">
-      <span class="ism-stage__label">Escenari</span>
-      <div class="ism-stage__glow" />
+      <span class="ism-stage__label">Davant · escenari</span>
     </div>
 
     <div ref="mapRoot" class="ism-map-root" />
@@ -15,8 +14,21 @@
 <script setup>
 import { select } from 'd3-selection';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
-import { allSeatCells } from '~/utils/cinemaVenueLayout';
+import {
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue';
+import {
+  AISLE_AFTER_COL,
+  allSeatCells,
+  CINEMA_VENUE_COLS,
+  CINEMA_VENUE_ROWS,
+  gridSeatsHeight,
+  gridSeatsWidth,
+  seatCenterX,
+} from '~/utils/cinemaVenueLayout';
 import { useInteractiveSeatmapStore } from '~/stores/interactiveSeatmap';
 
 const props = defineProps({
@@ -24,7 +36,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  /** Mode panell admin: sense clic ni reserva. */
   readOnly: {
     type: Boolean,
     default: false,
@@ -37,23 +48,76 @@ const mapRoot = ref(null);
 const seatmapStore = useInteractiveSeatmapStore();
 const { soldBySeatId, heldBySeatId, selectedSeatIds, currentUserId } = storeToRefs(seatmapStore);
 
-/* Cel·la més gran → mapa més llegible sense números de fila/columna */
-const CELL = 18;
-const COLS = 39;
-const ROWS = 18;
-const TOP_PAD = 0;
-const SEAT_R = 7.2;
+const LABEL_TOP = 28;
+const LABEL_LEFT = 32;
+const EDGE_PAD = 6;
+const INNER = 4;
+/** Passadís en proporció a la separació horitzontal entre columnes. */
+const AISLE_FACTOR = 0.9;
+/** Columnes una mica més separades que les files. */
+const COL_VS_ROW = 1.38;
 
-const svgWidth = computed(() => {
-  return COLS * CELL + 8;
-});
+const layoutCellX = ref(26);
+const layoutCellY = ref(22);
+const layoutAisleW = ref(22);
+const layoutSeatR = ref(11);
 
-const svgHeight = computed(() => {
-  return TOP_PAD + ROWS * CELL + 12;
-});
+let resizeObserver = null;
+let lastEmitTs = 0;
 
-function visualColIndex (col) {
-  return col - 1;
+function computeMetrics () {
+  const el = mapRoot.value;
+  if (!el) {
+    return;
+  }
+  const cw = el.clientWidth;
+  const ch = el.clientHeight;
+  if (cw < 48 || ch < 48) {
+    return;
+  }
+  const availW = cw - EDGE_PAD * 2 - LABEL_LEFT;
+  const availH = ch - EDGE_PAD * 2 - LABEL_TOP;
+  if (availW < 80 || availH < 80) {
+    return;
+  }
+
+  let cellY = Math.floor((availH - 6) / (CINEMA_VENUE_ROWS + 0.2));
+  if (cellY < 12) {
+    cellY = 12;
+  }
+
+  let cellX = Math.floor(cellY * COL_VS_ROW);
+  let aisleW = Math.floor(cellX * AISLE_FACTOR);
+  if (aisleW < 10) {
+    aisleW = 10;
+  }
+
+  const gridW = gridSeatsWidth(cellX, aisleW);
+  if (gridW > availW - 4) {
+    cellX = Math.floor((availW - 4) / (CINEMA_VENUE_COLS + AISLE_FACTOR));
+    if (cellX < 12) {
+      cellX = 12;
+    }
+    aisleW = Math.floor(cellX * AISLE_FACTOR);
+    cellY = Math.min(cellY, Math.floor(cellX / COL_VS_ROW * 1.05));
+  }
+
+  const gridH = gridSeatsHeight(cellY);
+  if (gridH > availH - 4) {
+    cellY = Math.floor((availH - 4) / (CINEMA_VENUE_ROWS + 0.2));
+    if (cellY < 12) {
+      cellY = 12;
+    }
+    cellX = Math.floor(cellY * COL_VS_ROW);
+    aisleW = Math.floor(cellX * AISLE_FACTOR);
+  }
+
+  const seatR = Math.max(5.5, Math.min(cellX, cellY) * 0.34);
+
+  layoutCellX.value = cellX;
+  layoutCellY.value = cellY;
+  layoutAisleW.value = aisleW;
+  layoutSeatR.value = seatR;
 }
 
 function classForSeat (seatId) {
@@ -76,25 +140,108 @@ function classForSeat (seatId) {
   return 'seat-available';
 }
 
+function emitSeatIfNeeded (seatId, row, col) {
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  if (now - lastEmitTs < 45) {
+    return;
+  }
+  lastEmitTs = now;
+  emit('seat-click', { seatId, row, col });
+}
+
+function bindSeatActivate (node, seatId, row, col) {
+  select(node).on('pointerup', (ev) => {
+    ev.stopPropagation();
+    if (props.readOnly) {
+      return;
+    }
+    if (ev.pointerType === 'mouse' && ev.button !== 0) {
+      return;
+    }
+    emitSeatIfNeeded(seatId, row, col);
+  });
+}
+
 function render () {
   const root = mapRoot.value;
   if (!root) {
     return;
   }
 
+  const cellX = layoutCellX.value;
+  const cellY = layoutCellY.value;
+  const aisleW = layoutAisleW.value;
+  const SEAT_R = layoutSeatR.value;
   const cells = allSeatCells();
-  const w = svgWidth.value;
-  const h = svgHeight.value;
+
+  const gridW = gridSeatsWidth(cellX, aisleW);
+  const gridH = gridSeatsHeight(cellY);
+  const w = EDGE_PAD * 2 + LABEL_LEFT + gridW + INNER;
+  const h = EDGE_PAD * 2 + LABEL_TOP + gridH + INNER;
 
   select(root).selectAll('svg').remove();
   const svg = select(root)
     .append('svg')
     .attr('class', 'ism-svg')
+    .attr('width', w)
+    .attr('height', h)
     .attr('viewBox', `0 0 ${w} ${h}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet')
-    .attr('width', '100%');
+    .attr('preserveAspectRatio', 'xMidYMid meet');
 
-  const g = svg.append('g').attr('class', 'ism-grid').attr('transform', 'translate(4,4)');
+  const ox = EDGE_PAD + LABEL_LEFT;
+  const oy = EDGE_PAD + LABEL_TOP;
+  const g = svg.append('g').attr('class', 'ism-grid').attr('transform', `translate(${ox},${oy})`);
+
+  const aisleX0 = AISLE_AFTER_COL * cellX;
+  const aisleX1 = AISLE_AFTER_COL * cellX + aisleW;
+  g
+    .append('rect')
+    .attr('x', aisleX0)
+    .attr('y', 0)
+    .attr('width', aisleW)
+    .attr('height', gridH)
+    .attr('class', 'ism-aisle-band');
+  g
+    .append('line')
+    .attr('x1', aisleX0)
+    .attr('y1', 0)
+    .attr('x2', aisleX0)
+    .attr('y2', gridH)
+    .attr('class', 'ism-aisle-edge');
+  g
+    .append('line')
+    .attr('x1', aisleX1)
+    .attr('y1', 0)
+    .attr('x2', aisleX1)
+    .attr('y2', gridH)
+    .attr('class', 'ism-aisle-edge');
+
+  const labelGroup = svg.append('g').attr('class', 'ism-labels');
+
+  for (let c = 1; c <= CINEMA_VENUE_COLS; c += 1) {
+    const cx = ox + seatCenterX(c, cellX, aisleW);
+    labelGroup
+      .append('text')
+      .attr('x', cx)
+      .attr('y', EDGE_PAD + Math.floor(LABEL_TOP * 0.62))
+      .attr('text-anchor', 'middle')
+      .attr('class', 'ism-col-label')
+      .text(String(c));
+  }
+
+  for (let r = 1; r <= CINEMA_VENUE_ROWS; r += 1) {
+    const cy = oy + (r - 0.5) * cellY;
+    labelGroup
+      .append('text')
+      .attr('x', EDGE_PAD + Math.floor(LABEL_LEFT * 0.42))
+      .attr('y', cy)
+      .attr('dominant-baseline', 'middle')
+      .attr('text-anchor', 'middle')
+      .attr('class', 'ism-row-label')
+      .text(String(r));
+  }
+
+  const hitR = Math.max(SEAT_R + 14, 22);
 
   const n = cells.length;
   for (let i = 0; i < n; i += 1) {
@@ -102,168 +249,211 @@ function render () {
     const row = cell.row;
     const col = cell.col;
     const seatId = cell.seatId;
-    const vx = visualColIndex(col);
-    const vy = row - 1;
-    const x = vx * CELL;
-    const y = vy * CELL;
+    const cx = seatCenterX(col, cellX, aisleW);
+    const cy = (row - 0.5) * cellY;
     const cls = classForSeat(seatId);
-    const cx = x + CELL / 2;
-    const cy = y + CELL / 2;
 
-    const circle = g
+    g
       .append('circle')
       .attr('cx', cx)
       .attr('cy', cy)
       .attr('r', SEAT_R)
       .attr('data-seat-id', seatId)
-      .attr('class', `ism-seat ${cls}`);
-    if (!props.readOnly) {
-      circle.on('click', () => {
-        emit('seat-click', { seatId, row, col });
-      });
+      .attr('class', `ism-seat-vis ${cls}`)
+      .attr('pointer-events', 'none');
+
+    const hit = g
+      .append('circle')
+      .attr('cx', cx)
+      .attr('cy', cy)
+      .attr('r', hitR)
+      .attr('class', `ism-seat-hit ${cls}`)
+      .attr('data-seat-id', seatId)
+      .attr('tabindex', '-1');
+
+    if (props.readOnly) {
+      hit.attr('pointer-events', 'none');
+    } else {
+      bindSeatActivate(hit.node(), seatId, row, col);
     }
   }
+}
 
-  const aisleG = svg.append('g').attr('class', 'ism-aisle').attr('transform', 'translate(4,4)');
-  const ax = 19.5 * CELL;
-  aisleG
-    .append('line')
-    .attr('x1', ax)
-    .attr('y1', 0)
-    .attr('x2', ax)
-    .attr('y2', ROWS * CELL)
-    .attr('class', 'ism-aisle-line');
+function bindResize () {
+  const el = mapRoot.value;
+  if (!el || typeof ResizeObserver === 'undefined') {
+    return;
+  }
+  resizeObserver = new ResizeObserver(() => {
+    computeMetrics();
+    render();
+  });
+  resizeObserver.observe(el);
+}
+
+function unbindResize () {
+  if (resizeObserver && mapRoot.value) {
+    resizeObserver.unobserve(mapRoot.value);
+  }
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
 }
 
 onMounted(() => {
-  render();
+  nextTick(() => {
+    computeMetrics();
+    render();
+    bindResize();
+  });
   seatmapStore.$subscribe(() => {
     render();
   });
 });
+
+onBeforeUnmount(() => {
+  unbindResize();
+});
 </script>
 
 <style scoped>
-/* Referència TR3: fons #131313, seients circulars, accent #f7e628, sense llegenda ni cap extra al voltant del SVG */
 .ism-root {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
-  gap: 1rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.55rem;
 }
 
 .ism-root--admin {
-  padding-top: 0.25rem;
+  padding-top: 0.2rem;
 }
 
+/* Mateixa línia visual que .event-info-bar (TR3) */
 .ism-stage {
-  position: relative;
+  flex-shrink: 0;
   box-sizing: border-box;
   width: 100%;
-  max-width: none;
-  min-height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.25rem;
-  background: #0e0e0e;
-  border-top: 4px solid #f7e628;
-  border-radius: 0 0 0.75rem 0.75rem;
+  padding: 0.45rem 0.75rem;
+  margin: 0;
+  min-height: 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(74, 71, 51, 0.45);
+  border-radius: 8px;
 }
 
 .ism-stage__label {
+  display: block;
   font-family: Epilogue, system-ui, sans-serif;
-  font-size: 0.625rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.45em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.38);
-}
-
-.ism-stage__glow {
-  position: absolute;
-  bottom: -0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8rem;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(247, 230, 40, 0.22),
-    transparent
-  );
-  pointer-events: none;
+  color: rgba(245, 245, 245, 0.55);
+  text-align: center;
 }
 
 .ism-map-root {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  max-width: none;
-  overflow-x: auto;
-  overflow-y: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .ism-svg {
   display: block;
-  width: 100%;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
 }
 
-.ism-root--admin :deep(.ism-seat) {
+:deep(.ism-labels) {
+  pointer-events: none;
+}
+
+:deep(.ism-col-label),
+:deep(.ism-row-label) {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  fill: rgba(245, 245, 245, 0.42);
+}
+
+:deep(.ism-aisle-band) {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: none;
+}
+
+:deep(.ism-aisle-edge) {
+  stroke: rgba(247, 230, 40, 0.14);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+  fill: none;
+}
+
+.ism-root--admin :deep(.ism-seat-hit) {
   cursor: default;
 }
 
-:deep(.ism-seat) {
+:deep(.ism-seat-hit) {
   cursor: pointer;
+  fill: rgba(0, 0, 0, 0.02);
+  stroke: none;
+}
+
+:deep(.ism-seat-hit.seat-sold) {
+  cursor: not-allowed;
+}
+
+:deep(.ism-seat-vis) {
   transition:
     fill 0.15s ease,
     stroke 0.15s ease,
     filter 0.15s ease;
 }
 
-/* Disponible: vora groga (referència) */
-:deep(.seat-available) {
+:deep(.ism-seat-vis.seat-available) {
   fill: none;
   stroke: #f7e628;
-  stroke-width: 1.5;
+  stroke-width: 1.75;
 }
 
-:deep(.seat-available:hover) {
+:deep(.ism-seat-vis.seat-available:hover) {
   fill: rgba(247, 230, 40, 0.18);
 }
 
-/* Seleccionat / hold propi: ple groc + brillantor */
-:deep(.seat-picked),
-:deep(.seat-held) {
-  fill: #f7e628;
-  stroke: none;
-  filter: drop-shadow(0 0 8px rgba(247, 230, 40, 0.55));
-}
-
-/* Reservat per un altre */
-:deep(.seat-held-other) {
-  fill: none;
-  stroke: rgba(247, 230, 40, 0.35);
-  stroke-width: 1.4;
-  stroke-dasharray: 3 3;
-}
-
-:deep(.seat-held-other:hover) {
+:deep(.ism-seat-vis.seat-held-other:hover) {
   fill: rgba(255, 255, 255, 0.04);
 }
 
-/* Venut / ocupat: gris pla (surface-container-highest) */
-:deep(.seat-sold) {
+:deep(.ism-seat-vis.seat-sold) {
   fill: #353534;
   stroke: none;
   cursor: not-allowed;
 }
 
-:deep(.ism-aisle-line) {
-  stroke: rgba(255, 255, 255, 0.08);
+:deep(.ism-seat-vis.seat-picked),
+:deep(.ism-seat-vis.seat-held) {
+  fill: #f7e628;
+  stroke: none;
+  filter: drop-shadow(0 0 8px rgba(247, 230, 40, 0.55));
+}
+
+:deep(.ism-seat-vis.seat-held-other) {
+  fill: none;
+  stroke: rgba(247, 230, 40, 0.35);
+  stroke-width: 1.4;
   stroke-dasharray: 3 3;
-  stroke-width: 1;
 }
 </style>

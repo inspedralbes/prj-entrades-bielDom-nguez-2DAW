@@ -20,8 +20,10 @@ run_psql () {
 
 TABLE_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'" 2>/dev/null || echo "0")
 EVENTS_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'events'" 2>/dev/null || echo "0")
+USERS_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users'" 2>/dev/null || echo "0")
 
-if [ "$EVENTS_COUNT" != "1" ]; then
+# Cal users i events: abans només es comprovava «events»; si «events» existia però «users» no (BD trencada), Laravel retornava 500 a totes les rutes JWT.
+if [ "$EVENTS_COUNT" != "1" ] || [ "$USERS_COUNT" != "1" ]; then
   if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
     if [ -f /var/www/database/init.sql ]; then
       echo "Base de dades buida: executant /var/www/database/init.sql ..."
@@ -32,7 +34,7 @@ if [ "$EVENTS_COUNT" != "1" ]; then
       run_psql -f /var/www/database/inserts.sql
     fi
   else
-    echo "ERROR: la taula public.events no existeix però la BD no està buida."
+    echo "ERROR: falta public.users o public.events (esquema incomplet) però la BD no està buida."
     echo "Solució: atura els serveis i esborra el volum de Postgres, després torna a aixecar:"
     echo "  docker compose -f docker/dev/docker-compose.yml down -v"
     echo "  docker compose -f docker/dev/docker-compose.yml up --build"

@@ -5,50 +5,103 @@
         Cerca
       </h1>
       <p class="user-page-lead">
-        Filtra per ciutat, text, categoria i data; obre el mapa per veure resultats geolocalitzats.
+        Filtra per ciutat, text i categoria; obre el mapa per veure resultats geolocalitzats.
       </p>
     </header>
 
-    <NuxtLink :to="mapSearchHref" class="search__fab" title="Mapa">Mapa</NuxtLink>
+    <NuxtLink :to="mapSearchHref" class="search__fab" title="Mapa">
+      <span class="search__fab-icon" aria-hidden="true">🗺</span>
+      <span>MAPA</span>
+    </NuxtLink>
 
     <form class="search__form" @submit.prevent="runSearch">
-      <label class="search__label">
-        Ciutat
-        <div class="city-search">
-          <input 
-            v-model="cityQuery" 
-            type="text" 
-            class="search__input" 
-            placeholder="Cerca ciutat... (ex: Madrid, Barcelona)"
-            @input="onCityInput"
-          />
-          <ul v-if="cityResults.length" class="city-results">
-            <li 
-              v-for="city in cityResults" 
-              :key="city.name"
-              @click="selectCity(city)"
-              class="city-result"
-            >
-              {{ city.name }}
-            </li>
-          </ul>
+      <UserSearchInput
+        v-model="searchQuery"
+        input-id="search-main-input"
+        sr-label="Cerca per artista o ciutat"
+        placeholder="Cerca esdeveniment, ciutat, poble…"
+        @input="onSearchInput"
+        @clear="onClearSearch"
+        @focus="onSearchFocus"
+        @blur="onSearchBlur"
+      >
+        <div
+          v-if="showSuggestPanel"
+          class="search-suggest"
+          role="listbox"
+          aria-label="Suggeriments de cerca"
+          @mousedown.prevent="onSuggestMouseDown"
+        >
+          <p v-if="suggestLoading" class="search-suggest__state">
+            Cercant…
+          </p>
+          <template v-else>
+            <template v-for="row in suggestRows" :key="row.key">
+              <button
+                v-if="row.kind === 'event'"
+                type="button"
+                class="search-suggest__row search-suggest__row--event"
+                role="option"
+                @click="goToEvent(row.event)"
+              >
+                <div
+                  class="search-suggest__thumb"
+                  :class="{ 'search-suggest__thumb--empty': !eventThumb(row.event) }"
+                >
+                  <img
+                    v-if="eventThumb(row.event)"
+                    class="search-suggest__img"
+                    :src="eventThumb(row.event)"
+                    :alt="eventImageAlt(row.event)"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                </div>
+                <div class="search-suggest__meta">
+                  <span class="search-suggest__title">{{ row.event.name }}</span>
+                  <span class="search-suggest__sub">{{ formatEventWhen(row.event.starts_at) }}</span>
+                </div>
+              </button>
+              <button
+                v-else-if="row.kind === 'place'"
+                type="button"
+                class="search-suggest__row search-suggest__row--place"
+                role="option"
+                @click="selectGooglePlace(row)"
+              >
+                <span class="material-symbols-rounded search-suggest__pin" aria-hidden="true">location_on</span>
+                <span class="search-suggest__place-label">{{ row.label }}</span>
+              </button>
+              <button
+                v-else-if="row.kind === 'city'"
+                type="button"
+                class="search-suggest__row search-suggest__row--place"
+                role="option"
+                @click="selectVenueCity(row)"
+              >
+                <span class="material-symbols-rounded search-suggest__pin" aria-hidden="true">location_on</span>
+                <span class="search-suggest__place-label">{{ row.name }}</span>
+              </button>
+            </template>
+            <p v-if="!suggestRows.length && searchQuery.trim().length >= 2" class="search-suggest__state">
+              Cap suggeriment.
+            </p>
+          </template>
         </div>
-      </label>
-      <label class="search__label">
-        Text
-        <input v-model="q" type="search" class="search__input" placeholder="Nom de l'esdeveniment">
-      </label>
-      <label class="search__label">
-        Categoria
-        <input v-model="category" type="text" class="search__input" placeholder="opcional">
-      </label>
-      <label class="search__label">
-        Data (des d’aquest dia)
-        <input v-model="dateFrom" type="date" class="search__input">
-      </label>
-      <button type="submit" class="search__btn" :disabled="loading">
-        Cercar
-      </button>
+      </UserSearchInput>
+
+      <div class="search-categories" role="group" aria-label="Filtres de cerca">
+        <button
+          v-for="cat in categoryOptions"
+          :key="cat.value"
+          type="button"
+          class="search-chip"
+          :class="{ 'search-chip--active': category === cat.value }"
+          @click="setCategory(cat.value)"
+        >
+          {{ cat.label }}
+        </button>
+      </div>
     </form>
 
     <p v-if="error" class="search__err">{{ error }}</p>
@@ -58,9 +111,10 @@
       <li v-for="ev in events" :key="ev.id" class="search__card-item">
         <EventCardTr3
           :event="ev"
+          link-from="search"
           :show-heart="!!auth.token"
-          :heart-filled="savedIds.has(ev.id)"
-          @favorite-click="toggleSaved(ev.id)"
+          :heart-filled="savedEventsStore.isSaved(ev.id)"
+          @favorite-click="onFavoriteClick(ev.id)"
         />
       </li>
     </ul>
@@ -70,9 +124,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '~/stores/auth';
-import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { useSavedEventsStore } from '~/stores/savedEvents';
 import { useApi } from '~/composables/useApi';
+import { useEventImage } from '~/composables/useEventImage';
 import EventCardTr3 from '~/components/EventCardTr3.vue';
+import UserSearchInput from '~/components/UserSearchInput.vue';
 
 const emit = defineEmits(['city-selected']);
 
@@ -81,16 +137,15 @@ definePageMeta({
 });
 
 const auth = useAuthStore();
+const savedEventsStore = useSavedEventsStore();
 const { fetchApi } = useApi();
-const { getJson, postJson, deleteJson } = useAuthorizedApi();
+const { imageSrc, imageAlt } = useEventImage();
 
 const q = ref('');
 const category = ref('');
-const dateFrom = ref('');
 const loading = ref(false);
 const error = ref('');
 const events = ref([]);
-const savedIds = ref(new Set());
 
 const mapSearchHref = computed(() => {
   const params = new URLSearchParams();
@@ -99,9 +154,6 @@ const mapSearchHref = computed(() => {
   }
   if (category.value) {
     params.set('category', category.value);
-  }
-  if (dateFrom.value) {
-    params.set('date_from', dateFrom.value);
   }
   if (selectedCity.value) {
     params.set('lat', String(selectedCity.value.lat));
@@ -114,47 +166,252 @@ const mapSearchHref = computed(() => {
   return `/search/map?${qs}`;
 });
 
-const cityQuery = ref('');
-const cityResults = ref([]);
+const searchQuery = ref('');
 const selectedCity = ref(null);
 let cityDebounce = null;
+let suggestDebounce = null;
 
-function onCityInput() {
-  if (cityDebounce) clearTimeout(cityDebounce);
-  if (cityQuery.value.length < 2) {
-    cityResults.value = [];
-    return;
+const suggestRows = ref([]);
+const suggestLoading = ref(false);
+const suggestPanelVisible = ref(true);
+let suggestBlurTimer = null;
+
+const categoryOptions = [
+  { value: '', label: 'Tots' },
+  { value: 'music', label: 'Música' },
+  { value: 'sports', label: 'Esports' },
+  { value: 'theatre', label: 'Teatre' },
+];
+
+const showSuggestPanel = computed(() => {
+  if (!suggestPanelVisible.value) {
+    return false;
   }
-  cityDebounce = setTimeout(async () => {
-    try {
-      const base = useRuntimeConfig().public.apiUrl || '';
-      const res = await $fetch(`${base.replace(/\/$/, '')}/api/cities/search?q=${encodeURIComponent(cityQuery.value)}`);
-      cityResults.value = res.cities || [];
-    } catch {}
-  }, 300);
+  if (searchQuery.value.trim().length < 2) {
+    return false;
+  }
+  return true;
+});
+
+function eventThumb (ev) {
+  return imageSrc(ev);
 }
 
-function selectCity(city) {
-  selectedCity.value = city;
-  cityQuery.value = city.name;
-  cityResults.value = [];
+function eventImageAlt (ev) {
+  return imageAlt(ev);
+}
+
+function formatEventWhen (iso) {
+  if (!iso) {
+    return '—';
+  }
+  try {
+    const d = new Date(iso);
+    const datePart = d.toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' });
+    const timePart = d.toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' });
+    return `${datePart} · ${timePart}`;
+  } catch {
+    return '—';
+  }
+}
+
+function setCategory (nextCategory) {
+  category.value = nextCategory;
+  runSearch();
+}
+
+function onSearchFocus () {
+  if (suggestBlurTimer !== null) {
+    clearTimeout(suggestBlurTimer);
+    suggestBlurTimer = null;
+  }
+  suggestPanelVisible.value = true;
+}
+
+function onSearchBlur () {
+  suggestBlurTimer = setTimeout(() => {
+    suggestPanelVisible.value = false;
+    suggestBlurTimer = null;
+  }, 180);
+}
+
+function onSuggestMouseDown () {
+  if (suggestBlurTimer !== null) {
+    clearTimeout(suggestBlurTimer);
+    suggestBlurTimer = null;
+  }
+}
+
+function onClearSearch () {
+  q.value = '';
+  selectedCity.value = null;
+  suggestRows.value = [];
+  suggestLoading.value = false;
+  void runSearch();
+}
+
+function onSearchInput () {
+  q.value = searchQuery.value;
+  selectedCity.value = null;
+  if (cityDebounce) {
+    clearTimeout(cityDebounce);
+  }
+  if (suggestDebounce) {
+    clearTimeout(suggestDebounce);
+  }
+  if (searchQuery.value.trim().length < 2) {
+    suggestRows.value = [];
+    suggestLoading.value = false;
+    return;
+  }
+  suggestLoading.value = true;
+  suggestDebounce = setTimeout(() => {
+    void loadSuggestions();
+  }, 280);
+}
+
+function buildSuggestRows (eventList, placeList, cityList) {
+  const rows = [];
+  const evn = eventList.length;
+  for (let i = 0; i < evn && i < 6; i++) {
+    const ev = eventList[i];
+    rows.push({
+      kind: 'event',
+      key: 'e-' + String(ev.id),
+      event: ev,
+    });
+  }
+  const pln = placeList.length;
+  for (let j = 0; j < pln && j < 7; j++) {
+    const p = placeList[j];
+    rows.push({
+      kind: 'place',
+      key: 'p-' + String(p.place_id),
+      placeId: p.place_id,
+      label: p.label,
+    });
+  }
+  const seen = {};
+  for (let s = 0; s < pln; s++) {
+    const pl = placeList[s];
+    seen[String(pl.label).toLowerCase()] = true;
+  }
+  const cn = cityList.length;
+  for (let c = 0; c < cn && c < 4; c++) {
+    const city = cityList[c];
+    const nm = city.name;
+    if (seen[String(nm).toLowerCase()] === true) {
+      continue;
+    }
+    rows.push({
+      kind: 'city',
+      key: 'c-' + String(nm) + '-' + String(c),
+      name: nm,
+      lat: city.lat,
+      lng: city.lng,
+    });
+  }
+  return rows;
+}
+
+async function loadSuggestions () {
+  const t = searchQuery.value.trim();
+  if (t.length < 2) {
+    suggestRows.value = [];
+    suggestLoading.value = false;
+    return;
+  }
+  suggestLoading.value = true;
+  try {
+    const params = new URLSearchParams();
+    params.set('q', t);
+    params.set('limit', '8');
+    if (category.value) {
+      params.set('category', category.value);
+    }
+    const evPath = `/api/search/events?${params.toString()}`;
+    const citiesPath = `/api/cities/search?q=${encodeURIComponent(t)}`;
+    const placesPath = `/api/places/autocomplete?q=${encodeURIComponent(t)}`;
+
+    const pair = await Promise.all([
+      fetchApi(evPath),
+      fetchApi(citiesPath),
+    ]);
+    const evData = pair[0];
+    const citiesData = pair[1];
+    let placesData = { places: [] };
+    try {
+      placesData = await fetchApi(placesPath);
+    } catch {
+      placesData = { places: [] };
+    }
+
+    const eventList = evData.events || [];
+    const cityList = citiesData.cities || [];
+    const placeList = placesData.places || [];
+
+    suggestRows.value = buildSuggestRows(eventList, placeList, cityList);
+  } catch {
+    suggestRows.value = [];
+  } finally {
+    suggestLoading.value = false;
+  }
+}
+
+async function goToEvent (ev) {
+  suggestRows.value = [];
+  suggestPanelVisible.value = false;
+  await navigateTo({ path: `/events/${ev.id}`, query: { from: 'search' } });
+}
+
+async function selectGooglePlace (row) {
+  try {
+    const data = await fetchApi(`/api/places/details?place_id=${encodeURIComponent(row.placeId)}`);
+    const lat = data.lat;
+    const lng = data.lng;
+    if (lat == null || lng == null) {
+      return;
+    }
+    let label = row.label;
+    if (data.formatted_address && String(data.formatted_address).trim() !== '') {
+      label = String(data.formatted_address);
+    }
+    selectedCity.value = {
+      name: label,
+      lat,
+      lng,
+    };
+    searchQuery.value = label;
+    q.value = label;
+    suggestRows.value = [];
+    suggestPanelVisible.value = false;
+    await runSearch();
+    if (selectedCity.value) {
+      emit('city-selected', selectedCity.value);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function selectVenueCity (row) {
+  selectedCity.value = {
+    name: row.name,
+    lat: row.lat,
+    lng: row.lng,
+  };
+  searchQuery.value = row.name;
+  q.value = row.name;
+  suggestRows.value = [];
+  suggestPanelVisible.value = false;
+  void runSearch();
+  if (selectedCity.value) {
+    emit('city-selected', selectedCity.value);
+  }
 }
 
 async function loadSaved () {
-  if (!auth.token) {
-    return;
-  }
-  try {
-    const data = await getJson('/api/saved-events');
-    const list = data.events || [];
-    const ids = new Set();
-    for (let i = 0; i < list.length; i++) {
-      ids.add(list[i].id);
-    }
-    savedIds.value = ids;
-  } catch {
-    /* ignore */
-  }
+  await savedEventsStore.fetchFromServer();
 }
 
 async function runSearch () {
@@ -167,9 +424,6 @@ async function runSearch () {
     }
     if (category.value) {
       params.set('category', category.value);
-    }
-    if (dateFrom.value) {
-      params.set('date_from', dateFrom.value);
     }
     if (selectedCity.value) {
       params.set('lat', selectedCity.value.lat);
@@ -191,28 +445,16 @@ async function runSearch () {
   }
 }
 
-async function toggleSaved (eventId) {
+function onFavoriteClick (eventId) {
   if (!auth.token) {
+    void navigateTo('/login');
     return;
   }
-  try {
-    if (savedIds.value.has(eventId)) {
-      await deleteJson(`/api/saved-events/${eventId}`);
-      const next = new Set(savedIds.value);
-      next.delete(eventId);
-      savedIds.value = next;
-    } else {
-      await postJson('/api/saved-events', { event_id: eventId });
-      const next = new Set(savedIds.value);
-      next.add(eventId);
-      savedIds.value = next;
-    }
-  } catch (e) {
-    console.error(e);
-  }
+  void savedEventsStore.toggleFavorite(eventId).catch(() => {});
 }
 
 onMounted(async () => {
+  searchQuery.value = q.value;
   await loadSaved();
   await runSearch();
 });
@@ -227,21 +469,28 @@ onMounted(async () => {
 .search__fab {
   position: fixed;
   right: 1rem;
-  bottom: calc(56px + 1rem);
+  bottom: calc(var(--footer-stack) + 1rem);
   z-index: 50;
-  width: 3.25rem;
+  min-width: 9rem;
   height: 3.25rem;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-on);
+  border-radius: 9999px;
+  background: #f7e628;
+  color: #111;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.6rem;
   text-decoration: none;
   font-family: Epilogue, system-ui, sans-serif;
-  font-size: 0.7rem;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+.search__fab-icon {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 @media (min-width: 900px) {
   .search__fab {
@@ -251,41 +500,8 @@ onMounted(async () => {
 .search__form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.9rem;
   margin-bottom: 1.25rem;
-}
-.search__label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  color: #aaa;
-}
-.search__input {
-  padding: 0.5rem 0.65rem;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #111;
-  color: #fff;
-}
-.search__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-.search__btn {
-  align-self: flex-start;
-  padding: 0.55rem 1.2rem;
-  background: var(--accent);
-  border: none;
-  border-radius: 9999px;
-  color: var(--accent-on);
-  font-family: Epilogue, system-ui, sans-serif;
-  font-weight: 800;
-  cursor: pointer;
-}
-.search__btn:disabled {
-  opacity: 0.6;
 }
 .search__cards {
   list-style: none;
@@ -306,33 +522,150 @@ onMounted(async () => {
 .search__err {
   color: #ff6b6b;
 }
-.city-search {
-  position: relative;
+.search-categories {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.city-results {
+.search-categories::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+  background: transparent;
+}
+.search-chip {
+  flex-shrink: 0;
+  border: 1px solid #2c2c2c;
+  background: #222;
+  color: #b8b8b8;
+  border-radius: 9999px;
+  padding: 0.58rem 1.25rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.search-chip--active {
+  background: #f7e628;
+  color: #6e6600;
+  border-color: #f7e628;
+}
+
+.search-suggest {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 6px;
-  list-style: none;
-  padding: 0;
-  margin: 4px 0 0;
-  z-index: 100;
-  max-height: 200px;
+  margin-top: 6px;
+  z-index: 120;
+  max-height: min(70vh, 22rem);
+  overflow-x: hidden;
   overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 238, 50, 0.18);
+  background: #141414;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
-.city-result {
-  padding: 0.65rem 0.85rem;
-  cursor: pointer;
+
+.search-suggest__state {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.search-suggest__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: none;
   border-bottom: 1px solid #222;
+  background: transparent;
+  color: #e5e2e1;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  box-sizing: border-box;
 }
-.city-result:last-child {
+
+.search-suggest__row:last-child {
   border-bottom: none;
 }
-.city-result:hover {
+
+.search-suggest__row:hover {
+  background: rgba(247, 230, 40, 0.08);
+}
+
+.search-suggest__row--event {
+  gap: 0.65rem;
+}
+
+.search-suggest__thumb {
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 10px;
+  overflow: hidden;
   background: #2a2a2a;
+}
+
+.search-suggest__thumb--empty {
+  background: linear-gradient(145deg, #333, #1a1a1a);
+}
+
+.search-suggest__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.search-suggest__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.search-suggest__title {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  color: #fff;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-suggest__sub {
+  font-size: 0.78rem;
+  color: #a8a49a;
+}
+
+.search-suggest__row--place {
+  padding: 0.7rem 0.85rem;
+}
+
+.search-suggest__pin {
+  flex-shrink: 0;
+  font-size: 1.45rem;
+  color: #f7e628;
+  line-height: 1;
+}
+
+.search-suggest__place-label {
+  font-size: 0.88rem;
+  line-height: 1.3;
+  color: #e5e2e1;
 }
 </style>

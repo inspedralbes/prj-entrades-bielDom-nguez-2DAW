@@ -27,6 +27,7 @@ class Event extends Model
         'tm_category',
         'is_large_event',
         'image_url',
+        'description',
     ];
 
     protected function casts (): array

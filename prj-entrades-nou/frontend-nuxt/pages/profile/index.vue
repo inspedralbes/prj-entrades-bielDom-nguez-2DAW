@@ -23,5 +23,6 @@ definePageMeta({
 .profile-page {
   max-width: 28rem;
   margin: 0 auto;
+  padding-bottom: 2rem;
 }
 </style>

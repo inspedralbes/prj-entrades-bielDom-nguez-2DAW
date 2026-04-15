@@ -14,8 +14,8 @@
       <li v-for="ev in events" :key="ev.id" class="saved__card-item">
         <EventCardTr3
           :event="ev"
-          :show-heart="true"
-          :heart-filled="true"
+          link-from="saved"
+          :heart-filled="savedEventsStore.isSaved(ev.id)"
           @favorite-click="removeSaved(ev.id)"
         />
       </li>
@@ -27,6 +27,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { useSavedEventsStore } from '~/stores/savedEvents';
 import EventCardTr3 from '~/components/EventCardTr3.vue';
 
 definePageMeta({
@@ -34,23 +35,25 @@ definePageMeta({
   middleware: 'auth',
 });
 
-const { getJson, deleteJson } = useAuthorizedApi();
+const { getJson } = useAuthorizedApi();
+const savedEventsStore = useSavedEventsStore();
 const loading = ref(true);
 const error = ref('');
 const events = ref([]);
 
 async function removeSaved (eventId) {
-  try {
-    await deleteJson(`/api/saved-events/${encodeURIComponent(eventId)}`);
-    const list = events.value;
-    const next = [];
-    for (let i = 0; i < list.length; i++) {
-      if (list[i].id !== eventId) {
-        next.push(list[i]);
-      }
+  const prevList = events.value;
+  const next = [];
+  for (let i = 0; i < prevList.length; i++) {
+    if (prevList[i].id !== eventId) {
+      next.push(prevList[i]);
     }
-    events.value = next;
+  }
+  events.value = next;
+  try {
+    await savedEventsStore.toggleFavorite(eventId);
   } catch (e) {
+    events.value = prevList;
     console.error(e);
   }
 }
@@ -60,7 +63,9 @@ onMounted(async () => {
   error.value = '';
   try {
     const data = await getJson('/api/saved-events');
-    events.value = data.events || [];
+    const list = data.events || [];
+    events.value = list;
+    savedEventsStore.hydrateFromApiList(list);
   } catch (e) {
     if (e?.status === 401) {
       navigateTo('/login');

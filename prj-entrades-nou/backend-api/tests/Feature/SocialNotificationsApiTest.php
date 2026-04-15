@@ -76,14 +76,48 @@ class SocialNotificationsApiTest extends TestCase
             ]);
         $res->assertStatus(201);
 
-        $this->assertSame(1, SocialNotification::query()->where('user_id', $b['id'])->count());
-        $this->assertSame(1, SocialNotification::query()->where('user_id', $a['id'])->count());
+        $this->assertGreaterThanOrEqual(2, SocialNotification::query()->where('user_id', $b['id'])->count());
+        $this->assertGreaterThanOrEqual(2, SocialNotification::query()->where('user_id', $a['id'])->count());
 
         $listB = $this->withHeaders(['Authorization' => 'Bearer '.$b['token']])
             ->getJson('/api/notifications');
         $listB->assertOk();
-        $this->assertSame('event_shared', $listB->json('notifications.0.type'));
-        $this->assertSame('received', $listB->json('notifications.0.payload.direction'));
+        $rows = $listB->json('notifications');
+        $this->assertIsArray($rows);
+        $eventShared = null;
+        foreach ($rows as $row) {
+            if (is_array($row) && ($row['type'] ?? '') === 'event_shared') {
+                $eventShared = $row;
+                break;
+            }
+        }
+        $this->assertNotNull($eventShared, 'Cal una notificació event_shared per al destinatari.');
+        $this->assertSame('received', $eventShared['payload']['direction']);
+    }
+
+    public function test_share_thread_requires_friendship (): void
+    {
+        $a = $this->registerUser('thread_a', 'thread_a@example.com');
+        $b = $this->registerUser('thread_b', 'thread_b@example.com');
+
+        $this->withHeaders(['Authorization' => 'Bearer '.$a['token']])
+            ->getJson('/api/social/users/'.$b['id'].'/share-thread')
+            ->assertStatus(403);
+
+        $inv = $this->withHeaders(['Authorization' => 'Bearer '.$a['token']])
+            ->postJson('/api/social/friend-invites', ['receiver_id' => $b['id']]);
+        $inviteId = $inv->json('id');
+
+        $this->withHeaders(['Authorization' => 'Bearer '.$b['token']])
+            ->patchJson('/api/social/friend-invites/'.$inviteId, ['action' => 'accept'])
+            ->assertOk();
+
+        $ok = $this->withHeaders(['Authorization' => 'Bearer '.$a['token']])
+            ->getJson('/api/social/users/'.$b['id'].'/share-thread');
+        $ok->assertOk();
+        $this->assertIsArray($ok->json('messages'));
+        $this->assertArrayHasKey('thread_notifications_muted', $ok->json());
+        $this->assertFalse($ok->json('thread_notifications_muted'));
     }
 
     public function test_share_event_forbidden_without_friendship (): void

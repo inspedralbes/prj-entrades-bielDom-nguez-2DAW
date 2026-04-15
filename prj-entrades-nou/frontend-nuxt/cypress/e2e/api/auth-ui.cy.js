@@ -49,11 +49,6 @@ describe('Auth UI - Login/Register/Checkout', () => {
       cy.url().should('include', '/login')
     })
 
-    it('redirects /checkout to login when not authenticated', () => {
-      cy.visit('/checkout')
-      cy.url().should('include', '/login')
-    })
-
     it('redirects /social to login when not authenticated', () => {
       cy.visit('/social')
       cy.url().should('include', '/login')

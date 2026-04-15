@@ -12,16 +12,16 @@ class RedisSeatKeyParsePatternsTest extends TestCase
 {
     public function test_seat_id_extracted_with_laravel_style_prefix (): void
     {
-        $physical = 'laravel-database-event:2:seat:section_1-row_1-seat_21';
+        $physical = 'laravel-database-event:2:seat:section_1-row_1-seat_5';
         $this->assertSame(1, preg_match('/event:\d+:seat:(.+)$/', $physical, $m));
-        $this->assertSame('section_1-row_1-seat_21', $m[1]);
+        $this->assertSame('section_1-row_1-seat_5', $m[1]);
     }
 
     public function test_seat_id_extracted_without_prefix (): void
     {
-        $logical = 'event:2:seat:section_1-row_1-seat_21';
+        $logical = 'event:2:seat:section_1-row_1-seat_5';
         $this->assertSame(1, preg_match('/event:\d+:seat:(.+)$/', $logical, $m));
-        $this->assertSame('section_1-row_1-seat_21', $m[1]);
+        $this->assertSame('section_1-row_1-seat_5', $m[1]);
     }
 
     public function test_user_index_event_id_with_prefix (): void

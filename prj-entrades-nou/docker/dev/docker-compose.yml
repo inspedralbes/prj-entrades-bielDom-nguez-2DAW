@@ -97,6 +97,8 @@ services:
     environment:
       NUXT_HOST: 0.0.0.0
       NUXT_PORT: 3000
+      # Navegador → localhost:8000; Node SSR dins el contenidor ha d’usar el servei compose.
+      NUXT_API_INTERNAL_URL: http://backend-api:8000
       NUXT_PUBLIC_API_URL: http://localhost:8000
       # Navegador del teu PC → port publicat; correcte (no usar socket-server aquí).
       NUXT_PUBLIC_SOCKET_URL: http://localhost:3001
