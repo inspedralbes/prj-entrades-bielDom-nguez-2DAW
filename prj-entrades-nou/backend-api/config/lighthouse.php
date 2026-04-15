@@ -1,6 +1,26 @@
 <?php
 
 declare(strict_types=1);
+use Nuwave\Lighthouse\Schema\Directives\ConvertEmptyStringsToNullDirective;
+use Nuwave\Lighthouse\Schema\Directives\DropArgsDirective;
+use Nuwave\Lighthouse\Schema\Directives\RenameArgsDirective;
+use Nuwave\Lighthouse\Schema\Directives\SanitizeDirective;
+use Nuwave\Lighthouse\Schema\Directives\SpreadDirective;
+use Nuwave\Lighthouse\Schema\Directives\TransformArgsDirective;
+use Nuwave\Lighthouse\Schema\Directives\TrimDirective;
+use Nuwave\Lighthouse\Subscriptions\SubscriptionRouter;
+use Nuwave\Lighthouse\Tracing\ApolloTracing\ApolloTracing;
+use Nuwave\Lighthouse\Validation\ValidateDirective;
+
+// Lighthouse fa (bool) sobre aquest valor; les variables d'entorn són strings i "false" es convertiria en true.
+$lighthouseSchemaCacheDefault = '1';
+if (in_array((string) env('APP_ENV', 'production'), ['local', 'testing'], true)) {
+    $lighthouseSchemaCacheDefault = '0';
+}
+$lighthouseSchemaCacheEnable = filter_var(env('LIGHTHOUSE_SCHEMA_CACHE_ENABLE', $lighthouseSchemaCacheDefault), FILTER_VALIDATE_BOOLEAN);
+
+// webonyx/graphql-php: DisableIntrospection espera int (DISABLED=0, ENABLED=1), no bool.
+$lighthouseDisableIntrospection = (int) filter_var(env('LIGHTHOUSE_SECURITY_DISABLE_INTROSPECTION', false), FILTER_VALIDATE_BOOLEAN);
 
 return [
     /*
@@ -82,7 +102,7 @@ return [
         /*
          * Setting to true enables schema caching.
          */
-        'enable' => env('LIGHTHOUSE_SCHEMA_CACHE_ENABLE', env('APP_ENV') !== 'local'),
+        'enable' => $lighthouseSchemaCacheEnable,
 
         /*
          * File path to store the lighthouse schema.
@@ -221,7 +241,7 @@ return [
     'security' => [
         'max_query_complexity' => PHP_INT_MAX,
         'max_query_depth' => PHP_INT_MAX,
-        'disable_introspection' => (bool) env('LIGHTHOUSE_SECURITY_DISABLE_INTROSPECTION', false),
+        'disable_introspection' => $lighthouseDisableIntrospection,
     ],
 
     /*

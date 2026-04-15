@@ -259,6 +259,20 @@ CREATE TABLE social_notifications (
 
 CREATE INDEX social_notifications_user_created_index ON social_notifications (user_id, created_at DESC);
 
+-- Silenci de toasts per fil compartit amb un amic (paritat amb database/init.sql).
+CREATE TABLE social_thread_notification_mutes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER NOT NULL,
+    peer_user_id INTEGER NOT NULL,
+    created_at VARCHAR(255),
+    updated_at VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (peer_user_id) REFERENCES users (id) ON DELETE CASCADE,
+    UNIQUE (user_id, peer_user_id)
+);
+
+CREATE INDEX social_thread_notification_mutes_user_index ON social_thread_notification_mutes (user_id);
+
 CREATE TABLE tm_discovery_sync (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     cursor TEXT,
