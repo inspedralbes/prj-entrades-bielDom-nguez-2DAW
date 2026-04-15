@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { nextTick, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js'
 
@@ -170,7 +170,6 @@ const props = defineProps({
   },
 })
 
-const router = useRouter()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 const apiUrl = computed(() => {
@@ -366,13 +365,13 @@ const handleSubmit = async () => {
     })
 
     if (res.token) {
-      const tokenCookie = useCookie('auth_token')
-      tokenCookie.value = res.token
-
       const auth = useAuthStore()
       auth.setSession({ token: res.token, user: res.user })
 
       let redirect = route.query.redirect
+      if (Array.isArray(redirect)) {
+        redirect = redirect[0] || ''
+      }
       if (typeof redirect !== 'string' || redirect.length === 0) {
         let isAdmin = false
         const r = res.user && res.user.roles
@@ -390,8 +389,16 @@ const handleSubmit = async () => {
         } else {
           redirect = '/tickets'
         }
+      } else {
+        try {
+          redirect = decodeURIComponent(redirect)
+        } catch {
+          /* URL ja vàlida sense codificar */
+        }
       }
-      router.push(redirect)
+
+      await nextTick()
+      await navigateTo(redirect, { replace: true })
     }
   } catch (err) {
     const payload = extract422Payload(err)

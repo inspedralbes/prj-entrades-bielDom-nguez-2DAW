@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 import { onMounted, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicSocketUrl } from '~/utils/apiBase.js';
 import { useSocialThreadMutesStore } from '~/stores/socialThreadMutes';
 import { useSocialToastsStore } from '~/stores/socialToasts';
 import { useTicketsStore } from '~/stores/tickets';
@@ -70,7 +71,7 @@ export function usePrivateTicketSocket () {
     const ticketsStore = useTicketsStore();
 
     function tryConnect () {
-      const base = (config.public.socketUrl || '').replace(/\/$/, '');
+      const base = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
       if (!base || !auth.token) {
         return;
       }

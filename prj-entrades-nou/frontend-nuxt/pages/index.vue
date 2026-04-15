@@ -2,9 +2,9 @@
   <div class="home user-page">
     <header class="user-page-hero user-page-hero--spaced">
       <h1 class="user-page-title">
-        {{ auth.token ? 'Destacats' : 'Esdeveniments' }}
+        {{ homeTitle }}
       </h1>
-      <p v-if="auth.token" class="user-page-lead">
+      <p v-if="homeLeadIsFeatured" class="user-page-lead">
         Esdeveniments recomanats segons el teu perfil i activitat.
       </p>
       <p v-else class="user-page-lead">
@@ -18,7 +18,7 @@
     <template v-else>
       <section class="home__section" aria-labelledby="h-featured">
         <h2 id="h-featured" class="home__sr-only">
-          {{ auth.token ? 'Llista de destacats' : 'Llista d’esdeveniments' }}
+          {{ homeListSr }}
         </h2>
         <ul v-if="featured.length" class="home__cards">
           <li v-for="ev in featured" :key="ev.id" class="home__card-item">
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { useSavedEventsStore } from '~/stores/savedEvents';
 import EventCardTr3 from '~/components/EventCardTr3.vue';
@@ -54,6 +54,38 @@ const savedEventsStore = useSavedEventsStore();
 const loading = ref(true);
 const error = ref('');
 const featured = ref([]);
+/* Fins al client (post-init), mateix text que SSR: evita mismatch d’hidratació si la cookie JWT arriba només al navegador. */
+const homeUiReady = ref(false);
+
+const homeTitle = computed(() => {
+  if (!homeUiReady.value) {
+    return 'Esdeveniments';
+  }
+  if (auth.token) {
+    return 'Destacats';
+  }
+  return 'Esdeveniments';
+});
+
+const homeLeadIsFeatured = computed(() => {
+  if (!homeUiReady.value) {
+    return false;
+  }
+  if (auth.token) {
+    return true;
+  }
+  return false;
+});
+
+const homeListSr = computed(() => {
+  if (!homeUiReady.value) {
+    return 'Llista d’esdeveniments';
+  }
+  if (auth.token) {
+    return 'Llista de destacats';
+  }
+  return 'Llista d’esdeveniments';
+});
 
 async function loadSaved () {
   await savedEventsStore.fetchFromServer();
@@ -82,6 +114,7 @@ async function fetchFeatured () {
 
 onMounted(async () => {
   auth.init();
+  homeUiReady.value = true;
   loading.value = true;
   error.value = '';
   try {

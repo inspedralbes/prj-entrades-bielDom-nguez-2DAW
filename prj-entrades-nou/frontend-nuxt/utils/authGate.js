@@ -5,15 +5,21 @@ import { useAuthStore } from '~/stores/auth';
  * Cridar des de middleware Nuxt.
  */
 export function enforceAuthCookie (to) {
-  const authToken = useCookie('auth_token');
-  const raw = authToken.value;
-  const token = typeof raw === 'string' ? raw.trim() : raw;
-  if (!token) {
-    return navigateTo({
-      path: '/login',
-      query: { redirect: to.fullPath },
-    });
-  }
   const auth = useAuthStore();
   auth.init();
+  const authToken = useCookie('auth_token');
+  const raw = authToken.value;
+  const cookieTok = typeof raw === 'string' ? raw.trim() : raw;
+  if (cookieTok && cookieTok.length > 0) {
+    return;
+  }
+  /* Just després de registre/login: Pinia ja té token (setSession) i la cookie pot no haver fet flush encara. */
+  const storeTok = auth.token ? String(auth.token).trim() : '';
+  if (storeTok.length > 0) {
+    return;
+  }
+  return navigateTo({
+    path: '/login',
+    query: { redirect: to.fullPath },
+  });
 }
