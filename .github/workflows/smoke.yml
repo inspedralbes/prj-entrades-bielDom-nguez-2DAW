@@ -167,6 +167,9 @@ jobs:
             docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs socket-server --tail=80
             exit 1
           }
+          # Docker amb bind mount sovint deixa fitxers com a root al workspace → npm ci del runner (EACCES a node_modules).
+          sudo chown -R "$(id -un):$(id -gn)" socket-server || true
+          sudo rm -rf socket-server/node_modules socket-server/.npm || true
           cd socket-server
           npm ci
           JWT_SECRET=smoke_test_secret npm run test:intent-broadcast -- http://127.0.0.1:3001
