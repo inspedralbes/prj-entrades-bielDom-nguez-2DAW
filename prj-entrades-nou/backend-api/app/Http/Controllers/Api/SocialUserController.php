@@ -72,7 +72,7 @@ class SocialUserController extends Controller
     /**
      * GET /api/social/users/{userId}/share-thread — fil d’esdeveniments i entrades compartits amb un amic (només lectura).
      */
-    public function shareThread (Request $request, string $userId): JsonResponse
+    public function shareThread(Request $request, string $userId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -115,7 +115,7 @@ class SocialUserController extends Controller
     /**
      * GET /api/social/thread-notification-mutes — llista d’IDs d’amics amb toasts de fil silenciats (per al client al iniciar).
      */
-    public function threadMutesIndex (Request $request): JsonResponse
+    public function threadMutesIndex(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -139,7 +139,7 @@ class SocialUserController extends Controller
      *
      * Cos: { "muted": true|false }
      */
-    public function threadMutePatch (Request $request, string $userId): JsonResponse
+    public function threadMutePatch(Request $request, string $userId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -250,7 +250,7 @@ class SocialUserController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function serializeShareMessage (SocialNotification $n): array
+    private function serializeShareMessage(SocialNotification $n): array
     {
         return [
             'id' => (int) $n->id,

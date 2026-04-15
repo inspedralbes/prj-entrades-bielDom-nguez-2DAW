@@ -8,7 +8,7 @@ use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
 
 class AdminDashboardOrdersPaidByDay
 {
-    public function __invoke (mixed $root, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
+    public function __invoke(mixed $root, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
     {
         $days = 30;
         if (isset($args['days'])) {

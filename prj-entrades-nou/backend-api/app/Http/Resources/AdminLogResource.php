@@ -11,7 +11,7 @@ class AdminLogResource extends JsonResource
     /**
      * @return array<string, mixed>
      */
-    public function toArray (Request $request): array
+    public function toArray(Request $request): array
     {
         $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
         $at = $this->created_at->timezone($tzName);

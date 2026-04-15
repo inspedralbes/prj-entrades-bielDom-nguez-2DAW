@@ -1,24 +1,12 @@
 /**
- * URL base de l'API Laravel (NUXT_PUBLIC_API_URL).
- * - Navegador: si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
- * - SSR (Node): opcionalment NUXT_API_INTERNAL_URL (p. ex. http://backend-api:8000 a Docker);
- *   dins el contenidor «localhost:8000» no apunta al servei Laravel.
+ * URL base pública (navegador): si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
+ *
+ * @param {string} [configuredBase]
+ * @param {string} defaultBase  Ex. http://localhost:8000 o http://localhost:3001
+ * @returns {string}
  */
-export function resolveApiBaseUrlForFetch (runtimeConfig) {
-  if (import.meta.server) {
-    const internal = runtimeConfig.apiInternalUrl;
-    if (typeof internal === 'string') {
-      const t = internal.trim();
-      if (t.length > 0) {
-        return t.replace(/\/$/, '');
-      }
-    }
-  }
-  return resolvePublicApiBaseUrl(runtimeConfig.public.apiUrl);
-}
-
-export function resolvePublicApiBaseUrl (configuredBase) {
-  let base = (configuredBase || 'http://localhost:8000').replace(/\/$/, '');
+function resolvePublicOrigin (configuredBase, defaultBase) {
+  let base = (configuredBase || defaultBase).replace(/\/$/, '');
   if (typeof window === 'undefined' || !window.location) {
     return base;
   }
@@ -41,7 +29,23 @@ export function resolvePublicApiBaseUrl (configuredBase) {
 
 /**
  * URL base de l'API Laravel (NUXT_PUBLIC_API_URL).
+ * - Navegador: si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
+ * - SSR (Node): opcionalment NUXT_API_INTERNAL_URL (p. ex. http://backend-api:8000 a Docker);
+ *   dins el contenidor «localhost:8000» no apunta al servei Laravel.
  */
+export function resolveApiBaseUrlForFetch (runtimeConfig) {
+  if (import.meta.server) {
+    const internal = runtimeConfig.apiInternalUrl;
+    if (typeof internal === 'string') {
+      const t = internal.trim();
+      if (t.length > 0) {
+        return t.replace(/\/$/, '');
+      }
+    }
+  }
+  return resolvePublicApiBaseUrl(runtimeConfig.public.apiUrl);
+}
+
 export function resolvePublicApiBaseUrl (configuredBase) {
   return resolvePublicOrigin(configuredBase, 'http://localhost:8000');
 }

@@ -96,7 +96,7 @@ class SocialNotificationsApiTest extends TestCase
         $this->assertSame('received', $eventShared['payload']['direction']);
     }
 
-    public function test_share_thread_requires_friendship (): void
+    public function test_share_thread_requires_friendship(): void
     {
         $a = $this->registerUser('thread_a', 'thread_a@example.com');
         $b = $this->registerUser('thread_b', 'thread_b@example.com');

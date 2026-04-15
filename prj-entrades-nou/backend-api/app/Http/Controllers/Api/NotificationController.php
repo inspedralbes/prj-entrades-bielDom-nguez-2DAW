@@ -42,7 +42,7 @@ class NotificationController extends Controller
     /**
      * POST /api/notifications/mark-all-read — marca totes les notificacions de l’usuari com a llegides (badge Social / peu).
      */
-    public function markAllRead (Request $request): JsonResponse
+    public function markAllRead(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -64,7 +64,7 @@ class NotificationController extends Controller
     /**
      * POST /api/notifications/mark-read-for-actor/{actorUserId} — llegides les notificacions d’un actor (badge «La teva gent»).
      */
-    public function markReadForActor (Request $request, string $actorUserId): JsonResponse
+    public function markReadForActor(Request $request, string $actorUserId): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {
@@ -89,7 +89,7 @@ class NotificationController extends Controller
         return response()->json(['marked' => $marked]);
     }
 
-    public function update (Request $request, int $id): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {

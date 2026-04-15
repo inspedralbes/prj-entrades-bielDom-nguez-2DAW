@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\Auth\JwtTokenService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
@@ -14,16 +15,16 @@ class AdminAnalyticsTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
     }
 
-    public function test_analytics_summary_requires_admin (): void
+    public function test_analytics_summary_requires_admin(): void
     {
         $user = User::factory()->create();
         $user->assignRole('user');
@@ -37,7 +38,7 @@ class AdminAnalyticsTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_analytics_invalid_range_returns_422 (): void
+    public function test_analytics_invalid_range_returns_422(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -48,7 +49,7 @@ class AdminAnalyticsTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_analytics_summary_and_events_with_paid_order (): void
+    public function test_analytics_summary_and_events_with_paid_order(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -64,7 +65,7 @@ class AdminAnalyticsTest extends TestCase
             'name' => 'Concert prova',
         ]);
 
-        $order = new Order();
+        $order = new Order;
         $order->user_id = $buyer->id;
         $order->event_id = $event->id;
         $order->state = Order::STATE_PAID;

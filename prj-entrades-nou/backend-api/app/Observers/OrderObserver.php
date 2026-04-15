@@ -8,7 +8,7 @@ use App\Services\Socket\InternalSocketNotifier;
 
 class OrderObserver
 {
-    public function updated (Order $order): void
+    public function updated(Order $order): void
     {
         if (! $order->wasChanged('state') && ! $order->wasChanged('total_amount')) {
             return;

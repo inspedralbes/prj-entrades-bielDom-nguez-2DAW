@@ -16,14 +16,14 @@ class AdminLog extends Model
         'ip_address',
     ];
 
-    protected function casts (): array
+    protected function casts(): array
     {
         return [
             'entity_id' => 'integer',
         ];
     }
 
-    public function adminUser (): BelongsTo
+    public function adminUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_user_id');
     }

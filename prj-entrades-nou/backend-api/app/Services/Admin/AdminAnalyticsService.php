@@ -18,7 +18,7 @@ class AdminAnalyticsService
      *
      * @return array{total_revenue_eur: float}
      */
-    public function buildSummary (Carbon $fromStart, Carbon $toEnd): array
+    public function buildSummary(Carbon $fromStart, Carbon $toEnd): array
     {
         $sum = Order::query()
             ->where('state', Order::STATE_PAID)
@@ -37,7 +37,7 @@ class AdminAnalyticsService
      *
      * @return array{events: list<array{event_id: int, name: string, revenue_eur: float, avg_daily_revenue_eur: float}>}
      */
-    public function buildPerEvent (Carbon $fromStart, Carbon $toEnd, int $daysInPeriod): array
+    public function buildPerEvent(Carbon $fromStart, Carbon $toEnd, int $daysInPeriod): array
     {
         $orders = Order::query()
             ->where('state', Order::STATE_PAID)
@@ -98,6 +98,7 @@ class AdminAnalyticsService
             if ($a['revenue_eur'] < $b['revenue_eur']) {
                 return 1;
             }
+
             return 0;
         });
 
@@ -109,7 +110,7 @@ class AdminAnalyticsService
      *
      * @return array{categories: list<array{category_key: string, label: string, capacity: int, sold: int, occupancy_percent: float}>}
      */
-    public function buildCategoryOccupancy (Carbon $fromStart, Carbon $toEnd): array
+    public function buildCategoryOccupancy(Carbon $fromStart, Carbon $toEnd): array
     {
         $allEvents = Event::query()->get(['id', 'category']);
         $idsByCategory = [];
@@ -172,6 +173,7 @@ class AdminAnalyticsService
             if ($a['occupancy_percent'] < $b['occupancy_percent']) {
                 return 1;
             }
+
             return 0;
         });
 

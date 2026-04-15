@@ -15,7 +15,7 @@ class PlacesController extends Controller
     /**
      * Prediccions d’adreces i localitats a Espanya (components=country:es).
      */
-    public function autocomplete (Request $request): JsonResponse
+    public function autocomplete(Request $request): JsonResponse
     {
         $raw = $request->query('q');
         if ($raw === null) {
@@ -89,7 +89,7 @@ class PlacesController extends Controller
     /**
      * Coordenades i nom per aplicar filtre de mapa / proximitat després d’elegir una predicció.
      */
-    public function details (Request $request): JsonResponse
+    public function details(Request $request): JsonResponse
     {
         $placeId = $request->query('place_id');
         if ($placeId === null || trim((string) $placeId) === '') {

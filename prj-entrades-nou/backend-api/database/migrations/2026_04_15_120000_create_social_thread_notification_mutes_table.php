@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up (): void
+    public function up(): void
     {
         Schema::create('social_thread_notification_mutes', function (Blueprint $table) {
             $table->id();
@@ -18,7 +18,7 @@ return new class extends Migration
         });
     }
 
-    public function down (): void
+    public function down(): void
     {
         Schema::dropIfExists('social_thread_notification_mutes');
     }

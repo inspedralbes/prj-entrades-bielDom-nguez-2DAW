@@ -24,6 +24,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js (npm ci al host després de Docker)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            prj-entrades-nou/socket-server/package-lock.json
+            prj-entrades-nou/frontend-nuxt/package-lock.json
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -141,6 +150,14 @@ jobs:
           else
             echo "All T001 directories verified"
           fi
+
+      # Els bind mounts de Docker poden deixar fitxers com a root al workspace; npm ci al runner
+      # falla amb EACCES a node_modules/@* si no es neteja i es restableixen permisos.
+      - name: Neteja node_modules i permisos (post-Docker, abans de npm ci)
+        run: |
+          sudo rm -rf socket-server/node_modules socket-server/.npm \
+            frontend-nuxt/node_modules frontend-nuxt/.npm
+          sudo chown -R "$(id -un):$(id -gn)" socket-server frontend-nuxt || true
 
       - name: Realtime — dos clients + SeatStatusUpdated (intent JWT)
         run: |

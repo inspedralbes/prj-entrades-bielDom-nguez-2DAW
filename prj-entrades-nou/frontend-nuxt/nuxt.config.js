@@ -23,6 +23,11 @@ export default defineNuxtConfig({
     },
   },
   compatibilityDate: '2024-11-01',
+  /* Necessari amb Nuxt 3.21+: el schema resol experimental.treeshakeClientOnly abans que `future`
+   * tingui valor per defecte; sense això `get("future")` és undefined al build (GH Actions). */
+  future: {
+    compatibilityVersion: 3,
+  },
   // Evita error Vite "Failed to resolve import #app-manifest" (Nuxt 3.20+ / primer arranque sense .nuxt).
   // Veure https://github.com/nuxt/nuxt/issues/33606 — es pot reactivar quan no calgui el workaround.
   experimental: {

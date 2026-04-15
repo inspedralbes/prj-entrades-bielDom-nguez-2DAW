@@ -13,11 +13,11 @@ use Illuminate\Http\Request;
  */
 class AdminAnalyticsController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly AdminAnalyticsService $analytics,
     ) {}
 
-    public function summary (Request $request): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
         $range = $this->parseDateRange($request);
         if ($range instanceof JsonResponse) {
@@ -33,7 +33,7 @@ class AdminAnalyticsController extends Controller
         return response()->json($payload);
     }
 
-    public function events (Request $request): JsonResponse
+    public function events(Request $request): JsonResponse
     {
         $range = $this->parseDateRange($request);
         if ($range instanceof JsonResponse) {
@@ -49,7 +49,7 @@ class AdminAnalyticsController extends Controller
         return response()->json($payload);
     }
 
-    public function categoryOccupancy (Request $request): JsonResponse
+    public function categoryOccupancy(Request $request): JsonResponse
     {
         $range = $this->parseDateRange($request);
         if ($range instanceof JsonResponse) {
@@ -62,9 +62,9 @@ class AdminAnalyticsController extends Controller
     }
 
     /**
-     * @return array{from_start: \Carbon\Carbon, to_end: \Carbon\Carbon, days_in_period: int}|\Illuminate\Http\JsonResponse
+     * @return array{from_start: Carbon, to_end: Carbon, days_in_period: int}|JsonResponse
      */
-    private function parseDateRange (Request $request): JsonResponse|array
+    private function parseDateRange(Request $request): JsonResponse|array
     {
         $data = $request->validate([
             'date_from' => ['required', 'date'],

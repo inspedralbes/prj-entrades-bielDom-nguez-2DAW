@@ -19,7 +19,7 @@ class SocialNotificationService
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
 
-    public function recordFriendInviteReceived (User $sender, User $receiver, FriendInvite $invite): void
+    public function recordFriendInviteReceived(User $sender, User $receiver, FriendInvite $invite): void
     {
         $payload = [
             'sender_id' => (int) $sender->id,
@@ -46,7 +46,7 @@ class SocialNotificationService
         ]);
     }
 
-    public function recordFriendInviteAccepted (User $accepter, User $sender, FriendInvite $invite): void
+    public function recordFriendInviteAccepted(User $accepter, User $sender, FriendInvite $invite): void
     {
         $payload = [
             'accepter_username' => (string) $accepter->username,
@@ -73,7 +73,7 @@ class SocialNotificationService
         ]);
     }
 
-    public function recordEventShare (User $actor, User $recipient, Event $event): void
+    public function recordEventShare(User $actor, User $recipient, Event $event): void
     {
         $event->loadMissing('venue');
 

@@ -9,7 +9,7 @@ use App\Models\AdminLog;
  */
 class AdminAuditLogService
 {
-    public function record (
+    public function record(
         int $adminUserId,
         string $action,
         string $entityType,
@@ -17,7 +17,7 @@ class AdminAuditLogService
         string $summary,
         ?string $ipAddress,
     ): AdminLog {
-        $log = new AdminLog();
+        $log = new AdminLog;
         $log->admin_user_id = $adminUserId;
         $log->action = $action;
         $log->entity_type = $entityType;

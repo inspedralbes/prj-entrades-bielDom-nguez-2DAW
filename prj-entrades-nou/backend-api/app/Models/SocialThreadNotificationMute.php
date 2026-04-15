@@ -21,7 +21,7 @@ class SocialThreadNotificationMute extends Model
     /**
      * @return BelongsTo<User, SocialThreadNotificationMute>
      */
-    public function user (): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
@@ -29,7 +29,7 @@ class SocialThreadNotificationMute extends Model
     /**
      * @return BelongsTo<User, SocialThreadNotificationMute>
      */
-    public function peer (): BelongsTo
+    public function peer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'peer_user_id');
     }

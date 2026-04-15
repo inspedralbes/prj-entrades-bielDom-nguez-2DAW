@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AdminLogController extends Controller
 {
-    public function index (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->query('per_page', 10);
         if ($perPage < 1) {
