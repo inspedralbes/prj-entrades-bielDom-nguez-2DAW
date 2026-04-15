@@ -3,6 +3,14 @@ set -e
 
 cd /var/www/html
 
+# El bind mount `backend-api:/var/www/html` substitueix el vendor de la imatge; en CI o clone fresc
+# no hi ha `vendor/` al host. Composer ve a la imatge Docker (Dockerfile).
+if [ ! -f vendor/autoload.php ]; then
+  echo "Falta vendor/ al directori muntat; executant composer install..."
+  composer install --no-interaction --prefer-dist --no-scripts
+  composer dump-autoload -o
+fi
+
 # El volum munta `backend-api/.env` del host (normalment DB_HOST=127.0.0.1). Dins del contenidor,
 # 127.0.0.1 és el propi contenidor, no Postgres/Redis. Els noms de servei del compose han de prevaldre.
 export DB_HOST=postgres
