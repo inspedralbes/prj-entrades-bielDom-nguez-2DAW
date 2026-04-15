@@ -157,10 +157,9 @@ jobs:
             echo "All T001 directories verified"
           fi
 
-      # Proves Socket.IO: el servei escolta a 127.0.0.1:3001 des del runner (port publicat).
-      # No fer `chown`/`npm ci` al host sobre `socket-server/` mentre el contenidor corre amb `node --watch`:
-      # actualitza metadates dels `.js` del bind mount i força reinici del procés → ECONNRESET / xhr poll error als clients.
-      # Els scripts s’executen dins del contenidor (`node_modules` al volum anomenat, sense tocar el watch del host).
+      # Proves Socket.IO contra 127.0.0.1:3001 des del runner (port publicat).
+      # No tocar `socket-server/` del bind mount (chown/npm ci) mentre corre `node --watch` al contenidor.
+      # `npm ci` en còpia a /tmp: dependències dels scripts (socket.io-client) sense esborrar `node_modules` del volum Docker.
       - name: Realtime — Socket.IO (intent JWT + /internal/emit)
         run: |
           curl -sf http://127.0.0.1:3001/health >/dev/null || {
@@ -168,13 +167,14 @@ jobs:
             docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs socket-server --tail=80
             exit 1
           }
-          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} exec -T \
-            -e JWT_SECRET=smoke_test_secret \
-            socket-server \
-            node scripts/verify-seat-intent-broadcast.mjs http://127.0.0.1:3001
-          docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} exec -T \
-            socket-server \
-            node scripts/verify-internal-emit.mjs http://127.0.0.1:3001
+          rm -rf /tmp/tr3-socket-realtime-test
+          mkdir -p /tmp/tr3-socket-realtime-test
+          cp socket-server/package.json socket-server/package-lock.json /tmp/tr3-socket-realtime-test/
+          cp -r socket-server/scripts /tmp/tr3-socket-realtime-test/
+          cd /tmp/tr3-socket-realtime-test
+          npm ci
+          JWT_SECRET=smoke_test_secret node scripts/verify-seat-intent-broadcast.mjs http://127.0.0.1:3001
+          JWT_SECRET=smoke_test_secret node scripts/verify-internal-emit.mjs http://127.0.0.1:3001
 
       # Els bind mounts de Docker poden deixar fitxers com a root al workspace; npm ci al runner
       # falla amb EACCES a node_modules/@* si no es neteja i es restableixen permisos.

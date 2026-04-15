@@ -186,6 +186,11 @@ function requestPathOnly (req) {
 }
 
 httpServer.on('request', (req, res) => {
+  /* Socket.IO afegeix listeners propis al mateix `httpServer`; aquest callback va després.
+   * Si Engine.io ja ha respost (p. ex. GET /socket.io/… polling), no enviar un segon 404. */
+  if (res.headersSent || res.writableEnded) {
+    return;
+  }
   const pathOnly = requestPathOnly(req);
   if (pathOnly === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -268,6 +273,9 @@ httpServer.on('request', (req, res) => {
         res.writeHead(400);
         res.end();
       });
+    return;
+  }
+  if (res.headersSent || res.writableEnded) {
     return;
   }
   res.writeHead(404);
