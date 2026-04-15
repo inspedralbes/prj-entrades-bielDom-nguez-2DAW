@@ -1,5 +1,6 @@
 import { watch } from 'vue';
 import { useAuthStore } from '~/stores/auth';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js';
 
 /**
  * Ping periòdic cap a /api/presence/ping per alimentar el ZSET Redis i el recompte online_users (admin).
@@ -7,7 +8,7 @@ import { useAuthStore } from '~/stores/auth';
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig();
   const auth = useAuthStore();
-  const base = (config.public.apiUrl || '').replace(/\/$/, '');
+  const base = resolvePublicApiBaseUrl(config.public.apiUrl).replace(/\/$/, '');
   let timer = null;
 
   async function ping () {

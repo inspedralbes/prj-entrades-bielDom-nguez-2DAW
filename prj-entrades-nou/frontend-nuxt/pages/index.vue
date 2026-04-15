@@ -41,6 +41,7 @@ import { onMounted, ref } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { useSavedEventsStore } from '~/stores/savedEvents';
 import EventCardTr3 from '~/components/EventCardTr3.vue';
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js';
 
 definePageMeta({
   layout: 'default',
@@ -71,7 +72,7 @@ function onFavoriteClick (eventId) {
  * Amb sessió: /api/feed/featured (destacats).
  */
 async function fetchFeatured () {
-  const base = (config.public.apiUrl || '').replace(/\/$/, '');
+  const base = resolvePublicApiBaseUrl(config.public.apiUrl).replace(/\/$/, '');
   const url = auth.token
     ? `${base}/api/feed/featured`
     : `${base}/api/search/events`;

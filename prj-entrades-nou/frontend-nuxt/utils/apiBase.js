@@ -20,7 +20,7 @@ function resolvePublicOrigin (configuredBase, defaultBase) {
   try {
     const u = new URL(base);
     u.hostname = h;
-    u.port = '';
+    /* Conservar el port de la URL configurada (p. ex. :8000); buidar-lo trencava API al mateix host que Nuxt (:3000). */
     return u.origin;
   } catch {
     return base;
