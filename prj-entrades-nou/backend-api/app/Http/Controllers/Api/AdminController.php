@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
+use App\Services\Admin\AdminAuditLogService;
 use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
@@ -22,6 +23,7 @@ class AdminController extends Controller
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
         private readonly AdminDashboardMetricsService $adminDashboardMetrics,
+        private readonly AdminAuditLogService $auditLog,
     ) {
         //
     }
@@ -127,6 +129,16 @@ class AdminController extends Controller
         }
 
         $event->save();
+
+        $changedFields = implode(', ', array_keys($data));
+        $this->auditLog->record(
+            adminUserId: (int) $request->user()->id,
+            action: 'update',
+            entityType: 'event',
+            entityId: (int) $event->id,
+            summary: 'Esdeveniment #'.$event->id.' actualitzat: '.$changedFields,
+            ipAddress: $request->ip(),
+        );
 
         return response()->json([
             'id' => $event->id,

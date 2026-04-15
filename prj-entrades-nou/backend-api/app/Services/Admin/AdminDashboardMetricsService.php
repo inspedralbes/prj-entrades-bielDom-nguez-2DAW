@@ -40,10 +40,10 @@ class AdminDashboardMetricsService
 
         $payload = [
             'finished_at' => now()->toIso8601String(),
-            'inserted' => (int) ($result['inserted'] ?? 0),
-            'skipped_no_venue' => (int) ($result['skipped_no_venue'] ?? 0),
-            'skipped_existing' => (int) ($result['skipped_existing'] ?? 0),
-            'pages_fetched' => (int) ($result['pages_fetched'] ?? 0),
+            'inserted' => (int)($result['inserted'] ?? 0),
+            'skipped_no_venue' => (int)($result['skipped_no_venue'] ?? 0),
+            'skipped_existing' => (int)($result['skipped_existing'] ?? 0),
+            'pages_fetched' => (int)($result['pages_fetched'] ?? 0),
             'errors' => $errors,
         ];
 
@@ -55,7 +55,7 @@ class AdminDashboardMetricsService
      */
     public function buildSummaryPayload(): array
     {
-        $tzName = (string) Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tzName = (string)Config::get('admin.business_timezone', 'Europe/Madrid');
         $tz = new DateTimeZone($tzName);
         $start = Carbon::now($tz)->startOfDay();
         $end = Carbon::now($tz);
@@ -68,7 +68,7 @@ class AdminDashboardMetricsService
 
         $revenueStr = '0.00';
         if ($revenueToday !== null) {
-            $revenueStr = number_format((float) $revenueToday, 2, '.', '');
+            $revenueStr = number_format((float)$revenueToday, 2, '.', '');
         }
 
         $pendingPaymentCount = Order::query()
@@ -96,8 +96,9 @@ class AdminDashboardMetricsService
             $cutoff = $now - 120;
             $conn->zremrangebyscore('presence:online_ts', '-inf', $cutoff);
 
-            return (int) $conn->zcard('presence:online_ts');
-        } catch (\Throwable) {
+            return (int)$conn->zcard('presence:online_ts');
+        }
+        catch (\Throwable) {
             return 0;
         }
     }
@@ -108,7 +109,7 @@ class AdminDashboardMetricsService
     private function buildSyncAlertsFromCache(): array
     {
         $cached = Cache::get(self::CACHE_KEY_LAST_DISCOVERY);
-        if (! is_array($cached)) {
+        if (!is_array($cached)) {
             return [];
         }
 
@@ -120,7 +121,7 @@ class AdminDashboardMetricsService
         $out = [];
         if (isset($cached['errors']) && is_array($cached['errors'])) {
             foreach ($cached['errors'] as $msg) {
-                if (! is_string($msg)) {
+                if (!is_string($msg)) {
                     continue;
                 }
                 if ($msg === '') {
@@ -136,5 +137,63 @@ class AdminDashboardMetricsService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<int, array{date: string, revenue: string}>
+     */
+    public function revenueByDay(int $days = 30): array
+    {
+        $points = [];
+        $tzName = (string)Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tz = new DateTimeZone($tzName);
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = Carbon::now($tz)->subDays($i);
+            $start = $day->copy()->startOfDay();
+            $end = $day->copy()->endOfDay();
+
+            $revenue = Order::query()
+                ->where('state', Order::STATE_PAID)
+                ->where('updated_at', '>=', $start)
+                ->where('updated_at', '<=', $end)
+                ->sum('total_amount');
+
+            $points[] = [
+                'date' => $day->toDateString(),
+                'revenue' => number_format((float)($revenue ?? 0), 2, '.', ''),
+            ];
+        }
+
+        return $points;
+    }
+
+    /**
+     * @return array<int, array{date: string, count: int}>
+     */
+    public function ordersPaidByDay(int $days = 30): array
+    {
+        $points = [];
+        $tzName = (string)Config::get('admin.business_timezone', 'Europe/Madrid');
+        $tz = new DateTimeZone($tzName);
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = Carbon::now($tz)->subDays($i);
+            $start = $day->copy()->startOfDay();
+            $end = $day->copy()->endOfDay();
+
+            $count = Order::query()
+                ->where('state', Order::STATE_PAID)
+                ->where('updated_at', '>=', $start)
+                ->where('updated_at', '<=', $end)
+                ->count();
+
+            $points[] = [
+                'date' => $day->toDateString(),
+                'count' => (int)$count,
+            ];
+        }
+
+        return $points;
     }
 }
