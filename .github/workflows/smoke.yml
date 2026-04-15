@@ -53,6 +53,12 @@ jobs:
           echo "NUXT_PUBLIC_API_URL=http://localhost:8000" >> frontend-nuxt/.env
           echo "NUXT_PUBLIC_SOCKET_URL=http://localhost:3001" >> frontend-nuxt/.env
           echo "NUXT_PUBLIC_GOOGLE_MAPS_KEY=" >> frontend-nuxt/.env
+          # Mateix JWT_SECRET que backend-api/.env — el socket-server el llegeix del volum (docker-compose no el injecta).
+          echo "PORT=3001" > socket-server/.env
+          echo "REDIS_URL=redis://redis:6379" >> socket-server/.env
+          echo "JWT_SECRET=smoke_test_secret" >> socket-server/.env
+          echo "LARAVEL_INTERNAL_API_URL=http://backend-api:8000" >> socket-server/.env
+          echo "SOCKET_INTERNAL_SECRET=" >> socket-server/.env
 
       - name: Build and start services
         run: docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} up --build -d
@@ -163,12 +169,12 @@ jobs:
         run: |
           cd socket-server
           npm ci
-          JWT_SECRET=tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok npm run test:intent-broadcast -- http://127.0.0.1:3001
+          JWT_SECRET=smoke_test_secret npm run test:intent-broadcast -- http://127.0.0.1:3001
 
       - name: Realtime — POST /internal/emit (held + sold)
         run: |
           cd socket-server
-          JWT_SECRET=tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok npm run test:realtime -- http://127.0.0.1:3001
+          npm run test:realtime -- http://127.0.0.1:3001
 
       - name: Pinia — store interactiveSeatmap (applySocketUpdate / bootstrap)
         run: |

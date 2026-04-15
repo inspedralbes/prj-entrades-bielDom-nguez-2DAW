@@ -15,7 +15,7 @@ const seatSold = 'section_1-row_1-seat_22';
 
 const socket = io(base, {
   query: { eventId },
-  transports: ['websocket', 'polling'],
+  transports: ['polling', 'websocket'],
   timeout: 8000,
 });
 

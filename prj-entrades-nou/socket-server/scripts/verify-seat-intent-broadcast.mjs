@@ -33,7 +33,8 @@ const tokenB = jwt.sign({ sub: userBId }, jwtSecret, { algorithm: 'HS256' });
 
 const common = {
   query: { eventId },
-  transports: ['websocket', 'polling'],
+  // Polling primer: alguns runners (p. ex. GH Actions) fallen l’upgrade WebSocket amb «websocket error».
+  transports: ['polling', 'websocket'],
   timeout: 12000,
 };
 
@@ -68,6 +69,12 @@ function waitConnect (label, token) {
       let msg = 'connect_error';
       if (err && err.message) {
         msg = err.message;
+      }
+      if (err && err.description) {
+        msg = msg + ' (' + String(err.description) + ')';
+      }
+      if (err && err.context) {
+        msg = msg + ' context=' + JSON.stringify(err.context);
       }
       disconnect(s);
       reject(new Error(label + ': ' + msg));
