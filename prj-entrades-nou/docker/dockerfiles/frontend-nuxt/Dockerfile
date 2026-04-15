@@ -1,6 +1,7 @@
 # Imatge dev — Node 20 + dependències Nuxt (sense Cypress: no cal al contenidor i el seu postinstall
 # intenta baixar binaris des de download.cypress.io, cosa que sovint falla dins del build Docker).
-FROM node:20-bookworm-slim
+# Espeig public.ecr.aws (mateixa imatge que library/node; menys pulls des de docker.io).
+FROM public.ecr.aws/docker/library/node:20-bookworm-slim
 
 WORKDIR /app
 

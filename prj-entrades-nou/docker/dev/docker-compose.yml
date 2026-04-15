@@ -5,6 +5,7 @@
 # Adminer va al perfil "tools" per defecte: `docker compose up` no el descarrega (evita fallides de pull CDN).
 # Per arrencar Adminer: docker compose --profile tools -f docker/dev/docker-compose.yml up
 services:
+  # PostGIS només a Docker Hub: si CI dona «toomanyrequests», defineix secrets DOCKERHUB_USERNAME + DOCKERHUB_TOKEN al workflow smoke.
   postgres:
     image: postgis/postgis:16-3.4
     environment:

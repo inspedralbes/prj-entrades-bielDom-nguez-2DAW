@@ -1,6 +1,7 @@
 # Imatge dev — PHP 8.3-FPM + Nginx + extensions Postgres; vendor via composer al build (sense artisan a build).
 # Nginx fa de reverse proxy cap a PHP-FPM (millor rendiment que `php artisan serve`).
-FROM php:8.3-fpm-bookworm
+# Espeig public.ecr.aws (mateixa capa que library/php a Docker Hub; evita rate limit «toomanyrequests» a CI).
+FROM public.ecr.aws/docker/library/php:8.3-fpm-bookworm
 
 RUN echo 'deb http://ftp.debian.org/debian bookworm main' > /etc/apt/sources.list \
   && echo 'deb http://security.debian.org/debian-security bookworm-security main' >> /etc/apt/sources.list \

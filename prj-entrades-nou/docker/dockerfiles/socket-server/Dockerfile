@@ -1,5 +1,6 @@
 # Imatge dev — Node 20 + Socket.IO / Redis / qrcode
-FROM node:20-bookworm-slim
+# Espeig public.ecr.aws (mateixa imatge que library/node; menys pulls des de docker.io).
+FROM public.ecr.aws/docker/library/node:20-bookworm-slim
 
 WORKDIR /app
 
