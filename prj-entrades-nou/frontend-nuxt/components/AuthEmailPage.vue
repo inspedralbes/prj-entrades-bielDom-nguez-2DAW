@@ -158,6 +158,7 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
+import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js'
 
 const props = defineProps({
   mode: {
@@ -171,7 +172,10 @@ const props = defineProps({
 
 const router = useRouter()
 const route = useRoute()
-const apiUrl = useRuntimeConfig().public?.apiUrl || 'http://localhost:8000'
+const runtimeConfig = useRuntimeConfig()
+const apiUrl = computed(() => {
+  return resolvePublicApiBaseUrl(runtimeConfig.public.apiUrl).replace(/\/$/, '')
+})
 
 const headTitle = computed(() => {
   if (props.mode === 'register') {
@@ -353,7 +357,7 @@ const handleSubmit = async () => {
       }
     }
 
-    const res = await $fetch(`${apiUrl}${endpoint}`, {
+    const res = await $fetch(`${apiUrl.value}${endpoint}`, {
       method: 'POST',
       body,
       headers: {

@@ -32,8 +32,11 @@ export function useGoogleMapsLoader () {
       const s = document.createElement('script');
       s.id = id;
       s.async = true;
-      s.defer = true;
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}`;
+      /* Paràmetre loading=async: patró recomanat per Google (evita avís «suboptimal performance»). */
+      s.src =
+        'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(key) +
+        '&loading=async';
       s.onload = () => resolve();
       s.onerror = () => reject(new Error('No s’ha pogut carregar Google Maps'));
       document.head.appendChild(s);
