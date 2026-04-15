@@ -38,7 +38,116 @@ function readJsonBody (req) {
 
 const httpServer = createServer();
 
-//================================ Socket.IO (cal crear abans del handler HTTP per usar io a /internal/emit)
+//================================ HTTP: health + internal (abans de `new Server` perquè Engine.io encasti aquest listener)
+const appState = {
+  io: null,
+  privateNs: null,
+};
+
+function requestPathOnly (req) {
+  const u = req.url || '';
+  const q = u.indexOf('?');
+  if (q >= 0) {
+    return u.slice(0, q);
+  }
+  return u;
+}
+
+httpServer.on('request', (req, res) => {
+  const pathOnly = requestPathOnly(req);
+  if (pathOnly === '/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ status: 'ok', service: 'socket-server' }));
+    return;
+  }
+  if (pathOnly === '/internal/emit' && req.method === 'POST') {
+    if (!internalSecretOk(req)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    const ioRef = appState.io;
+    const privateNsRef = appState.privateNs;
+    if (!ioRef || !privateNsRef) {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'socket-server no preparat' }));
+      return;
+    }
+    readJsonBody(req)
+      .then(async (body) => {
+        const room = String(body.room || '').trim();
+        const evt = String(body.event || '');
+        const payload = body.payload;
+        if (room === '' || evt === '') {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
+        try {
+          privateNsRef.in(room).emit(evt, payload);
+          const defSockets = await ioRef.in(room).fetchSockets();
+          let ids = '';
+          let i = 0;
+          for (; i < defSockets.length; i += 1) {
+            defSockets[i].emit(evt, payload);
+            if (i > 0) {
+              ids = ids + ',';
+            }
+            ids = ids + defSockets[i].id;
+          }
+          console.log('[socket-server][internal/emit]', {
+            room,
+            event: evt,
+            defaultNsRecipients: defSockets.length,
+            socketIds: ids,
+          });
+        } catch (err) {
+          let m = 'emit failed';
+          if (err && err.message) {
+            m = err.message;
+          }
+          console.warn('[socket-server][internal/emit] error', m);
+        }
+        res.writeHead(204);
+        res.end();
+      })
+      .catch(() => {
+        res.writeHead(400);
+        res.end();
+      });
+    return;
+  }
+  if (pathOnly === '/internal/qr-svg' && req.method === 'POST') {
+    if (!internalSecretOk(req)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    readJsonBody(req)
+      .then(async (body) => {
+        const text = String(body.text || body.payload || '');
+        if (text === '') {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'text or payload requerit' }));
+          return;
+        }
+        const width = body.width !== undefined ? Number(body.width) : undefined;
+        const margin = body.margin !== undefined ? Number(body.margin) : undefined;
+        const svg = await generateTicketSvg(text, { width, margin });
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+        res.end(svg);
+      })
+      .catch(() => {
+        res.writeHead(400);
+        res.end();
+      });
+    return;
+  }
+  res.writeHead(404);
+  res.end();
+});
+
+//================================ Socket.IO
 const io = new Server(httpServer, {
   cors: {
     origin: true,
@@ -175,112 +284,8 @@ privateNs.on('connection', (socket) => {
   });
 });
 
-//================================ HTTP: health + emissió interna + QR SVG (T026)
-function requestPathOnly (req) {
-  const u = req.url || '';
-  const q = u.indexOf('?');
-  if (q >= 0) {
-    return u.slice(0, q);
-  }
-  return u;
-}
-
-httpServer.on('request', (req, res) => {
-  /* Socket.IO afegeix listeners propis al mateix `httpServer`; aquest callback va després.
-   * Si Engine.io ja ha respost (p. ex. GET /socket.io/… polling), no enviar un segon 404. */
-  if (res.headersSent || res.writableEnded) {
-    return;
-  }
-  const pathOnly = requestPathOnly(req);
-  if (pathOnly === '/health' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ status: 'ok', service: 'socket-server' }));
-    return;
-  }
-  if (pathOnly === '/internal/emit' && req.method === 'POST') {
-    if (!internalSecretOk(req)) {
-      res.writeHead(403);
-      res.end();
-      return;
-    }
-    readJsonBody(req)
-      .then(async (body) => {
-        const room = String(body.room || '').trim();
-        const evt = String(body.event || '');
-        const payload = body.payload;
-        if (room === '' || evt === '') {
-          res.writeHead(204);
-          res.end();
-          return;
-        }
-        try {
-          // Namespace /private: sala pròpia (JWT); el mapa públic viu al namespace per defecte.
-          privateNs.in(room).emit(evt, payload);
-          /* Emissió explícita als sockets del namespace per defecte (evita casos rars amb broadcast + multiplex). */
-          const defSockets = await io.in(room).fetchSockets();
-          let ids = '';
-          let i = 0;
-          for (; i < defSockets.length; i += 1) {
-            defSockets[i].emit(evt, payload);
-            if (i > 0) {
-              ids = ids + ',';
-            }
-            ids = ids + defSockets[i].id;
-          }
-          console.log('[socket-server][internal/emit]', {
-            room,
-            event: evt,
-            defaultNsRecipients: defSockets.length,
-            socketIds: ids,
-          });
-        } catch (err) {
-          let m = 'emit failed';
-          if (err && err.message) {
-            m = err.message;
-          }
-          console.warn('[socket-server][internal/emit] error', m);
-        }
-        res.writeHead(204);
-        res.end();
-      })
-      .catch(() => {
-        res.writeHead(400);
-        res.end();
-      });
-    return;
-  }
-  if (pathOnly === '/internal/qr-svg' && req.method === 'POST') {
-    if (!internalSecretOk(req)) {
-      res.writeHead(403);
-      res.end();
-      return;
-    }
-    readJsonBody(req)
-      .then(async (body) => {
-        const text = String(body.text || body.payload || '');
-        if (text === '') {
-          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ error: 'text or payload requerit' }));
-          return;
-        }
-        const width = body.width !== undefined ? Number(body.width) : undefined;
-        const margin = body.margin !== undefined ? Number(body.margin) : undefined;
-        const svg = await generateTicketSvg(text, { width, margin });
-        res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
-        res.end(svg);
-      })
-      .catch(() => {
-        res.writeHead(400);
-        res.end();
-      });
-    return;
-  }
-  if (res.headersSent || res.writableEnded) {
-    return;
-  }
-  res.writeHead(404);
-  res.end();
-});
+appState.io = io;
+appState.privateNs = privateNs;
 
 //================================ Canal públic: room event:{eventId} sense JWT (query ?eventId=)
 io.on('connection', (socket) => {
