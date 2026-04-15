@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Auth\JwtTokenService;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
@@ -16,18 +17,18 @@ class AdminDashboardMetricsTest extends TestCase
 {
     use RefreshDatabaseFromSql;
 
-    protected function setUp (): void
+    protected function setUp(): void
     {
         parent::setUp();
         config(['jwt.secret' => 'test_jwt_secret_minimum_32_chars_long_xx']);
         config(['admin.business_timezone' => 'UTC']);
         config(['services.socket.internal_url' => 'http://socket.test']);
         config(['services.socket.internal_secret' => '']);
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $this->seed(RoleSeeder::class);
         Cache::flush();
     }
 
-    public function test_admin_summary_revenue_today_and_pending_payment (): void
+    public function test_admin_summary_revenue_today_and_pending_payment(): void
     {
         Http::fake([
             'http://socket.test/internal/emit' => Http::response('', 204),
@@ -66,7 +67,7 @@ class AdminDashboardMetricsTest extends TestCase
         $res->assertJsonPath('pending_payment_count', 1);
     }
 
-    public function test_sync_alerts_populated_after_record_discovery (): void
+    public function test_sync_alerts_populated_after_record_discovery(): void
     {
         $svc = app(AdminDashboardMetricsService::class);
         $svc->recordDiscoverySyncResult([

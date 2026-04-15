@@ -14,12 +14,12 @@ use Illuminate\Support\Facades\Config;
  */
 class AdminDiscoveryController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly TicketmasterDiscoveryEventsClient $discoveryClient,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
     ) {}
 
-    public function search (Request $request): JsonResponse
+    public function search(Request $request): JsonResponse
     {
         $keyword = (string) $request->query('keyword', '');
         if (trim($keyword) === '') {
@@ -48,7 +48,7 @@ class AdminDiscoveryController extends Controller
         return response()->json($payload);
     }
 
-    public function importByExternalId (Request $request): JsonResponse
+    public function importByExternalId(Request $request): JsonResponse
     {
         $data = $request->validate([
             'external_tm_id' => ['required', 'string', 'max:255'],

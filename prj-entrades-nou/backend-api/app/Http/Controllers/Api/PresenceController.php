@@ -15,12 +15,12 @@ use Illuminate\Support\Facades\Redis;
  */
 class PresenceController extends Controller
 {
-    public function __construct (
+    public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly AdminDashboardMetricsService $adminDashboardMetrics,
     ) {}
 
-    public function ping (Request $request): JsonResponse
+    public function ping(Request $request): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {

@@ -16,7 +16,7 @@ class EnsureDevAdminRolesCommand extends Command
 
     protected $description = 'Assigna rols admin+user a admin@example.com (entorn local / Docker)';
 
-    public function handle (): int
+    public function handle(): int
     {
         $email = 'admin@example.com';
         $user = User::query()->where('email', $email)->first();

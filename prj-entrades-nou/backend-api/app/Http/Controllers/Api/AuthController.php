@@ -126,7 +126,7 @@ class AuthController extends Controller
     /**
      * Treu espais accidentals al correu/nom/contrasenyes abans de validar (evita correu «invàlid» o confirmació desalineada).
      */
-    private function trimRegistrationStrings (Request $request): void
+    private function trimRegistrationStrings(Request $request): void
     {
         $email = $request->input('email');
         if (is_string($email)) {

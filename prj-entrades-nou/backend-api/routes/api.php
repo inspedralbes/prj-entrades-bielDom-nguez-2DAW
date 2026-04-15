@@ -2,21 +2,17 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminDiscoveryController;
-use App\Http\Controllers\Api\AdminLogController;
 use App\Http\Controllers\Api\AdminMonitorController;
-use App\Http\Controllers\Api\AdminAnalyticsController;
+use App\Http\Controllers\Api\AdminReportsController;
 use App\Http\Controllers\Api\AdminUsersController;
-use App\Http\Controllers\Api\PresenceController;
-use App\Http\Controllers\Api\FeedController;
-use App\Http\Controllers\Api\SavedEventsController;
-use App\Http\Controllers\Api\SearchEventsController;
-use App\Http\Controllers\Api\PlacesController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HoldController;
 use App\Http\Controllers\Api\InternalSeatHoldController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\SavedEventsController;
 use App\Http\Controllers\Api\SearchEventsController;
 use App\Http\Controllers\Api\SeatmapController;
@@ -36,8 +32,6 @@ Route::get('/search/events', [SearchEventsController::class, 'index']);
 
 Route::get('/events/nearby', [SearchEventsController::class, 'nearby']);
 Route::get('/cities/search', [SearchEventsController::class, 'searchCities']);
-Route::get('/places/autocomplete', [PlacesController::class, 'autocomplete']);
-Route::get('/places/details', [PlacesController::class, 'details']);
 Route::get('/events/{eventId}', [SearchEventsController::class, 'show']);
 Route::get('/events/{eventId}/price', [SearchEventsController::class, 'eventPrice']);
 
@@ -77,15 +71,10 @@ Route::middleware('jwt.auth')->post('/tickets/{ticketId}/transfer', [TicketTrans
     ->whereUuid('ticketId');
 
 Route::middleware('jwt.auth')->get('/notifications', [NotificationController::class, 'index']);
-Route::middleware('jwt.auth')->post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
-Route::middleware('jwt.auth')->post('/notifications/mark-read-for-actor/{actorUserId}', [NotificationController::class, 'markReadForActor'])->whereNumber('actorUserId');
 Route::middleware('jwt.auth')->patch('/notifications/{id}', [NotificationController::class, 'update'])->whereNumber('id');
 
 Route::middleware('jwt.auth')->get('/social/friends', [SocialController::class, 'friends']);
 Route::middleware('jwt.auth')->get('/social/discover/search', [SocialUserController::class, 'search']);
-Route::middleware('jwt.auth')->get('/social/thread-notification-mutes', [SocialUserController::class, 'threadMutesIndex']);
-Route::middleware('jwt.auth')->get('/social/users/{userId}/share-thread', [SocialUserController::class, 'shareThread']);
-Route::middleware('jwt.auth')->patch('/social/users/{userId}/thread-notification-mute', [SocialUserController::class, 'threadMutePatch']);
 Route::middleware('jwt.auth')->get('/social/users/{userId}', [SocialUserController::class, 'publicProfile']);
 Route::middleware('jwt.auth')->post('/social/share-event', [SocialController::class, 'shareEvent']);
 Route::middleware('jwt.auth')->get('/social/friend-invites', [SocialController::class, 'invitesIndex']);
@@ -93,12 +82,10 @@ Route::middleware('jwt.auth')->post('/social/friend-invites', [SocialController:
 Route::middleware('jwt.auth')->patch('/social/friend-invites/{inviteId}', [SocialController::class, 'invitesPatch']);
 
 Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/logs', [AdminLogController::class, 'index']);
     Route::get('/summary', [AdminController::class, 'summary']);
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
     Route::get('/discovery/search', [AdminDiscoveryController::class, 'search']);
     Route::post('/discovery/import', [AdminDiscoveryController::class, 'importByExternalId']);
-    Route::get('/events/metrics', [AdminController::class, 'eventsMetrics']);
     Route::get('/events', [AdminController::class, 'index']);
     Route::post('/events', [AdminController::class, 'store']);
     Route::patch('/events/{eventId}', [AdminController::class, 'updateEvent'])->whereNumber('eventId');
@@ -106,13 +93,10 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::get('/events/{eventId}/monitor', [AdminMonitorController::class, 'show'])->whereNumber('eventId');
     Route::get('/users', [AdminUsersController::class, 'index']);
     Route::post('/users', [AdminUsersController::class, 'store']);
-    Route::patch('/users/{userId}', [AdminUsersController::class, 'update'])->whereNumber('userId');
     Route::delete('/users/{userId}', [AdminUsersController::class, 'destroy'])->whereNumber('userId');
     Route::get('/users/{userId}/orders', [AdminUsersController::class, 'orders'])->whereNumber('userId');
-    Route::get('/orders/recent', [AdminUsersController::class, 'recentOrders']);
-    Route::get('/analytics/summary', [AdminAnalyticsController::class, 'summary']);
-    Route::get('/analytics/events', [AdminAnalyticsController::class, 'events']);
-    Route::get('/analytics/categories/occupancy', [AdminAnalyticsController::class, 'categoryOccupancy']);
+    Route::get('/reports/sales', [AdminReportsController::class, 'salesSeries']);
+    Route::get('/reports/occupancy', [AdminReportsController::class, 'occupancy']);
 });
 
 Route::middleware('jwt.auth')->post('/validation/scan', [ValidationController::class, 'scan']);

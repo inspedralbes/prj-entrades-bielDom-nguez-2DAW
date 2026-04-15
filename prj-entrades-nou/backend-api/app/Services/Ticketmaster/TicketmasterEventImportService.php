@@ -163,7 +163,7 @@ class TicketmasterEventImportService
      *
      * @return array{ok: bool, message?: string, http_status?: int, event_id?: int, inserted?: bool}
      */
-    public function importSingleFromDiscoveryByExternalId (string $externalId): array
+    public function importSingleFromDiscoveryByExternalId(string $externalId): array
     {
         $item = $this->discoveryClient->fetchEventDetailById($externalId);
         if ($item === null) {
@@ -230,7 +230,7 @@ class TicketmasterEventImportService
 
         $fixedPrice = (float) Config::get('services.order.fixed_event_price_eur', 20.0);
 
-        $row = new Event();
+        $row = new Event;
         $row->external_tm_id = $externalId;
         $row->name = $name;
         $row->hold_ttl_seconds = 240;

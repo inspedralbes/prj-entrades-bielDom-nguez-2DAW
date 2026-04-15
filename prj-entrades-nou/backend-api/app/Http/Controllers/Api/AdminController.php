@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
-use App\Services\Admin\AdminAuditLogService;
 use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 
 /**
  * Esborranys T035: panell / import — respostes mínimes fins a T052.
@@ -23,12 +22,17 @@ class AdminController extends Controller
         private readonly InternalSocketNotifier $socketNotifier,
         private readonly TicketmasterEventImportService $ticketmasterEventImportService,
         private readonly AdminDashboardMetricsService $adminDashboardMetrics,
-        private readonly AdminAuditLogService $adminAuditLog,
-    ) {}
+    ) {
+        //
+    }
 
     public function summary(Request $request): JsonResponse
     {
-        $payload = $this->adminDashboardMetrics->buildFullDashboardPayload();
+        $metrics = $this->adminDashboardMetrics->buildSummaryPayload();
+        $payload = $metrics;
+        $payload['events_total'] = Event::query()->count();
+        $payload['orders_paid'] = Order::query()->where('state', Order::STATE_PAID)->count();
+        $payload['generated_at'] = now()->toIso8601String();
 
         $this->socketNotifier->emitMetricsStub($payload);
 
@@ -45,25 +49,6 @@ class AdminController extends Controller
         $result = $this->ticketmasterEventImportService->sync($maxPages);
 
         $this->adminDashboardMetrics->recordDiscoverySyncResult($result);
-
-        $user = $request->user();
-        if ($user !== null) {
-            $msg = 'Sincronització Discovery Ticketmaster completada (inserits: '.$result['inserted'].', pàgines: '.$result['pages_fetched'].').';
-            $this->adminAuditLog->record(
-                (int) $user->id,
-                'discovery_sync',
-                'TicketmasterDiscovery',
-                null,
-                $msg,
-                $request->ip()
-            );
-        }
-
-        try {
-            $snap = $this->adminDashboardMetrics->buildFullDashboardPayload();
-            $this->socketNotifier->emitMetricsStub($snap);
-        } catch (\Throwable) {
-        }
 
         return response()->json([
             'status' => 'completed',
@@ -143,18 +128,6 @@ class AdminController extends Controller
 
         $event->save();
 
-        $actor = $request->user();
-        if ($actor !== null) {
-            $this->adminAuditLog->record(
-                (int) $actor->id,
-                'updated',
-                'Event',
-                (int) $event->id,
-                'S\'ha actualitzat l\'esdeveniment «'.$event->name.'».',
-                $request->ip()
-            );
-        }
-
         return response()->json([
             'id' => $event->id,
             'external_tm_id' => $event->external_tm_id,
@@ -169,43 +142,15 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * KPIs per al panell d’esdeveniments: recompte actius (futurs i visibles) i volum de vendes (ingressos acumulats pagats).
-     */
-    public function eventsMetrics (Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $now = Carbon::now();
+        $query = Event::query()->orderBy('starts_at', 'desc');
 
-        $activeEventsCount = Event::query()
-            ->whereNull('hidden_at')
-            ->where('starts_at', '>=', $now)
-            ->count();
-
-        $sum = Order::query()
-            ->where('state', Order::STATE_PAID)
-            ->sum('total_amount');
-
-        $salesVolumeEur = '0.00';
-        if ($sum !== null) {
-            $salesVolumeEur = number_format((float) $sum, 2, '.', '');
-        }
-
-        return response()->json([
-            'active_events_count' => $activeEventsCount,
-            'sales_volume_eur' => $salesVolumeEur,
-        ]);
-    }
-
-    public function index (Request $request): JsonResponse
-    {
-        $query = Event::query()->with('venue')->orderBy('starts_at', 'desc');
-
-        // Visibilitat amb `hidden_at` (el model Event no usa SoftDeletes; `withTrashed()` provocava 500).
-        // hidden=include: sense filtre (tot el catàleg al panell); only: només ocults; per defecte: només visibles.
-        $hidden = $request->query('hidden');
-        if ($hidden === 'only') {
+        if ($request->query('hidden') === 'include') {
+            $query->withTrashed();
+        } elseif ($request->query('hidden') === 'only') {
             $query->whereNotNull('hidden_at');
-        } elseif ($hidden !== 'include') {
+        } else {
             $query->whereNull('hidden_at');
         }
 
@@ -252,18 +197,6 @@ class AdminController extends Controller
         }
         $event->save();
 
-        $actor = $request->user();
-        if ($actor !== null) {
-            $this->adminAuditLog->record(
-                (int) $actor->id,
-                'created',
-                'Event',
-                (int) $event->id,
-                'S\'ha creat l\'esdeveniment «'.$event->name.'».',
-                $request->ip()
-            );
-        }
-
         return response()->json([
             'id' => $event->id,
             'external_tm_id' => $event->external_tm_id,
@@ -287,37 +220,14 @@ class AdminController extends Controller
         }
 
         $force = $request->query('force') === '1';
-        $actor = $request->user();
         if ($force) {
-            $name = $event->name;
-            $eid = (int) $event->id;
             $event->delete();
-            if ($actor !== null) {
-                $this->adminAuditLog->record(
-                    (int) $actor->id,
-                    'deleted',
-                    'Event',
-                    $eid,
-                    'S\'ha eliminat definitivament l\'esdeveniment «'.$name.'».',
-                    $request->ip()
-                );
-            }
 
             return response()->json(['message' => 'Esdeveniment eliminat definitivament de la base de dades']);
         }
 
         $event->hidden_at = now();
         $event->save();
-        if ($actor !== null) {
-            $this->adminAuditLog->record(
-                (int) $actor->id,
-                'updated',
-                'Event',
-                (int) $event->id,
-                'S\'ha ocultat l\'esdeveniment «'.$event->name.'» del catàleg públic.',
-                $request->ip()
-            );
-        }
 
         return response()->json(['message' => 'Esdeveniment ocultat (hidden_at). No es mostra al catàleg públic.']);
     }
