@@ -1,12 +1,23 @@
 <template>
-  <div class="saved">
-    <h1 class="saved__h1">Guardats</h1>
+  <div class="saved user-page">
+    <header class="user-page-hero user-page-hero--spaced">
+      <h1 class="user-page-title">
+        Guardats
+      </h1>
+      <p class="user-page-lead">
+        Esdeveniments que has desat per tornar-hi més tard.
+      </p>
+    </header>
     <p v-if="error" class="saved__err">{{ error }}</p>
     <p v-else-if="loading" class="saved__muted">Carregant…</p>
-    <ul v-else-if="events.length" class="saved__list">
-      <li v-for="ev in events" :key="ev.id" class="saved__item">
-        <NuxtLink :to="`/events/${ev.id}`" class="saved__link">{{ ev.name }}</NuxtLink>
-        <p class="saved__meta">{{ formatDate(ev.starts_at) }} · {{ ev.venue?.name || '—' }}</p>
+    <ul v-else-if="events.length" class="saved__cards">
+      <li v-for="ev in events" :key="ev.id" class="saved__card-item">
+        <EventCardTr3
+          :event="ev"
+          link-from="saved"
+          :heart-filled="savedEventsStore.isSaved(ev.id)"
+          @favorite-click="removeSaved(ev.id)"
+        />
       </li>
     </ul>
     <p v-else class="saved__muted">No tens esdeveniments guardats.</p>
@@ -16,6 +27,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { useSavedEventsStore } from '~/stores/savedEvents';
+import EventCardTr3 from '~/components/EventCardTr3.vue';
 
 definePageMeta({
   layout: 'default',
@@ -23,18 +36,25 @@ definePageMeta({
 });
 
 const { getJson } = useAuthorizedApi();
+const savedEventsStore = useSavedEventsStore();
 const loading = ref(true);
 const error = ref('');
 const events = ref([]);
 
-function formatDate (iso) {
-  if (!iso) {
-    return '';
+async function removeSaved (eventId) {
+  const prevList = events.value;
+  const next = [];
+  for (let i = 0; i < prevList.length; i++) {
+    if (prevList[i].id !== eventId) {
+      next.push(prevList[i]);
+    }
   }
+  events.value = next;
   try {
-    return new Date(iso).toLocaleString('ca-ES', { dateStyle: 'medium', timeStyle: 'short' });
-  } catch {
-    return iso;
+    await savedEventsStore.toggleFavorite(eventId);
+  } catch (e) {
+    events.value = prevList;
+    console.error(e);
   }
 }
 
@@ -43,7 +63,9 @@ onMounted(async () => {
   error.value = '';
   try {
     const data = await getJson('/api/saved-events');
-    events.value = data.events || [];
+    const list = data.events || [];
+    events.value = list;
+    savedEventsStore.hydrateFromApiList(list);
   } catch (e) {
     if (e?.status === 401) {
       navigateTo('/login');
@@ -59,39 +81,27 @@ onMounted(async () => {
 
 <style scoped>
 .saved {
-  padding: 0 1rem 2rem;
   max-width: 42rem;
   margin: 0 auto;
 }
-.saved__h1 {
-  color: #ff0055;
-  font-size: 1.35rem;
-}
-.saved__list {
+
+.saved__cards {
   list-style: none;
   padding: 0;
   margin: 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-.saved__item {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #222;
+
+.saved__card-item {
+  margin: 0;
 }
-.saved__link {
-  font-weight: 600;
-  color: #fff;
-  text-decoration: none;
-}
-.saved__link:hover {
-  color: #ff0055;
-}
-.saved__meta {
-  margin: 0.35rem 0 0;
-  font-size: 0.85rem;
-  color: #888;
-}
+
 .saved__muted {
-  color: #888;
+  color: var(--fg-muted);
 }
+
 .saved__err {
   color: #ff6b6b;
 }

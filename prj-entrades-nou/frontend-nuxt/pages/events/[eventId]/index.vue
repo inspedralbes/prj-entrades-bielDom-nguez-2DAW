@@ -1,7 +1,18 @@
 <template>
-  <main class="event-detail">
-    <div v-if="pending" class="loading">Carregant…</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+  <main class="event-detail user-page">
+    <header class="event-detail__toolbar">
+      <button
+        type="button"
+        class="event-detail__back"
+        aria-label="Tornar enrere"
+        @click="goBack"
+      >
+        <span class="material-symbols-rounded event-detail__back-ico" aria-hidden="true">arrow_back</span>
+      </button>
+    </header>
+
+    <div v-if="pending" class="event-detail__state">Carregant…</div>
+    <div v-else-if="error" class="event-detail__state event-detail__state--err">{{ error }}</div>
     <template v-else-if="event">
       <div class="event-hero">
         <img v-if="event.image_url" :src="event.image_url" :alt="event.name" class="event-image" />
@@ -9,18 +20,39 @@
       </div>
 
       <div class="event-content">
-        <div class="event-header">
-          <h1 class="event-title">{{ event.name }}</h1>
-          <button type="button" class="save-btn" :class="{ saved: isSaved }" @click="toggleSave">
-            <span class="save-icon">{{ isSaved ? '♥' : '♡' }}</span>
-            <span class="save-text">{{ isSaved ? 'Desar' : 'Guardar' }}</span>
-          </button>
-        </div>
+        <h1 class="event-title">{{ event.name }}</h1>
 
-        <div class="event-actions">
-          <button type="button" class="action-btn" @click="openShareModal">Compartir</button>
-          <button type="button" class="action-btn action-btn--ghost" @click="copyEventLink">
-            {{ copyFeedback ? copyFeedback : 'Copiar enllaç' }}
+        <div class="event-quick-actions" role="toolbar" aria-label="Accions ràpides">
+          <button
+            type="button"
+            class="event-qa"
+            @click="openShareModal"
+          >
+            <span class="material-symbols-rounded event-qa__ico" aria-hidden="true">share</span>
+            <span class="event-qa__lab">Compartir</span>
+          </button>
+          <button
+            type="button"
+            class="event-qa"
+            @click="copyEventLink"
+          >
+            <span class="material-symbols-rounded event-qa__ico" aria-hidden="true">content_copy</span>
+            <span class="event-qa__lab">{{ copyActionLabel }}</span>
+          </button>
+          <button
+            type="button"
+            class="event-qa"
+            :class="{ 'event-qa--on': isSaved }"
+            :aria-pressed="isSaved"
+            :aria-label="isSaved ? 'Treure dels preferits' : 'Afegir a preferits'"
+            @click="toggleSave"
+          >
+            <span
+              class="material-symbols-rounded event-qa__ico event-qa__ico--fav"
+              :class="{ 'event-qa__ico--fill': isSaved }"
+              aria-hidden="true"
+            >favorite</span>
+            <span class="event-qa__lab">{{ isSaved ? 'Guardat' : 'Guardar' }}</span>
           </button>
         </div>
 
@@ -32,18 +64,76 @@
           </p>
         </div>
 
+        <section v-if="eventDescriptionText !== ''" class="event-block event-block--desc">
+          <h2 class="event-section-title">
+            Descripció
+          </h2>
+          <p class="event-description-body">
+            {{ eventDescriptionText }}
+          </p>
+        </section>
+
+        <section v-if="hasMoreDetailsBlock" class="event-block event-block--more">
+          <h2 class="event-section-title">
+            Més detalls
+          </h2>
+          <dl class="event-dl">
+            <template v-if="detailCategory !== ''">
+              <dt class="event-dl__dt">
+                Categoria
+              </dt>
+              <dd class="event-dl__dd">
+                {{ detailCategory }}
+              </dd>
+            </template>
+            <template v-if="detailTmCategory !== ''">
+              <dt class="event-dl__dt">
+                Tipus
+              </dt>
+              <dd class="event-dl__dd">
+                {{ detailTmCategory }}
+              </dd>
+            </template>
+          </dl>
+        </section>
+
         <div class="event-map" v-if="event.venue?.map_lat && event.venue?.map_lng">
           <p v-if="mapError" class="map-err">{{ mapError }}</p>
-          <div ref="miniMapEl" class="map-canvas"></div>
+          <div class="event-map-stack">
+            <div class="event-map-filter">
+              <div ref="miniMapEl" class="map-canvas"></div>
+            </div>
+            <div class="event-map-vignette" aria-hidden="true" />
+          </div>
           <button type="button" class="map-expand-btn" @click="showMapModal = true">
             Veure mapa gran
           </button>
         </div>
 
-        <div v-if="showMapModal" class="map-modal" @click.self="showMapModal = false">
-          <div class="map-modal-content">
-            <button type="button" class="map-modal-close" @click="showMapModal = false">×</button>
-            <div ref="modalMapEl" class="map-modal-canvas"></div>
+        <div
+          v-if="showMapModal"
+          class="map-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mapa del local"
+          @click.self="showMapModal = false"
+        >
+          <div class="map-modal-content" @click.stop>
+            <!-- Només mapa estil TR3 (mateix que /search/map); sense imatge de l’esdeveniment -->
+            <div class="map-modal-stack map-modal-stack--expanded">
+              <button
+                type="button"
+                class="map-modal-close"
+                aria-label="Tancar"
+                @click="showMapModal = false"
+              >
+                <span class="material-symbols-outlined map-modal-close-ico" aria-hidden="true">close</span>
+              </button>
+              <div class="event-map-filter">
+                <div ref="modalMapEl" class="map-modal-canvas"></div>
+              </div>
+              <div class="event-map-vignette" aria-hidden="true" />
+            </div>
             <div class="map-modal-info">
               <p v-if="event.venue?.address" class="map-address">{{ event.venue.address }}</p>
               <p v-if="event.venue?.city" class="map-city">{{ event.venue.city }}</p>
@@ -96,7 +186,7 @@
           <span v-if="event.price" class="price-value">€{{ event.price }}</span>
           <span v-else class="price-value">—</span>
         </div>
-        <NuxtLink :to="`/events/${eventId}/seats`" class="footer-btn">Get Tickets</NuxtLink>
+        <NuxtLink :to="seatsLinkTo" class="footer-btn">Comprar entrades</NuxtLink>
       </footer>
     </template>
   </main>
@@ -104,12 +194,13 @@
 
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useGoogleMapsLoader } from '~/composables/useGoogleMapsLoader';
+import { buildTr3EventMarkerDataUrl } from '~/utils/tr3MapMarkerIcon';
+import { buildTr3GoogleMapOptions } from '~/utils/tr3MapOptions';
 import { useSavedEventsStore } from '~/stores/savedEvents';
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
-
 definePageMeta({
   layout: 'default',
 });
@@ -117,6 +208,7 @@ definePageMeta({
 const PENDING_SAVE_KEY = 'pending_save_event_id';
 
 const route = useRoute();
+const router = useRouter();
 const rawEventId = route.params.eventId;
 const eventId = Array.isArray(rawEventId) ? rawEventId[0] : rawEventId;
 const config = useRuntimeConfig();
@@ -135,6 +227,48 @@ const isSaved = computed(() => {
   }
   return savedEventsStore.isSaved(event.value.id);
 });
+
+const eventDescriptionText = computed(() => {
+  const ev = event.value;
+  if (!ev) {
+    return '';
+  }
+  const d = ev.description;
+  if (d === undefined || d === null) {
+    return '';
+  }
+  const s = String(d).trim();
+  return s;
+});
+
+const detailCategory = computed(() => {
+  const ev = event.value;
+  if (!ev || ev.category === undefined || ev.category === null) {
+    return '';
+  }
+  const s = String(ev.category).trim();
+  return s;
+});
+
+const detailTmCategory = computed(() => {
+  const ev = event.value;
+  if (!ev || ev.tm_category === undefined || ev.tm_category === null) {
+    return '';
+  }
+  const s = String(ev.tm_category).trim();
+  return s;
+});
+
+const hasMoreDetailsBlock = computed(() => {
+  if (detailCategory.value !== '') {
+    return true;
+  }
+  if (detailTmCategory.value !== '') {
+    return true;
+  }
+  return false;
+});
+
 const showMapModal = ref(false);
 const showShareModal = ref(false);
 const mapError = ref('');
@@ -154,6 +288,13 @@ let friendSearchTimer = null;
 
 const copyFeedback = ref('');
 
+const copyActionLabel = computed(() => {
+  if (copyFeedback.value !== '') {
+    return copyFeedback.value;
+  }
+  return 'Copiar enllaç';
+});
+
 const googleMapsUrl = computed(() => {
   if (!event.value?.venue?.map_lat || !event.value?.venue?.map_lng) {
     return '';
@@ -161,6 +302,61 @@ const googleMapsUrl = computed(() => {
   const { map_lat, map_lng, name } = event.value.venue;
   return `https://www.google.com/maps/search/?api=1&query=${map_lat},${map_lng}&query_place_id=${encodeURIComponent(name || '')}`;
 });
+
+/** Enllaç a seients conservant ?from= per al footer. */
+const seatsLinkTo = computed(() => {
+  const path = `/events/${eventId}/seats`;
+  const fr = route.query.from;
+  if (fr === undefined || fr === null) {
+    return path;
+  }
+  const s = String(fr).trim();
+  if (s === '') {
+    return path;
+  }
+  return { path, query: { from: s } };
+});
+
+function fallbackPathFromFooter () {
+  const raw = route.query.from;
+  if (raw === undefined || raw === null) {
+    return '/';
+  }
+  const slug = String(raw).toLowerCase().trim();
+  if (slug === '') {
+    return '/';
+  }
+  if (slug === 'home') {
+    return '/';
+  }
+  if (slug === 'search') {
+    return '/search';
+  }
+  if (slug === 'tickets') {
+    return '/tickets';
+  }
+  if (slug === 'saved') {
+    return '/saved';
+  }
+  if (slug === 'social') {
+    return '/social';
+  }
+  if (slug === 'profile') {
+    return '/profile';
+  }
+  return '/';
+}
+
+function goBack () {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (window.history.length > 1) {
+    router.back();
+    return;
+  }
+  void navigateTo(fallbackPathFromFooter());
+}
 
 function hasAuth () {
   const v = authToken.value;
@@ -206,13 +402,7 @@ async function syncSavedState () {
   if (!event.value) {
     return;
   }
-  try {
-    const res = await getJson('/api/saved-events');
-    const list = res.events || [];
-    savedEventsStore.mergeFromApiList(list);
-  } catch (e) {
-    console.error(e);
-  }
+  await savedEventsStore.mergeFromServer();
 }
 
 async function applyPendingSaveIfNeeded () {
@@ -233,14 +423,7 @@ async function applyPendingSaveIfNeeded () {
   savedEventsStore.setSaved(event.value.id, true);
 }
 
-/**
- * Persistència servidor: afegir aquí POST/DELETE quan l’API estigui llesta.
- */
-async function persistSavedToServer () {
-  // TODO: sincronitzar amb /api/saved-events
-}
-
-async function toggleSave () {
+function toggleSave () {
   if (!hasAuth()) {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(PENDING_SAVE_KEY, String(eventId));
@@ -251,8 +434,7 @@ async function toggleSave () {
   if (!event.value) {
     return;
   }
-  savedEventsStore.toggle(event.value.id);
-  void persistSavedToServer();
+  void savedEventsStore.toggleFavorite(event.value.id).catch(() => {});
 }
 
 function openShareModal () {
@@ -347,14 +529,17 @@ function venuePosition () {
   return { lat, lng };
 }
 
-function markerIcon () {
+function venueMarkerIcon () {
+  let n = '·';
+  if (event.value && event.value.name && String(event.value.name).trim() !== '') {
+    n = String(event.value.name).trim();
+  }
+  const url = buildTr3EventMarkerDataUrl(n);
+  const g = window.google.maps;
   return {
-    path: window.google.maps.SymbolPath.CIRCLE,
-    scale: 12,
-    fillColor: '#FFD700',
-    fillOpacity: 1,
-    strokeColor: '#000',
-    strokeWeight: 2,
+    url,
+    scaledSize: new g.Size(112, 52),
+    anchor: new g.Point(56, 50),
   };
 }
 
@@ -386,7 +571,7 @@ async function initMaps () {
       miniMarker = new window.google.maps.Marker({
         position: pos,
         map: miniMap,
-        icon: markerIcon(),
+        icon: venueMarkerIcon(),
       });
     }
     window.google.maps.event.trigger(miniMap, 'resize');
@@ -397,17 +582,15 @@ async function initMaps () {
     miniMapEl.value.removeChild(miniMapEl.value.firstChild);
   }
 
-  miniMap = new window.google.maps.Map(miniMapEl.value, {
-    center: pos,
-    zoom: 15,
-    disableDefaultUI: true,
-    zoomControl: true,
-  });
+  const miniOpts = buildTr3GoogleMapOptions(pos, 15, { variant: 'searchMonochrome' });
+  miniOpts.disableDefaultUI = true;
+  miniOpts.zoomControl = true;
+  miniMap = new window.google.maps.Map(miniMapEl.value, miniOpts);
 
   miniMarker = new window.google.maps.Marker({
     position: pos,
     map: miniMap,
-    icon: markerIcon(),
+    icon: venueMarkerIcon(),
   });
 
   window.google.maps.event.addListenerOnce(miniMap, 'idle', () => {
@@ -436,16 +619,14 @@ async function openModalMap () {
     while (modalMapEl.value.firstChild) {
       modalMapEl.value.removeChild(modalMapEl.value.firstChild);
     }
-    modalMap = new window.google.maps.Map(modalMapEl.value, {
-      center: pos,
-      zoom: 16,
-      disableDefaultUI: true,
-      zoomControl: true,
-    });
+    const modalOpts = buildTr3GoogleMapOptions(pos, 16, { variant: 'searchMonochrome' });
+    modalOpts.disableDefaultUI = true;
+    modalOpts.zoomControl = true;
+    modalMap = new window.google.maps.Map(modalMapEl.value, modalOpts);
     modalMarker = new window.google.maps.Marker({
       position: pos,
       map: modalMap,
-      icon: markerIcon(),
+      icon: venueMarkerIcon(),
     });
   } else {
     modalMap.setCenter(pos);
@@ -455,7 +636,7 @@ async function openModalMap () {
       modalMarker = new window.google.maps.Marker({
         position: pos,
         map: modalMap,
-        icon: markerIcon(),
+        icon: venueMarkerIcon(),
       });
     }
   }
@@ -514,20 +695,92 @@ onMounted(async () => {
 
 <style scoped>
 .event-detail {
-  padding-bottom: 80px;
+  padding-bottom: 5.75rem;
+  padding-top: 0;
 }
-.loading, .error {
-  padding: 2rem;
+
+@media (max-width: 899px) {
+  .event-detail {
+    padding-bottom: calc(var(--footer-stack, 5rem) + 5.25rem);
+  }
+}
+
+.event-detail__toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  margin: 0 -1rem 0.75rem;
+  padding: 0.35rem 0.25rem 0.5rem;
+  background: linear-gradient(180deg, #131313f2 0%, #13131300 100%);
+}
+
+@media (min-width: 900px) {
+  .event-detail__toolbar {
+    margin: 0 -2rem 1rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
+
+.event-detail__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 2px solid rgba(247, 230, 40, 0.55);
+  border-radius: 9999px;
+  background: rgba(19, 19, 19, 0.92);
+  color: var(--accent);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.event-detail__back:hover,
+.event-detail__back:focus-visible {
+  background: var(--accent);
+  border-color: #131313;
+  color: #131313;
+  outline: none;
+}
+
+.event-detail__back-ico {
+  font-size: 1.45rem;
+  line-height: 1;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.event-detail__state {
+  padding: 2rem 0;
   text-align: center;
-  color: #888;
+  font-size: 0.95rem;
+  color: #ccc7ac;
 }
-.error {
-  color: #ff6b6b;
+
+.event-detail__state--err {
+  color: #ff8a80;
 }
+
 .event-hero {
   width: 100%;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
   aspect-ratio: 16 / 9;
   background: #222;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 .event-image {
   width: 100%;
@@ -541,93 +794,219 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #666;
-}
-.event-content {
-  padding: 1rem;
-}
-.event-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-.event-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #f5f5f5;
-  margin: 0;
-  flex: 1;
-}
-.event-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.action-btn {
-  padding: 0.45rem 0.85rem;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 8px;
-  color: #f5f5f5;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-.action-btn--ghost {
-  background: #1a1a1a;
-}
-.save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 20px;
-  color: #f5f5f5;
-  cursor: pointer;
   font-size: 0.9rem;
 }
-.save-btn.saved {
-  color: #ff0055;
-  border-color: #ff0055;
+/* Els marges horitzontals venen de `.user-page` (app.css); sense padding extra aquí */
+.event-content {
+  padding: 0.75rem 0 0;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
 }
-.save-icon {
-  font-size: 1.1rem;
+
+.event-title {
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: clamp(1.85rem, 6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+  margin: 0 0 1.1rem;
+  line-height: 1.08;
 }
+
+/* Sense caixes: tres accions alineades al centre, icona a dalt i text a sota */
+.event-quick-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(0.75rem, 4vw, 1.75rem);
+  margin: 0 0 1.35rem;
+}
+
+.event-qa {
+  flex: 0 1 auto;
+  min-width: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  font-family: Epilogue, system-ui, sans-serif;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.event-qa:hover,
+.event-qa:focus-visible {
+  color: #fff;
+  opacity: 0.95;
+  outline: none;
+}
+
+.event-qa--on {
+  color: #f7e628;
+}
+
+.event-qa__ico {
+  font-size: 1.55rem;
+  line-height: 1;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.event-qa__ico--fill {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.event-qa__lab {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.event-block {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(74, 71, 51, 0.2);
+  background: rgba(22, 22, 22, 0.65);
+}
+
+.event-section-title {
+  margin: 0 0 0.65rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(247, 230, 40, 0.88);
+}
+
+/* «Més detalls»: títol de secció més llegible */
+.event-block--more > .event-section-title {
+  font-size: clamp(0.95rem, 2.8vw, 1.2rem);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.85rem;
+}
+
+.event-description-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #ccc7ac;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.event-dl {
+  margin: 0;
+  padding: 0;
+}
+
+.event-dl__dt {
+  margin: 0 0 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.event-dl__dd {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+.event-dl__dd:last-child {
+  margin-bottom: 0;
+}
+
 .event-meta {
   margin-bottom: 1.5rem;
 }
 .event-date {
-  font-size: 1.1rem;
-  color: #f5f5f5;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--fg);
   margin: 0 0 0.5rem;
 }
 .event-venue {
   font-size: 0.9rem;
-  color: #888;
+  color: #ccc7ac;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 .event-map {
   margin: 1rem 0;
-  border-radius: 8px;
+  border-radius: 1rem;
   overflow: hidden;
+  border: 1px solid rgba(74, 71, 51, 0.15);
+}
+.event-map-stack,
+.map-modal-stack {
+  position: relative;
+}
+.event-map-filter {
+  filter: grayscale(0.38) contrast(1.14) brightness(0.86);
+}
+.event-map-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  /* Mateix vinietat que /search/map (map-tr3__vignette) */
+  background: linear-gradient(
+    to bottom,
+    rgba(19, 19, 19, 0.88) 0%,
+    rgba(19, 19, 19, 0) 18%,
+    rgba(19, 19, 19, 0) 78%,
+    rgba(19, 19, 19, 0.92) 100%
+  );
 }
 .map-canvas {
   width: 100%;
   height: 200px;
-  background: #222;
+  background: #0e0e0e;
 }
 .map-expand-btn {
   width: 100%;
-  padding: 0.75rem;
-  background: #1a1a1a;
+  padding: 0.85rem;
+  background: #1c1b1b;
   border: none;
-  color: #888;
+  border-top: 1px solid rgba(74, 71, 51, 0.2);
+  color: #ccc7ac;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.map-expand-btn:hover {
+  color: var(--accent);
+  background: #222;
 }
 .map-modal {
   position: fixed;
@@ -641,169 +1020,280 @@ onMounted(async () => {
 }
 .map-modal-content {
   background: #1a1a1a;
-  border-radius: 12px;
+  border-radius: 14px;
   width: 100%;
   max-width: 500px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
+
+.map-modal-stack--expanded {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
 .map-modal-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 32px;
-  height: 32px;
-  background: rgba(0, 0, 0, 0.5);
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 1.5rem;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 10;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #000000;
+  border: 2px solid #f7e628;
+  color: #f7e628;
   cursor: pointer;
-  z-index: 1;
+  box-sizing: border-box;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
+
+.map-modal-close:hover,
+.map-modal-close:focus-visible {
+  background: #f7e628;
+  border-color: #131313;
+  color: #131313;
+  outline: none;
+}
+
+.map-modal-close-ico {
+  font-size: 1.35rem;
+  line-height: 1;
+  color: currentColor;
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
 .map-modal-canvas {
   width: 100%;
-  height: 300px;
-  background: #222;
+  /* ~el doble de l’alçària anterior del mapa al modal (220px → zona gran sense hero) */
+  min-height: clamp(22rem, 56vh, 32rem);
+  height: min(56vh, 32rem);
+  background: #0e0e0e;
 }
 .map-modal-info {
   padding: 1rem;
 }
 .map-address, .map-city {
   margin: 0;
-  color: #f5f5f5;
+  color: var(--fg);
 }
 .map-city {
-  color: #888;
+  color: #ccc7ac;
   font-size: 0.9rem;
 }
 .map-gmaps-link {
   display: inline-block;
   margin-top: 0.75rem;
-  color: #ff0055;
+  color: #f7e628;
   text-decoration: none;
   font-size: 0.9rem;
 }
 .share-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(19, 19, 19, 0.88);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1100;
   padding: 1rem;
 }
+
+/* Panell TR3: alineat amb login (AuthEmailPage) — #131313, vores fines, groc #f7e628 */
 .share-modal__box {
-  background: #141414;
-  border: 1px solid #333;
-  border-radius: 12px;
+  background: #131313;
+  border: 1px solid rgba(74, 71, 51, 0.28);
+  border-radius: 1rem;
   width: 100%;
-  max-width: 420px;
-  padding: 1.25rem;
+  max-width: 26rem;
+  padding: 1.5rem 1.35rem 1.35rem;
   position: relative;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
 }
+
 .share-modal__close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #888;
-  font-size: 1.5rem;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid #f7e628;
+  border-radius: 9999px;
+  background: #000000;
+  color: #f7e628;
+  font-size: 1.35rem;
+  line-height: 1;
   cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
+
+.share-modal__close:hover,
+.share-modal__close:focus-visible {
+  background: #f7e628;
+  border-color: #131313;
+  color: #131313;
+  outline: none;
+}
+
 .share-modal__title {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
-  color: #ff0055;
+  margin: 0 2.5rem 1.15rem 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f7e628;
 }
+
 .share-modal__search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.65rem;
-  background: #0d0d0d;
-  border: 1px solid #333;
-  border-radius: 8px;
+  margin-bottom: 0.85rem;
+  min-height: 3.5rem;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  background: #0e0e0e;
+  border: 1px solid rgba(74, 71, 51, 0.2);
+  border-radius: 1rem;
+  transition: border-color 0.2s ease;
 }
+
+.share-modal__search:focus-within {
+  border-color: #f7e628;
+}
+
 .share-modal__icon {
-  color: #888;
+  color: rgba(204, 199, 172, 0.65);
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
 }
+
 .share-modal__input {
   flex: 1;
+  min-width: 0;
+  height: 3.25rem;
   border: none;
   background: transparent;
-  color: #fff;
-  font-size: 0.95rem;
+  color: #e5e2e1;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   outline: none;
 }
+
+.share-modal__input::placeholder {
+  color: rgba(204, 199, 172, 0.4);
+}
+
 .share-modal__list {
   list-style: none;
   padding: 0;
   margin: 0;
   max-height: 220px;
   overflow-y: auto;
+  border-radius: 0.65rem;
 }
+
 .share-modal__friend {
   width: 100%;
   text-align: left;
-  padding: 0.65rem 0.5rem;
+  padding: 0.7rem 0.65rem;
   border: none;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid rgba(74, 71, 51, 0.25);
   background: transparent;
-  color: #eee;
+  color: #e5e2e1;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.92rem;
 }
+
 .share-modal__friend:hover {
-  background: #1f1f1f;
+  background: rgba(255, 255, 255, 0.04);
 }
+
 .share-modal__fname {
-  color: #888;
+  color: #ccc7ac;
   font-size: 0.85rem;
 }
+
 .share-modal__muted {
-  color: #666;
-  font-size: 0.85rem;
-  margin: 0.5rem 0;
+  color: #ccc7ac;
+  font-size: 0.88rem;
+  margin: 0.55rem 0 0;
 }
+
 .share-modal__err {
-  color: #ff6b6b;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 0;
+  color: #ffb4ab;
+  font-size: 0.88rem;
+  margin: 0.55rem 0 0;
 }
+
 .share-modal__ok {
   color: #7bed9f;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  margin: 0.55rem 0 0;
 }
 .event-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  z-index: 30;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: #1a1a1a;
-  border-top: 1px solid #2a2a2a;
+  gap: 1rem;
+  padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(19, 19, 19, 0.96);
+  border-top: 1px solid rgba(247, 230, 40, 0.18);
+  backdrop-filter: blur(10px);
 }
 .footer-price {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #f5f5f5;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--fg);
 }
 .footer-btn {
-  padding: 0.75rem 1.5rem;
-  background: #ff0055;
-  color: #fff;
+  padding: 0.75rem 1.35rem;
+  background: var(--accent);
+  color: var(--accent-on);
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 0.2s ease;
+}
+.footer-btn:hover {
+  opacity: 0.92;
+}
+
+@media (max-width: 899px) {
+  .event-footer {
+    bottom: var(--footer-stack, 5rem);
+  }
 }
 </style>

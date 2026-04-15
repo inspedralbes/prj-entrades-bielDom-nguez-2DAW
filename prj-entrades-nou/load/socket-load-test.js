@@ -5,7 +5,7 @@
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = process.env.SOCKET_URL || 'http://localhost:3001';
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_jwt_secret_change_me';
+const JWT_SECRET = process.env.JWT_SECRET || 'tr3_dev_jwt_hs256_minimum_key_length_32_bytes_ok';
 import jwt from 'jsonwebtoken';
 
 function generateJWT(userId) {

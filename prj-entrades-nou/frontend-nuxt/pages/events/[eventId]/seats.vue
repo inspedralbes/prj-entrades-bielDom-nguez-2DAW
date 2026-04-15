@@ -1,8 +1,13 @@
 <template>
   <main class="seats-page" data-seatmap-route="interactive-v2">
     <header class="seats-header">
-      <NuxtLink :to="`/events/${eventId}`" class="back-link">← Enrere</NuxtLink>
-      <h1 class="title">Selecciona els teus seients</h1>
+      <NuxtLink
+        :to="detailBackHref"
+        class="seats-back-btn"
+        aria-label="Tornar a l'esdeveniment"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </NuxtLink>
     </header>
 
     <div v-if="pending" class="loading">Carregant mapa…</div>
@@ -14,12 +19,14 @@
       </div>
 
       <!-- Mapa D3: només client (evita desalineació SSR/hidratació). -->
-      <ClientOnly>
-        <InteractiveSeatMap :event-id="eventId" @seat-click="onSeatClick" />
-        <template #fallback>
-          <p class="loading">Preparant mapa de seients…</p>
-        </template>
-      </ClientOnly>
+      <div class="seats-map-grow">
+        <ClientOnly>
+          <InteractiveSeatMap :event-id="eventId" @seat-click="onSeatClick" />
+          <template #fallback>
+            <p class="loading">Preparant mapa de seients…</p>
+          </template>
+        </ClientOnly>
+      </div>
 
       <p v-if="holdMessage" class="seats-toast">{{ holdMessage }}</p>
 
@@ -80,6 +87,20 @@ const eventId = computed(() => {
     return rawId[0];
   }
   return rawId;
+});
+
+/** Conserva ?from= per al detall i el tab del footer. */
+const detailBackHref = computed(() => {
+  const path = `/events/${eventId.value}`;
+  const fr = route.query.from;
+  if (fr === undefined || fr === null) {
+    return path;
+  }
+  const s = String(fr).trim();
+  if (s === '') {
+    return path;
+  }
+  return { path, query: { from: s } };
 });
 
 /** Esdeveniment del mapa (fix per onUnmounted: route.params ja pot ser la ruta nova). */
@@ -306,10 +327,11 @@ async function goToCheckout () {
     });
     await postJson(`/api/orders/${created.order_id}/confirm-payment`, {});
     await router.push({
-      path: '/checkout',
+      path: '/tickets',
       query: {
         eventId: String(eventId.value),
         orderId: String(created.order_id),
+        new: '1',
       },
     });
   } catch (err) {
@@ -367,25 +389,56 @@ onUnmounted(() => {
 <style scoped>
 .seats-page {
   padding: 1rem;
-  padding-bottom: 120px;
-  min-height: 100vh;
-  background: #0a0a0a;
+  padding-bottom: 1rem;
+  min-height: 0;
+  flex: 1 1 auto;
+  background: var(--bg);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.seats-map-grow {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.seats-map-grow :deep(.ism-root) {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 .seats-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
-.back-link {
-  color: #ff0055;
+
+/* Mateix patró que `map-tr3__back` (cerca mapa): botó rodó, només icona. */
+.seats-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: rgba(42, 42, 42, 0.9);
+  border: 1px solid rgba(74, 71, 51, 0.35);
+  color: #ffee32;
   text-decoration: none;
-  font-size: 1rem;
+  transition: opacity 0.2s ease;
 }
-.title {
-  font-size: 1.1rem;
-  color: #f5f5f5;
-  margin: 0;
+
+.seats-back-btn:hover {
+  opacity: 0.88;
+}
+
+.seats-back-btn .material-symbols-outlined {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 .loading,
 .error {
@@ -419,10 +472,9 @@ onUnmounted(() => {
 }
 .ticket-footer {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 45;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
@@ -432,6 +484,63 @@ onUnmounted(() => {
   background: #0d0d0d;
   border-top: 1px solid #333;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
+  bottom: 0;
+}
+
+/* Barra de compra just a sobre del menú inferior fix (mòbil). */
+@media (max-width: 899px) {
+  .ticket-footer {
+    bottom: var(--footer-stack);
+  }
+
+  .seats-page {
+    padding: 0.5rem 0.75rem 0.25rem;
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .seats-map-grow {
+    min-height: 0;
+    flex: 1 1 0;
+  }
+
+  .seats-map-grow :deep(.ism-root) {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    gap: 0.45rem;
+  }
+
+  /* Graella 10×10: omple l’alçària útil; sense scroll horitzontal. */
+  .seats-map-grow :deep(.ism-map-root) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .seats-map-grow :deep(.ism-svg) {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
+
+  .seats-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .event-info-bar {
+    margin-bottom: 0.5rem;
+    padding: 0.55rem 0.65rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .seats-page {
+    padding-bottom: 6rem;
+  }
 }
 .ticket-footer__left {
   flex: 1;
@@ -465,12 +574,13 @@ onUnmounted(() => {
   align-self: center;
   flex-shrink: 0;
   padding: 0.85rem 1.25rem;
-  background: #ff0055;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-on);
   border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -479,6 +589,6 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 .ticket-footer__cta:not(:disabled):hover {
-  background: #ff3377;
+  background: var(--accent-dim);
 }
 </style>

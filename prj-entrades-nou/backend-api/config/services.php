@@ -54,4 +54,8 @@ return [
         'fixed_event_price_eur' => (float) env('ORDER_FIXED_EVENT_PRICE_EUR', 20.0),
     ],
 
+    'google' => [
+        'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

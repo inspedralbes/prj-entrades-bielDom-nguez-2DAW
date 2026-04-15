@@ -57,10 +57,30 @@ class SearchEventsController extends Controller
             }
         }
 
+        $limit = 0;
+        $limitRaw = $request->query('limit');
+        if ($limitRaw !== null && $limitRaw !== '') {
+            $limit = (int) $limitRaw;
+            if ($limit > 40) {
+                $limit = 40;
+            }
+            if ($limit < 0) {
+                $limit = 0;
+            }
+        }
+
         if ($usePostgisJoin) {
-            $events = $q->orderBy('events.starts_at')->get();
+            $q->orderBy('events.starts_at');
+            if ($limit > 0) {
+                $q->limit($limit);
+            }
+            $events = $q->get();
         } else {
-            $events = $q->orderBy('starts_at')->get();
+            $q->orderBy('starts_at');
+            if ($limit > 0) {
+                $q->limit($limit);
+            }
+            $events = $q->get();
         }
 
         $out = [];
@@ -80,6 +100,7 @@ class SearchEventsController extends Controller
                 $venuePayload = [
                     'id' => $e->venue->id,
                     'name' => $e->venue->name,
+                    'city' => $e->venue->city,
                 ];
             }
             $starts = null;
@@ -234,10 +255,15 @@ class SearchEventsController extends Controller
             }
         }
 
+        $description = null;
+        if (isset($event->description) && is_string($event->description) && trim($event->description) !== '') {
+            $description = $event->description;
+        }
+
         return response()->json([
             'id' => $event->id,
             'name' => $event->name,
-            'description' => null,
+            'description' => $description,
             'starts_at' => $event->starts_at?->toIso8601String(),
             'category' => $event->category,
             'tm_category' => $event->tm_category,

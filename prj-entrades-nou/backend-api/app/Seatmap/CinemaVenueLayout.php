@@ -3,45 +3,31 @@
 namespace App\Seatmap;
 
 /**
- * Geometria fixa del mapa tipus cinema (18 files, passadís central entre 19 i 21).
+ * Geometria fixa del mapa tipus cinema: graella 10×10 (columnes 1–10).
+ * El passadís entre blocs esquerre/dret és només visual al client (entre cols 5 i 6).
  * Ha de coincidir amb `frontend-nuxt/utils/cinemaVenueLayout.js`.
  */
 final class CinemaVenueLayout
 {
+    public const ROWS = 10;
+
+    public const COLS = 10;
+
     /**
      * @return list<int>
      */
     public static function columnsForRow(int $row): array
     {
-        if ($row < 1 || $row > 18) {
+        if ($row < 1 || $row > self::ROWS) {
             return [];
         }
 
-        if ($row <= 2 || $row >= 8) {
-            return self::mergeSides(1, 19, 21, 39);
+        $out = [];
+        for ($c = 1; $c <= self::COLS; $c++) {
+            $out[] = $c;
         }
 
-        if ($row === 3) {
-            return self::mergeSides(9, 19, 21, 30);
-        }
-
-        if ($row === 4) {
-            return self::mergeSides(12, 19, 21, 27);
-        }
-
-        if ($row === 5) {
-            return self::mergeSides(11, 19, 21, 28);
-        }
-
-        if ($row === 6) {
-            return self::mergeSides(14, 19, 21, 25);
-        }
-
-        if ($row === 7) {
-            return self::mergeSides(15, 19, 21, 22);
-        }
-
-        return [];
+        return $out;
     }
 
     /**
@@ -50,7 +36,7 @@ final class CinemaVenueLayout
     public static function allSeatIds(): array
     {
         $out = [];
-        for ($row = 1; $row <= 18; $row++) {
+        for ($row = 1; $row <= self::ROWS; $row++) {
             $cols = self::columnsForRow($row);
             $n = count($cols);
             for ($i = 0; $i < $n; $i++) {
@@ -79,21 +65,5 @@ final class CinemaVenueLayout
         }
 
         return false;
-    }
-
-    /**
-     * @return list<int>
-     */
-    private static function mergeSides(int $minL, int $maxL, int $minR, int $maxR): array
-    {
-        $out = [];
-        for ($c = $minL; $c <= $maxL; $c++) {
-            $out[] = $c;
-        }
-        for ($c = $minR; $c <= $maxR; $c++) {
-            $out[] = $c;
-        }
-
-        return $out;
     }
 }

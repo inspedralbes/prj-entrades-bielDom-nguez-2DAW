@@ -11,6 +11,8 @@
         "firebase/php-jwt": "^7.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
+        "nuwave/lighthouse": "^6.66",
+        "predis/predis": "^3.4",
         "spatie/laravel-permission": "^7.3"
     },
     "require-dev": {

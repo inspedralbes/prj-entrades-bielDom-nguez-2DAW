@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint": "node --check composables/useAdminDashboard.js && node --check composables/useAuthorizedApi.js && node --check plugins/presence-ping.client.js && node --check stores/adminDashboard.js",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.5.5",
+    "chart.js": "^4.5.1",
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "html5-qrcode": "^2.3.8",

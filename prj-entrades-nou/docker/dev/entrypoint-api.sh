@@ -10,7 +10,7 @@ export REDIS_HOST=redis
 # Laravel (dins Docker) crida el socket per HTTP intern; ha de ser el nom DNS del servei, no localhost.
 export SOCKET_SERVER_INTERNAL_URL=http://socket-server:3001
 
-# Volums Postgres buits (sense init d’entrada): carregar init.sql + inserts del repo.
+# Volums Postgres buits (sense init d'entrada): carregar init.sql + inserts del repo.
 # Si falta `events` però ja hi ha altres taules, cal esborrar el volum (`docker compose down -v`).
 export PGPASSWORD="${DB_PASSWORD:-esdeveniments}"
 
@@ -20,8 +20,10 @@ run_psql () {
 
 TABLE_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'" 2>/dev/null || echo "0")
 EVENTS_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'events'" 2>/dev/null || echo "0")
+USERS_COUNT=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users'" 2>/dev/null || echo "0")
 
-if [ "$EVENTS_COUNT" != "1" ]; then
+# Cal users i events: abans només es comprovava «events»; si «events» existia però «users» no (BD trencada), Laravel retornava 500 a totes les rutes JWT.
+if [ "$EVENTS_COUNT" != "1" ] || [ "$USERS_COUNT" != "1" ]; then
   if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
     if [ -f /var/www/database/init.sql ]; then
       echo "Base de dades buida: executant /var/www/database/init.sql ..."
@@ -32,7 +34,7 @@ if [ "$EVENTS_COUNT" != "1" ]; then
       run_psql -f /var/www/database/inserts.sql
     fi
   else
-    echo "ERROR: la taula public.events no existeix però la BD no està buida."
+    echo "ERROR: falta public.users o public.events (esquema incomplet) però la BD no està buida."
     echo "Solució: atura els serveis i esborra el volum de Postgres, després torna a aixecar:"
     echo "  docker compose -f docker/dev/docker-compose.yml down -v"
     echo "  docker compose -f docker/dev/docker-compose.yml up --build"
@@ -47,6 +49,12 @@ php artisan config:clear
 if [ "${APP_ENV:-local}" = "local" ] && [ -f /var/www/database/docker-dev-ensure-admin.sql ]; then
   echo "Sincronitzant usuari admin de desenvolupament (docker-dev-ensure-admin.sql) ..."
   run_psql -f /var/www/database/docker-dev-ensure-admin.sql
+fi
+
+# Si admin@example.com es va registrar abans via API, només tenia rol «user»; cal «admin» per /api/admin/* i /admin.
+if [ "${APP_ENV:-local}" = "local" ]; then
+  echo "Sincronitzant rols Spatie (admin+user) per admin@example.com ..."
+  php artisan db:ensure-dev-admin-roles || true
 fi
 
 # Volums Postgres antics: no tornen a executar init.sql; columnes TM poden faltar.

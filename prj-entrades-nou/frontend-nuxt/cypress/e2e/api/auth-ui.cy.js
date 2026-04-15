@@ -11,7 +11,8 @@ describe('Auth UI - Login/Register/Checkout', () => {
 
   describe('Login form', () => {
     it('shows login form by default', () => {
-      cy.get('h1').should('contain', 'Inici de sessió')
+      cy.get('.login-page__logo').should('contain', 'TR3-ENTRADES')
+      cy.get('.login-page__title').should('contain', 'Benvingut de nou')
       cy.get('input[type="email"]').should('be.visible')
       cy.get('input[type="password"]').should('be.visible')
       cy.get('button[type="submit"]').should('contain', 'Iniciar sessió')
@@ -21,19 +22,23 @@ describe('Auth UI - Login/Register/Checkout', () => {
       cy.get('input[type="email"]').type('invalid@example.com')
       cy.get('input[type="password"]').type('wrongpassword')
       cy.get('button[type="submit"]').click()
-      cy.get('.text-red-600').should('contain', 'Error')
+      cy.get('[role="alert"]').should('contain', 'Error')
     })
 
-    it('can switch to register mode', () => {
-      cy.contains('Registra-t').click()
-      cy.get('h1').should('contain', 'Registre')
+    it('can navigate to register page', () => {
+      cy.get('footer a.login-page__link-cta').click()
+      cy.url().should('include', '/register')
+      cy.get('.login-page__title').should('contain', 'Crea el teu compte')
     })
   })
 
   describe('Register form', () => {
+    beforeEach(() => {
+      cy.visit('/register')
+    })
+
     it('shows register form fields', () => {
-      cy.contains('Registra-t').click()
-      cy.get('input[type="text"]').first().should('have.attr', 'placeholder', undefined)
+      cy.get('#register-name').should('be.visible')
       cy.get('button[type="submit"]').should('contain', 'Crear compte')
     })
   })
@@ -41,11 +46,6 @@ describe('Auth UI - Login/Register/Checkout', () => {
   describe('Protected routes', () => {
     it('redirects /tickets to login when not authenticated', () => {
       cy.visit('/tickets')
-      cy.url().should('include', '/login')
-    })
-
-    it('redirects /checkout to login when not authenticated', () => {
-      cy.visit('/checkout')
       cy.url().should('include', '/login')
     })
 

@@ -26,7 +26,7 @@ class InternalSocketNotifierTest extends TestCase
         $notifier = app(InternalSocketNotifier::class);
         $notifier->emitToEventRoom('2', 'SeatStatusUpdated', [
             'eventId' => '2',
-            'seatId' => 'section_1-row_1-seat_21',
+            'seatId' => 'section_1-row_1-seat_5',
             'status' => 'held',
             'userId' => '7',
         ]);
@@ -55,7 +55,7 @@ class InternalSocketNotifierTest extends TestCase
             if (($pl['status'] ?? null) !== 'held') {
                 return false;
             }
-            if (($pl['seatId'] ?? null) !== 'section_1-row_1-seat_21') {
+            if (($pl['seatId'] ?? null) !== 'section_1-row_1-seat_5') {
                 return false;
             }
 
@@ -78,7 +78,7 @@ class InternalSocketNotifierTest extends TestCase
         $notifier = app(InternalSocketNotifier::class);
         $notifier->emitToEventRoom('2', 'SeatStatusUpdated', [
             'eventId' => '2',
-            'seatId' => 'section_1-row_1-seat_22',
+            'seatId' => 'section_1-row_1-seat_7',
             'status' => 'sold',
             'userId' => null,
         ]);

@@ -121,6 +121,7 @@ CREATE TABLE events (
     tm_url VARCHAR(1024),
     price DECIMAL(10, 2),
     image_url VARCHAR(1024),
+    description TEXT,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
@@ -247,6 +248,18 @@ CREATE TABLE social_notifications (
 
 CREATE INDEX social_notifications_user_created_index ON social_notifications (user_id, created_at DESC);
 
+-- Silenci de toasts per fil compartit amb un amic (el xat segueix en temps real).
+CREATE TABLE social_thread_notification_mutes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    peer_user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    UNIQUE (user_id, peer_user_id)
+);
+
+CREATE INDEX social_thread_notification_mutes_user_index ON social_thread_notification_mutes (user_id);
+
 CREATE TABLE tm_discovery_sync (
     id BIGSERIAL PRIMARY KEY,
     cursor TEXT,
@@ -301,3 +314,19 @@ CREATE TABLE role_has_permissions (
     role_id BIGINT NOT NULL REFERENCES roles (id) ON DELETE CASCADE,
     PRIMARY KEY (permission_id, role_id)
 );
+
+-- Auditoria panell administració
+CREATE TABLE admin_logs (
+    id BIGSERIAL PRIMARY KEY,
+    admin_user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    action VARCHAR(64) NOT NULL,
+    entity_type VARCHAR(120) NOT NULL,
+    entity_id BIGINT,
+    summary TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+
+CREATE INDEX admin_logs_created_at_index ON admin_logs (created_at DESC);
+CREATE INDEX admin_logs_admin_user_id_index ON admin_logs (admin_user_id);

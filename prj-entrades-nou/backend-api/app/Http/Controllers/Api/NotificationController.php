@@ -39,7 +39,57 @@ class NotificationController extends Controller
         return response()->json(['notifications' => $list]);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    /**
+     * POST /api/notifications/mark-all-read — marca totes les notificacions de l’usuari com a llegides (badge Social / peu).
+     */
+    public function markAllRead (Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $now = now();
+        $marked = SocialNotification::query()
+            ->where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->update([
+                'read_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+        return response()->json(['marked' => $marked]);
+    }
+
+    /**
+     * POST /api/notifications/mark-read-for-actor/{actorUserId} — llegides les notificacions d’un actor (badge «La teva gent»).
+     */
+    public function markReadForActor (Request $request, string $actorUserId): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        if (! ctype_digit((string) $actorUserId)) {
+            return response()->json(['message' => 'ID invàlid'], 422);
+        }
+
+        $actorId = (int) $actorUserId;
+        $now = now();
+        $marked = SocialNotification::query()
+            ->where('user_id', $user->id)
+            ->where('actor_user_id', $actorId)
+            ->whereNull('read_at')
+            ->update([
+                'read_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+        return response()->json(['marked' => $marked]);
+    }
+
+    public function update (Request $request, int $id): JsonResponse
     {
         $user = $request->user();
         if (! $user instanceof User) {

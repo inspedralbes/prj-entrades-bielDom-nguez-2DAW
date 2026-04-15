@@ -3,6 +3,7 @@
 namespace App\Services\Notification;
 
 use App\Models\Event;
+use App\Models\FriendInvite;
 use App\Models\SocialNotification;
 use App\Models\Ticket;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Services\Socket\InternalSocketNotifier;
 
 /**
  * Crea registres de social_notifications i avisa per Socket.IO (room user:{id}).
+ * El camí és Laravel → HTTP intern al socket-server (mateix patró que la resta del projecte).
  */
 class SocialNotificationService
 {
@@ -17,7 +19,61 @@ class SocialNotificationService
         private readonly InternalSocketNotifier $socketNotifier,
     ) {}
 
-    public function recordEventShare(User $actor, User $recipient, Event $event): void
+    public function recordFriendInviteReceived (User $sender, User $receiver, FriendInvite $invite): void
+    {
+        $payload = [
+            'sender_id' => (int) $sender->id,
+            'sender_username' => (string) $sender->username,
+            'invite_id' => (string) $invite->id,
+        ];
+
+        $n = SocialNotification::query()->create([
+            'user_id' => $receiver->id,
+            'actor_user_id' => $sender->id,
+            'type' => 'friend_request',
+            'payload' => $payload,
+        ]);
+
+        $body = '@'.$sender->username.' t\'ha enviat una sol·licitud d\'amistat.';
+
+        $this->socketNotifier->emitToUser((int) $receiver->id, 'notification:new', [
+            'notification_id' => (int) $n->id,
+            'type' => 'friend_request',
+            'toast' => [
+                'body' => $body,
+            ],
+            'thread_peer_user_id' => (int) $sender->id,
+        ]);
+    }
+
+    public function recordFriendInviteAccepted (User $accepter, User $sender, FriendInvite $invite): void
+    {
+        $payload = [
+            'accepter_username' => (string) $accepter->username,
+            'accepter_name' => (string) $accepter->name,
+            'invite_id' => (string) $invite->id,
+        ];
+
+        $n = SocialNotification::query()->create([
+            'user_id' => $sender->id,
+            'actor_user_id' => $accepter->id,
+            'type' => 'friend_accepted',
+            'payload' => $payload,
+        ]);
+
+        $body = '@'.$accepter->username.' ha acceptat la teva sol·licitud d\'amistat.';
+
+        $this->socketNotifier->emitToUser((int) $sender->id, 'notification:new', [
+            'notification_id' => (int) $n->id,
+            'type' => 'friend_accepted',
+            'toast' => [
+                'body' => $body,
+            ],
+            'thread_peer_user_id' => (int) $accepter->id,
+        ]);
+    }
+
+    public function recordEventShare (User $actor, User $recipient, Event $event): void
     {
         $event->loadMissing('venue');
 
@@ -62,14 +118,21 @@ class SocialNotificationService
             'payload' => $toActor,
         ]);
 
+        $toastRecipient = [
+            'body' => '@'.$actor->username.' t\'ha enviat un missatge.',
+        ];
+
         $this->socketNotifier->emitToUser((int) $recipient->id, 'notification:new', [
             'notification_id' => (int) $nRecipient->id,
             'type' => 'event_shared',
+            'toast' => $toastRecipient,
+            'thread_peer_user_id' => (int) $actor->id,
         ]);
 
         $this->socketNotifier->emitToUser((int) $actor->id, 'notification:new', [
             'notification_id' => (int) $nActor->id,
             'type' => 'event_shared',
+            'thread_peer_user_id' => (int) $recipient->id,
         ]);
     }
 
@@ -140,14 +203,22 @@ class SocialNotificationService
             'payload' => $toSender,
         ]);
 
+        $at = '@'.$from->username;
+        $ticketToastBody = $at.' t\'ha enviat un missatge.';
+
         $this->socketNotifier->emitToUser((int) $to->id, 'notification:new', [
             'notification_id' => (int) $nRecipient->id,
             'type' => 'ticket_shared',
+            'toast' => [
+                'body' => $ticketToastBody,
+            ],
+            'thread_peer_user_id' => (int) $from->id,
         ]);
 
         $this->socketNotifier->emitToUser((int) $from->id, 'notification:new', [
             'notification_id' => (int) $nSender->id,
             'type' => 'ticket_shared',
+            'thread_peer_user_id' => (int) $to->id,
         ]);
     }
 }

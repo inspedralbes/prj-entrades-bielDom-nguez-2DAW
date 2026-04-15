@@ -163,7 +163,7 @@ class SocialController extends Controller
         }
 
         if ($dup->exists()) {
-            return response()->json(['message' => 'Ja hi ha una invitació pendent equivalent.'], 409);
+            return response()->json(['message' => 'Ja hi ha una sol·licitud pendent equivalent.'], 409);
         }
 
         $invite = FriendInvite::query()->create([
@@ -175,7 +175,15 @@ class SocialController extends Controller
             'invite_token' => Str::random(40),
         ]);
 
-        return response()->json($this->invitePayload($invite->fresh()->load(['sender', 'receiver'])), 201);
+        $inviteFresh = $invite->fresh()->load(['sender', 'receiver']);
+        if (! empty($validated['receiver_id'])) {
+            $recv = User::query()->find((int) $validated['receiver_id']);
+            if ($recv !== null) {
+                $this->socialNotificationService->recordFriendInviteReceived($user, $recv, $inviteFresh);
+            }
+        }
+
+        return response()->json($this->invitePayload($inviteFresh), 201);
     }
 
     public function invitesPatch(Request $request, string $inviteId): JsonResponse
@@ -191,11 +199,11 @@ class SocialController extends Controller
 
         $invite = FriendInvite::query()->find($inviteId);
         if ($invite === null) {
-            return response()->json(['message' => 'Invitació no trobada'], 404);
+            return response()->json(['message' => 'Sol·licitud no trobada'], 404);
         }
 
         if ($invite->status !== FriendInvite::STATUS_PENDING) {
-            return response()->json(['message' => 'Aquesta invitació ja està resolta'], 409);
+            return response()->json(['message' => 'Aquesta sol·licitud ja està resolta'], 409);
         }
 
         $isReceiver = false;
@@ -218,6 +226,13 @@ class SocialController extends Controller
             $invite->status = FriendInvite::STATUS_REJECTED;
         }
         $invite->save();
+
+        if ($validated['action'] === 'accept') {
+            $after = $invite->fresh()->load(['sender']);
+            if ($after->sender !== null) {
+                $this->socialNotificationService->recordFriendInviteAccepted($user, $after->sender, $after);
+            }
+        }
 
         return response()->json($this->invitePayload($invite->fresh()->load(['sender', 'receiver'])));
     }

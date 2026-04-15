@@ -1,12 +1,24 @@
 /**
- * Origen públic (API o Socket) quan el .env apunta a localhost/127.0.0.1 però el navegador
- * és a un altre host (producció darrere Nginx al 80/443).
- *
- * @param {string} [configuredBase]
- * @param {string} devFallback URL per defecte en desenvolupament
+ * URL base de l'API Laravel (NUXT_PUBLIC_API_URL).
+ * - Navegador: si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
+ * - SSR (Node): opcionalment NUXT_API_INTERNAL_URL (p. ex. http://backend-api:8000 a Docker);
+ *   dins el contenidor «localhost:8000» no apunta al servei Laravel.
  */
-export function resolvePublicOrigin (configuredBase, devFallback) {
-  let base = (configuredBase || devFallback).replace(/\/$/, '');
+export function resolveApiBaseUrlForFetch (runtimeConfig) {
+  if (import.meta.server) {
+    const internal = runtimeConfig.apiInternalUrl;
+    if (typeof internal === 'string') {
+      const t = internal.trim();
+      if (t.length > 0) {
+        return t.replace(/\/$/, '');
+      }
+    }
+  }
+  return resolvePublicApiBaseUrl(runtimeConfig.public.apiUrl);
+}
+
+export function resolvePublicApiBaseUrl (configuredBase) {
+  let base = (configuredBase || 'http://localhost:8000').replace(/\/$/, '');
   if (typeof window === 'undefined' || !window.location) {
     return base;
   }

@@ -110,6 +110,7 @@ CREATE TABLE events (
     tm_url VARCHAR(1024),
     tm_category VARCHAR(100),
     is_large_event INTEGER NOT NULL DEFAULT 0,
+    description TEXT,
     created_at VARCHAR(255),
     updated_at VARCHAR(255),
     FOREIGN KEY (venue_id) REFERENCES venues (id) ON DELETE CASCADE
@@ -311,3 +312,20 @@ CREATE TABLE role_has_permissions (
     FOREIGN KEY (permission_id) REFERENCES permissions (id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
+
+-- Auditoria panell admin (dashboard)
+CREATE TABLE admin_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    admin_user_id INTEGER NOT NULL,
+    action VARCHAR(64) NOT NULL,
+    entity_type VARCHAR(120) NOT NULL,
+    entity_id INTEGER,
+    summary TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    created_at VARCHAR(255),
+    updated_at VARCHAR(255),
+    FOREIGN KEY (admin_user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX admin_logs_created_at_index ON admin_logs (created_at);
+CREATE INDEX admin_logs_admin_user_id_index ON admin_logs (admin_user_id);

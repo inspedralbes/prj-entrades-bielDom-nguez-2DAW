@@ -1,41 +1,99 @@
 <template>
-  <main class="ticket-detail">
-    <header class="ticket-detail__header">
-      <NuxtLink to="/tickets" class="ticket-detail__back">← Totes les entrades</NuxtLink>
+  <main class="tk-shell tk-detail">
+    <header class="tk-bar" aria-label="Capçalera entrada">
+      <div class="tk-bar__inner">
+        <NuxtLink to="/tickets" class="tk-bar__icon-btn" aria-label="Tornar a les entrades">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+        </NuxtLink>
+        <p class="tk-bar__brand">TR3-ENTRADES</p>
+        <span class="tk-bar__balance" aria-hidden="true" />
+      </div>
     </header>
 
-    <p v-if="loading" class="ticket-detail__muted">Carregant…</p>
-    <p v-else-if="error" class="ticket-detail__error">{{ error }}</p>
+    <div class="tk-detail__body">
+      <p v-if="loading" class="tk-muted">Carregant…</p>
+      <p v-else-if="error" class="tk-err">{{ error }}</p>
 
-    <template v-else-if="ticket">
-      <h1 class="ticket-detail__title">{{ ticket.event?.name || 'Esdeveniment' }}</h1>
-      <p v-if="startsAt" class="ticket-detail__muted">{{ startsAt }}</p>
+      <template v-else-if="ticket">
+        <TicketCardFull
+          :ticket="ticket"
+          :qr-svg="qrSvg"
+          :qr-error="qrError"
+          :display-status="displayStatus"
+          heading-is-h1
+          @transfer="openTransfer"
+        />
 
-      <div class="ticket-detail__meta">
-        <p><strong>Seient</strong> {{ ticket.seat?.key || '—' }}</p>
-        <p>
-          <strong>Estat</strong>
-          <span class="ticket-detail__status" :data-status="displayStatus">{{ labelStatus(displayStatus) }}</span>
+        <div class="tk-legal">
+          <span class="material-symbols-outlined tk-legal__ico" aria-hidden="true">lock</span>
+          <p class="tk-legal__txt">
+            Aquesta entrada està protegida amb tecnologia TR3-Secure™. No comparteixis el codi QR abans de l’entrada.
+          </p>
+        </div>
+      </template>
+    </div>
+
+    <div
+      v-if="transferOpen"
+      class="tk-modal-bg"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tk-transfer-title"
+      @click.self="closeTransfer"
+    >
+      <div class="tk-modal">
+        <h2 id="tk-transfer-title" class="tk-modal__title">Enviar entrada</h2>
+        <p class="tk-muted">
+          Només a un amic amb invitació acceptada. Cerca per nom o usuari.
         </p>
+        <div class="tk-search">
+          <span class="tk-search__ico" aria-hidden="true">⌕</span>
+          <input
+            v-model="transferFriendQuery"
+            type="search"
+            class="tk-search__input"
+            placeholder="Cercar amic…"
+            @input="scheduleTransferFriendSearch"
+          >
+        </div>
+        <ul v-if="transferFriendsLoading" class="tk-friends">
+          <li class="tk-muted">Carregant…</li>
+        </ul>
+        <ul v-else class="tk-friends">
+          <li v-for="f in transferFriends" :key="f.id">
+            <button type="button" class="tk-friend-btn" @click="pickTransferFriend(f)">
+              @{{ f.username }} · {{ f.name }}
+            </button>
+          </li>
+        </ul>
+        <p v-if="transferFriends.length === 0 && !transferFriendsLoading" class="tk-muted">
+          Cap amic coincideix.
+        </p>
+        <p v-if="transferSelectedLabel" class="tk-pick">Destinatari: {{ transferSelectedLabel }}</p>
+        <p v-if="transferErr" class="tk-err">{{ transferErr }}</p>
+        <p v-if="transferOk" class="tk-ok">{{ transferOk }}</p>
+        <div class="tk-modal__actions">
+          <button type="button" class="tk-btn-sec" @click="closeTransfer">
+            Cancel·lar
+          </button>
+          <button
+            type="button"
+            class="tk-btn-prim"
+            :disabled="transferLoading"
+            @click="submitTransfer"
+          >
+            {{ transferLoading ? 'Enviant…' : 'Confirmar' }}
+          </button>
+        </div>
       </div>
-
-      <div v-if="displayStatus === 'utilitzada'" class="ticket-detail__stamp-wrap" aria-hidden="true">
-        <span class="ticket-detail__stamp">✕</span>
-      </div>
-
-      <div v-if="displayStatus === 'venuda' && qrSvg" class="ticket-detail__qr" v-html="qrSvg" />
-      <p v-else-if="displayStatus === 'venuda' && qrError" class="ticket-detail__error">{{ qrError }}</p>
-      <p v-else-if="displayStatus === 'utilitzada'" class="ticket-detail__muted">
-        Aquesta entrada ja s’ha utilitzat; el QR no és vàlid.
-      </p>
-    </template>
+    </div>
   </main>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import TicketCardFull from '~/components/TicketCardFull.vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
-import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
 import { useTicketsStore } from '~/stores/tickets';
 
 definePageMeta({
@@ -44,15 +102,25 @@ definePageMeta({
 });
 
 const route = useRoute();
-const { getJson, getTicketQrSvg } = useAuthorizedApi();
+const { getJson, postJson, getTicketQrSvg } = useAuthorizedApi();
 const ticketsStore = useTicketsStore();
-usePrivateTicketSocket();
 
 const loading = ref(true);
 const error = ref('');
 const ticket = ref(null);
 const qrSvg = ref('');
 const qrError = ref('');
+
+const transferOpen = ref(false);
+const transferUserId = ref(null);
+const transferSelectedLabel = ref('');
+const transferFriendQuery = ref('');
+const transferFriends = ref([]);
+const transferFriendsLoading = ref(false);
+let transferSearchTimer = null;
+const transferLoading = ref(false);
+const transferErr = ref('');
+const transferOk = ref('');
 
 const ticketId = computed(() => String(route.params.ticketId || ''));
 
@@ -64,29 +132,81 @@ const displayStatus = computed(() => {
   return ticketsStore.effectiveStatus(t.id, t.status);
 });
 
-const startsAt = computed(() => {
-  const iso = ticket.value?.event?.starts_at;
-  if (!iso) {
-    return '';
-  }
-  try {
-    return new Date(iso).toLocaleString('ca-ES', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  } catch {
-    return iso;
-  }
-});
+function openTransfer () {
+  transferUserId.value = null;
+  transferSelectedLabel.value = '';
+  transferFriendQuery.value = '';
+  transferErr.value = '';
+  transferOk.value = '';
+  transferOpen.value = true;
+  loadTransferFriends();
+}
 
-function labelStatus (s) {
-  if (s === 'venuda') {
-    return 'Vàlida';
+function scheduleTransferFriendSearch () {
+  if (transferSearchTimer !== null) {
+    clearTimeout(transferSearchTimer);
   }
-  if (s === 'utilitzada') {
-    return 'Utilitzada';
+  transferSearchTimer = setTimeout(() => {
+    loadTransferFriends();
+  }, 350);
+}
+
+async function loadTransferFriends () {
+  if (!transferOpen.value) {
+    return;
   }
-  return s || '—';
+  transferFriendsLoading.value = true;
+  try {
+    const q = transferFriendQuery.value.trim();
+    let path = '/api/social/friends';
+    if (q !== '') {
+      path = path + '?q=' + encodeURIComponent(q);
+    }
+    const res = await getJson(path);
+    transferFriends.value = res.friends || [];
+  } catch (e) {
+    console.error(e);
+    transferFriends.value = [];
+  } finally {
+    transferFriendsLoading.value = false;
+  }
+}
+
+function pickTransferFriend (f) {
+  transferUserId.value = f.id;
+  transferSelectedLabel.value = '@' + f.username + ' · ' + f.name;
+}
+
+function closeTransfer () {
+  transferOpen.value = false;
+}
+
+async function submitTransfer () {
+  const tid = ticket.value?.id;
+  if (!tid || !transferUserId.value) {
+    transferErr.value = 'Selecciona un amic de la llista.';
+    return;
+  }
+  transferLoading.value = true;
+  transferErr.value = '';
+  transferOk.value = '';
+  try {
+    await postJson('/api/tickets/' + tid + '/transfer', {
+      to_user_id: transferUserId.value,
+    });
+    transferOk.value = 'Entrada enviada. El QR anterior deixa de ser vàlid.';
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:notifications-updated'));
+    }
+    setTimeout(() => {
+      closeTransfer();
+      loadTicket();
+    }, 1200);
+  } catch (e) {
+    transferErr.value = e?.data?.message || e?.message || 'No s\'ha pogut transferir.';
+  } finally {
+    transferLoading.value = false;
+  }
 }
 
 async function loadTicket () {
@@ -106,7 +226,13 @@ async function loadTicket () {
   try {
     const data = await getJson('/api/tickets');
     const list = data.tickets || [];
-    const found = list.find((t) => t.id === id);
+    let found = null;
+    for (let i = 0; i < list.length; i = i + 1) {
+      if (list[i].id === id) {
+        found = list[i];
+        break;
+      }
+    }
     if (!found) {
       error.value = 'No s’ha trobat aquesta entrada al teu compte.';
       return;
@@ -149,75 +275,223 @@ watch(displayStatus, (s) => {
 </script>
 
 <style scoped>
-.ticket-detail {
-  min-height: 100vh;
-  background: #0a0a0a;
-  color: #f5f5f5;
-  padding: 1.5rem;
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.tk-valid .tk-valid__ico {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.tk-shell {
+  --tk-bg: #131313;
+  --tk-on-bg: #e5e2e1;
+  --tk-yellow: #f7e628;
+  --tk-yellow-text: #6e6600;
+  --tk-outline: #959178;
+  --tk-surface-high: #2a2a2a;
+  --tk-surface-highest: #353534;
+  --tk-outline-var: #4a4733;
+  --tk-container-low: #1c1b1b;
+  min-height: min(100dvh, 884px);
+  background: var(--tk-bg);
+  color: var(--tk-on-bg);
+  font-family: Inter, system-ui, sans-serif;
+  padding-bottom: calc(var(--footer-stack) + 1rem);
+}
+
+.tk-bar {
+  position: fixed;
+  top: var(--header-h, 56px);
+  left: 0;
+  right: 0;
+  z-index: 45;
+  height: 4rem;
+  background: #131313;
+  border-bottom: 1px solid rgba(255, 238, 50, 0.2);
+}
+.tk-bar__inner {
+  max-width: 80rem;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+.tk-bar__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: #ffee32;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.tk-bar__icon-btn:hover {
+  background: #2a2a2a;
+}
+.tk-bar__icon-btn:active {
+  transform: scale(0.95);
+}
+.tk-bar__brand {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  font-size: 1.35rem;
+  color: #ffee32;
+}
+.tk-bar__balance {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+
+.tk-detail__body {
+  padding: calc(var(--header-h, 56px) + 4rem + 1.5rem) 1.5rem 2rem;
   max-width: 28rem;
   margin: 0 auto;
 }
-.ticket-detail__header {
-  margin-bottom: 1.25rem;
+
+.tk-muted {
+  color: var(--tk-outline);
+  margin: 0;
 }
-.ticket-detail__back {
-  color: #aaa;
-  text-decoration: none;
+.tk-err {
+  color: #ffb4ab;
+  margin: 0;
+}
+.tk-ok {
+  color: #7bed9f;
   font-size: 0.9rem;
+  margin: 0.5rem 0 0;
 }
-.ticket-detail__back:hover {
-  color: #fff;
+
+.tk-legal {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--tk-container-low);
+  border: 1px solid rgba(74, 71, 51, 0.35);
+  border-radius: 0.5rem;
+  text-align: center;
 }
-.ticket-detail__title {
+.tk-legal__ico {
+  display: block;
+  margin: 0 auto 0.5rem;
+  color: var(--tk-outline);
+  font-size: 1.25rem;
+}
+.tk-legal__txt {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--tk-outline);
+  padding: 0 0.5rem;
+}
+
+.tk-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.tk-modal {
+  background: #1c1b1b;
+  border: 1px solid var(--tk-outline-var);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  max-width: 22rem;
+  width: 100%;
+}
+.tk-modal__title {
   margin: 0 0 0.5rem;
-  font-size: 1.35rem;
-  color: #ff0055;
+  font-size: 1.1rem;
+  color: var(--tk-yellow);
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 800;
 }
-.ticket-detail__muted {
-  color: #888;
+.tk-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--tk-outline-var);
+  border-radius: 0.5rem;
+  background: #0e0e0e;
 }
-.ticket-detail__error {
-  color: #ff6b6b;
+.tk-search__ico {
+  color: #666;
 }
-.ticket-detail__meta {
-  margin: 1.25rem 0;
-  line-height: 1.6;
+.tk-search__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 0.9rem;
+  min-width: 0;
 }
-.ticket-detail__status[data-status='venuda'] {
+.tk-friends {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.tk-friend-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem;
+  border: none;
+  border-bottom: 1px solid #222;
+  background: transparent;
+  color: #eee;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tk-friend-btn:hover {
+  background: #2a2a2a;
+}
+.tk-pick {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
   color: #7bed9f;
 }
-.ticket-detail__status[data-status='utilitzada'] {
-  color: #888;
-}
-.ticket-detail__stamp-wrap {
+.tk-modal__actions {
   display: flex;
-  justify-content: center;
-  margin: 1rem 0;
-}
-.ticket-detail__stamp {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 4.5rem;
-  height: 4.5rem;
-  border: 4px solid #c0392b;
-  border-radius: 50%;
-  color: #c0392b;
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1;
-}
-.ticket-detail__qr {
+  justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 1rem;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
-.ticket-detail__qr :deep(svg) {
-  max-width: 100%;
-  height: auto;
+.tk-btn-sec {
+  background: #444;
+  border: none;
+  color: #fff;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.tk-btn-prim {
+  background: var(--tk-yellow);
+  color: var(--tk-yellow-text);
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 700;
 }
 </style>

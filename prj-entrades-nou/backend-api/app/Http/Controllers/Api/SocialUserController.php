@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\FriendInvite;
+use App\Models\SocialNotification;
+use App\Models\SocialThreadNotificationMute;
 use App\Models\User;
 use App\Services\Social\FriendshipQuery;
 use Illuminate\Http\JsonResponse;
@@ -65,6 +67,117 @@ class SocialUserController extends Controller
         }
 
         return response()->json(['users' => $out]);
+    }
+
+    /**
+     * GET /api/social/users/{userId}/share-thread — fil d’esdeveniments i entrades compartits amb un amic (només lectura).
+     */
+    public function shareThread (Request $request, string $userId): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $other = User::query()->find($userId);
+        if ($other === null) {
+            return response()->json(['message' => 'Usuari no trobat'], 404);
+        }
+
+        if (! $this->friendshipQuery->areFriends($user, $other)) {
+            return response()->json(['message' => 'Cal ser amics per veure el fil compartit.'], 403);
+        }
+
+        $rows = SocialNotification::query()
+            ->where('user_id', $user->id)
+            ->where('actor_user_id', $other->id)
+            ->whereIn('type', ['event_shared', 'ticket_shared'])
+            ->orderBy('created_at', 'asc')
+            ->limit(200)
+            ->get();
+
+        $messages = [];
+        foreach ($rows as $n) {
+            $messages[] = $this->serializeShareMessage($n);
+        }
+
+        $muted = SocialThreadNotificationMute::query()
+            ->where('user_id', $user->id)
+            ->where('peer_user_id', $other->id)
+            ->exists();
+
+        return response()->json([
+            'messages' => $messages,
+            'thread_notifications_muted' => $muted,
+        ]);
+    }
+
+    /**
+     * GET /api/social/thread-notification-mutes — llista d’IDs d’amics amb toasts de fil silenciats (per al client al iniciar).
+     */
+    public function threadMutesIndex (Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $rows = SocialThreadNotificationMute::query()
+            ->where('user_id', $user->id)
+            ->get(['peer_user_id']);
+
+        $ids = [];
+        foreach ($rows as $r) {
+            $ids[] = (int) $r->peer_user_id;
+        }
+
+        return response()->json(['muted_peer_ids' => $ids]);
+    }
+
+    /**
+     * PATCH /api/social/users/{userId}/thread-notification-mute — silenciar o activar toasts del fil amb un amic.
+     *
+     * Cos: { "muted": true|false }
+     */
+    public function threadMutePatch (Request $request, string $userId): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'No autenticat'], 401);
+        }
+
+        $other = User::query()->find($userId);
+        if ($other === null) {
+            return response()->json(['message' => 'Usuari no trobat'], 404);
+        }
+
+        if (! $this->friendshipQuery->areFriends($user, $other)) {
+            return response()->json(['message' => 'Cal ser amics per ajustar aquesta preferència.'], 403);
+        }
+
+        $rawMuted = $request->input('muted');
+        if (! is_bool($rawMuted)) {
+            return response()->json(['message' => 'Cal el camp «muted» (booleà).'], 422);
+        }
+
+        if ($rawMuted) {
+            SocialThreadNotificationMute::query()->updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'peer_user_id' => $other->id,
+                ],
+                []
+            );
+        } else {
+            SocialThreadNotificationMute::query()
+                ->where('user_id', $user->id)
+                ->where('peer_user_id', $other->id)
+                ->delete();
+        }
+
+        return response()->json([
+            'thread_notifications_muted' => $rawMuted,
+        ]);
     }
 
     /**
@@ -132,5 +245,18 @@ class SocialUserController extends Controller
         }
 
         return ['status' => 'pending_received', 'pending_invite_id' => (string) $pending->id];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeShareMessage (SocialNotification $n): array
+    {
+        return [
+            'id' => (int) $n->id,
+            'type' => (string) $n->type,
+            'payload' => $n->payload,
+            'created_at' => $n->created_at?->toIso8601String(),
+        ];
     }
 }

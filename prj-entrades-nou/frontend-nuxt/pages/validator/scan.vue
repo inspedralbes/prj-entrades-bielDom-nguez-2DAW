@@ -1,18 +1,22 @@
 <template>
-  <main class="validator">
-    <header class="validator__head">
-      <h1 class="validator__title">Validació</h1>
+  <main class="validator user-page">
+    <p class="validator__crumb">
       <NuxtLink to="/" class="validator__back">← Inici</NuxtLink>
+    </p>
+
+    <header class="user-page-hero user-page-hero--spaced">
+      <h1 class="user-page-title">
+        Validació
+      </h1>
+      <p class="user-page-lead">
+        Escaneja el QR amb la càmera o enganxa el JWT de l’entrada per comprovar l’accés.
+      </p>
     </header>
 
     <p v-if="roleBlock" class="validator__err">{{ roleBlock }}</p>
 
     <template v-else>
       <div id="validator-reader" class="validator__reader" />
-
-      <p class="validator__muted">
-        Escaneja el QR amb la càmera o enganxa el JWT de l’entrada.
-      </p>
 
       <textarea
         v-model="manualToken"
@@ -164,28 +168,21 @@ onUnmounted(async () => {
 <style scoped>
 .validator {
   min-height: 100vh;
-  background: #070707;
-  color: #f2f2f2;
-  padding: 1.25rem;
+  background: var(--bg);
+  color: var(--fg);
   max-width: 28rem;
   margin: 0 auto;
 }
-.validator__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.validator__title {
-  margin: 0;
-  font-size: 1.35rem;
-  color: #00d4aa;
+.validator__crumb {
+  margin: 0 0 0.25rem;
 }
 .validator__back {
-  color: #888;
+  color: var(--muted);
   text-decoration: none;
   font-size: 0.9rem;
+}
+.validator__back:hover {
+  color: var(--accent);
 }
 .validator__reader {
   width: 100%;
@@ -194,11 +191,6 @@ onUnmounted(async () => {
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 0.75rem;
-}
-.validator__muted {
-  color: #888;
-  font-size: 0.9rem;
-  margin: 0 0 0.75rem;
 }
 .validator__manual {
   width: 100%;
