@@ -17691,3 +17691,4 @@ LINE 1: select * from \"users\" where \"users\".\"id\" = $1 limit 1
 #8 /home/a24biedommar/Documents/Projectes_Transversals/TR3_TicketMaster/tr3_nou/prj-entrades-bielDom-nguez-2DAW/prj-entrades-nou/backend-api/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
 #9 {main}
 "} 
+[2026-04-15 16:39:47] local.INFO: ticketmaster_event_import {"inserted":0,"skipped_no_venue":0,"skipped_existing":105,"pages_fetched":2,"errors":[]} 

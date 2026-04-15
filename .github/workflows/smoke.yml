@@ -157,24 +157,28 @@ jobs:
             echo "All T001 directories verified"
           fi
 
+      # Proves Socket.IO contra 127.0.0.1:3001: és el port que Docker publica al **runner** de GitHub (no és «producció»).
+      # Cal executar-les **abans** de netejar `socket-server/node_modules` al host: el bind mount + `node --watch`
+      # al contenidor pot provocar ECONNRESET / xhr poll error si s’esborra `node_modules` mentre el servei està actiu.
+      - name: Realtime — Socket.IO (intent JWT + /internal/emit)
+        run: |
+          curl -sf http://127.0.0.1:3001/health >/dev/null || {
+            echo "socket /health no respon abans de les proves Realtime"
+            docker compose --env-file backend-api/.env -f ${{ env.COMPOSE_FILE }} logs socket-server --tail=80
+            exit 1
+          }
+          cd socket-server
+          npm ci
+          JWT_SECRET=smoke_test_secret npm run test:intent-broadcast -- http://127.0.0.1:3001
+          npm run test:realtime -- http://127.0.0.1:3001
+
       # Els bind mounts de Docker poden deixar fitxers com a root al workspace; npm ci al runner
       # falla amb EACCES a node_modules/@* si no es neteja i es restableixen permisos.
-      - name: Neteja node_modules i permisos (post-Docker, abans de npm ci)
+      - name: Neteja node_modules i permisos (post-Docker, abans de npm ci al frontend)
         run: |
           sudo rm -rf socket-server/node_modules socket-server/.npm \
             frontend-nuxt/node_modules frontend-nuxt/.npm
           sudo chown -R "$(id -un):$(id -gn)" socket-server frontend-nuxt || true
-
-      - name: Realtime — dos clients + SeatStatusUpdated (intent JWT)
-        run: |
-          cd socket-server
-          npm ci
-          JWT_SECRET=smoke_test_secret npm run test:intent-broadcast -- http://127.0.0.1:3001
-
-      - name: Realtime — POST /internal/emit (held + sold)
-        run: |
-          cd socket-server
-          npm run test:realtime -- http://127.0.0.1:3001
 
       - name: Pinia — store interactiveSeatmap (applySocketUpdate / bootstrap)
         run: |
