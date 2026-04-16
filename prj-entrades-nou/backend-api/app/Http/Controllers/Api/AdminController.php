@@ -154,12 +154,35 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Mètriques resumides per al capçalera de la llista d’esdeveniments (panell admin).
+     */
+    public function eventsMetrics(Request $request): JsonResponse
+    {
+        $activeEventsCount = Event::query()->whereNull('hidden_at')->count();
+
+        $salesSum = Order::query()
+            ->where('state', Order::STATE_PAID)
+            ->sum('total_amount');
+
+        $salesStr = '0.00';
+        if ($salesSum !== null) {
+            $salesStr = number_format((float) $salesSum, 2, '.', '');
+        }
+
+        return response()->json([
+            'active_events_count' => $activeEventsCount,
+            'sales_volume_eur' => $salesStr,
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Event::query()->orderBy('starts_at', 'desc');
 
+        /* L’ocultació és `hidden_at`, no SoftDeletes: no usar withTrashed(). */
         if ($request->query('hidden') === 'include') {
-            $query->withTrashed();
+            /* Tots els esdeveniments (amb hidden o sense). */
         } elseif ($request->query('hidden') === 'only') {
             $query->whereNotNull('hidden_at');
         } else {

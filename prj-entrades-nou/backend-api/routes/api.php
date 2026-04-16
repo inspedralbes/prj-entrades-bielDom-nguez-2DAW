@@ -92,6 +92,7 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::post('/discovery/sync', [AdminController::class, 'discoverySync']);
     Route::get('/discovery/search', [AdminDiscoveryController::class, 'search']);
     Route::post('/discovery/import', [AdminDiscoveryController::class, 'importByExternalId']);
+    Route::get('/events/metrics', [AdminController::class, 'eventsMetrics']);
     Route::get('/events', [AdminController::class, 'index']);
     Route::post('/events', [AdminController::class, 'store']);
     Route::patch('/events/{eventId}', [AdminController::class, 'updateEvent'])->whereNumber('eventId');
