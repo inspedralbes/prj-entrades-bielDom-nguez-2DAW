@@ -1,6 +1,7 @@
 //================================ IMPORTS ============
 
 import { useAuthStore } from '~/stores/auth';
+import { storeAuthIntendedPath } from '~/utils/authGate';
 import { resolveApiBaseUrlForFetch } from '~/utils/apiBase';
 import { getForbiddenRedirectPath } from '~/utils/routeForbiddenRedirect';
 import { rolesIncludeAdmin } from '~/utils/userRoles';
@@ -19,6 +20,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const rawCookie = authToken.value;
   const cookieToken = typeof rawCookie === 'string' ? rawCookie.trim() : '';
   if (!cookieToken && !auth.token) {
+    storeAuthIntendedPath(to);
     return navigateTo({
       path: '/login',
       query: { redirect: to.fullPath },
@@ -46,6 +48,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   } catch (err) {
     const status = err?.statusCode || err?.status;
     if (status === 401) {
+      storeAuthIntendedPath(to);
       return navigateTo({
         path: '/login',
         query: { redirect: to.fullPath },

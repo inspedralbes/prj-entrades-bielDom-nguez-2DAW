@@ -508,6 +508,9 @@ const handleSubmit = async () => {
       if (Array.isArray(redirect)) {
         redirect = redirect[0] || ''
       }
+      if (typeof redirect !== 'string') {
+        redirect = ''
+      }
 
       const isAdminUser = res.user && rolesIncludeAdmin(res.user.roles)
 
@@ -515,11 +518,20 @@ const handleSubmit = async () => {
         redirect = '/admin'
       } else {
         if (typeof redirect !== 'string' || redirect.length === 0) {
-          if (isRegister.value) {
-            redirect = '/'
-          } else {
-            redirect = '/tickets'
+          if (import.meta.client) {
+            try {
+              const stored = sessionStorage.getItem('auth_intended_path')
+              if (typeof stored === 'string' && stored.length > 0 && isSafeInternalRedirectPath(stored)) {
+                redirect = stored
+              }
+              sessionStorage.removeItem('auth_intended_path')
+            } catch {
+              /* sense sessionStorage */
+            }
           }
+        }
+        if (typeof redirect !== 'string' || redirect.length === 0) {
+          redirect = '/tickets'
         } else {
           try {
             redirect = decodeURIComponent(redirect)
@@ -527,9 +539,14 @@ const handleSubmit = async () => {
             /* URL ja vàlida sense codificar */
           }
           if (!isSafeInternalRedirectPath(redirect)) {
-            if (isRegister.value) {
-              redirect = '/'
-            } else {
+            redirect = '/tickets'
+          } else {
+            let pathOnly = redirect
+            const qMark = redirect.indexOf('?')
+            if (qMark !== -1) {
+              pathOnly = redirect.slice(0, qMark)
+            }
+            if (pathOnly === '/login' || pathOnly === '/register') {
               redirect = '/tickets'
             }
           }
@@ -537,9 +554,19 @@ const handleSubmit = async () => {
       }
 
       await nextTick()
-      const navResult = await navigateTo(redirect, { replace: true })
-      if (navResult === false) {
+      /* Des del submit del formulari, router.replace acostuma a ser més fiable que navigateTo. */
+      try {
         await router.replace(redirect)
+      } catch {
+        /* navegació duplicada o cancel·lada */
+      }
+      await nextTick()
+      if (import.meta.client) {
+        const stillAuthScreen = route.path === '/login' || route.path === '/register'
+        const currentPath = router.currentRoute.value.path
+        if (stillAuthScreen && (currentPath === '/login' || currentPath === '/register')) {
+          window.location.assign(redirect)
+        }
       }
     } else {
       error.value = 'Resposta del servidor sense token de sessió. Torna a intentar o contacta suport.'

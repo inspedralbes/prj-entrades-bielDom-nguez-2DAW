@@ -9,5 +9,6 @@ import AuthEmailPage from '../components/AuthEmailPage.vue'
 // `layout: 'auth'` depèn del registre de layouts a `.nuxt`; en alguns entorns falla i deixa la pàgina en negre.
 definePageMeta({
   layout: false,
+  middleware: 'guest',
 })
 </script>

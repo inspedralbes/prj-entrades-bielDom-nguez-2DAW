@@ -7,5 +7,6 @@ import AuthEmailPage from '../components/AuthEmailPage.vue'
 
 definePageMeta({
   layout: false,
+  middleware: 'guest',
 })
 </script>
