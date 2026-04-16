@@ -26,7 +26,8 @@ function resolveSocketBase (config) {
 }
 
 const commonOpts = {
-  transports: ['websocket', 'polling'],
+  /* Polling primer: menys soroll de WS si el primer intent falla; mateix servidor Socket.IO. */
+  transports: ['polling', 'websocket'],
   reconnection: true,
   reconnectionAttempts: 12,
   reconnectionDelay: 500,

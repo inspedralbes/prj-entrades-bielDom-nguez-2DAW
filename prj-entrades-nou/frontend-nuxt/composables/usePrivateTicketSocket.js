@@ -6,40 +6,10 @@ import { useSocialThreadMutesStore } from '~/stores/socialThreadMutes';
 import { useSocialToastsStore } from '~/stores/socialToasts';
 import { useTicketsStore } from '~/stores/tickets';
 
+/* URL del socket: `resolvePublicSocketUrl` (apiBase) reescriu :3001 → origen 80/443 quan cal proxy Nginx. */
+
 /** Una sola connexió compartida (layout); evita desconnexió en canvi de ruta. */
 let sharedSocket = null;
-
-/**
- * Si la finestra és HTTPS al 443 i la URL configurada apunta al mateix host al :3001,
- * usem l’origen de la finestra (p. ex. nginx fa proxy de /socket.io al Node).
- * Això evita WSS directe al 3001 quan només el 443 té certificat.
- */
-function preferSameOriginWhenHttpsPortMismatch (resolvedBase) {
-  if (typeof window === 'undefined' || !window.location) {
-    return resolvedBase;
-  }
-  if (window.location.protocol !== 'https:') {
-    return resolvedBase;
-  }
-  let out = resolvedBase;
-  try {
-    const u = new URL(resolvedBase);
-    const loc = window.location;
-    if (u.hostname !== loc.hostname) {
-      return out;
-    }
-    let locPort = loc.port;
-    if (locPort === '') {
-      locPort = '443';
-    }
-    if (u.port === '3001' && locPort === '443') {
-      out = loc.origin;
-    }
-  } catch {
-    return out;
-  }
-  return out;
-}
 
 function handleNotificationPayload (payload) {
   if (!payload || typeof payload !== 'object') {
@@ -103,8 +73,7 @@ export function usePrivateTicketSocket () {
     const ticketsStore = useTicketsStore();
 
     function tryConnect () {
-      const raw = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
-      const base = preferSameOriginWhenHttpsPortMismatch(raw);
+      const base = resolvePublicSocketUrl(config.public.socketUrl).replace(/\/$/, '');
       if (!base || !auth.token) {
         return;
       }

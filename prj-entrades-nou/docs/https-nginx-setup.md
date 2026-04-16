@@ -84,7 +84,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Socket.IO WebSocket (port 3001)
+    # Socket.IO (Node escolta a 127.0.0.1:3001; el navegador usa wss al 443 sobre aquest path)
     location /socket.io/ {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
@@ -94,6 +94,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
     }
 
     # API Laravel (port 8000)
@@ -138,16 +139,21 @@ curl -I https://pulse.daw.inspedralbes.cat
 curl -I wss://pulse.daw.inspedralbes.cat/socket.io/?EIO=4
 ```
 
-### 6. Actualizar variables d'entorn per producció
+### 6. Variables d’entorn Nuxt (producció / Docker)
 
-Al teu fitxer `.env` de producció:
+Al `.env` del **build** de Nuxt (o variables del contenidor):
 
 ```bash
-NUXT_PUBLIC_SOCKET_URL=wss://pulse.daw.inspedralbes.cat
-NUXT_PUBLIC_API_URL=https://pulse.daw.inspedralbes.cat/api
+# Mateix origen que el navegador (sense port 3001); Nginx fa proxy de /socket.io/ → Node :3001
+NUXT_PUBLIC_SOCKET_URL=https://pulse.daw.inspedralbes.cat
+
+# Base de l’API (sense «/api» al final; el client afegeix «/api/...»)
+NUXT_PUBLIC_API_URL=https://pulse.daw.inspedralbes.cat
 ```
 
-(Canvia `http://` per `https://` i `ws://` per `wss://`)
+**Docker típic:** sovint es posa `NUXT_PUBLIC_SOCKET_URL=http://localhost:3001`. En executar-se al navegador, el codi substitueix `localhost` pel domini real però **deixava el port :3001** (`https://domini:3001`), i el WSS fallava. Això ja es corregeix a `frontend-nuxt/utils/apiBase.js` (`rewriteSocketUrlWhenProxiedSameHost`): si la finestra és al mateix host en **80 o 443** i la URL del socket acaba en **:3001**, s’usa `window.location.origin` perquè la connexió passi per Nginx (TLS al 443).
+
+Cal **tornar a fer `npm run build`** després de canviar aquestes variables.
 
 ---
 

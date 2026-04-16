@@ -72,9 +72,56 @@ export function resolvePublicApiBaseUrl (configuredBase) {
 }
 
 /**
+ * Docker / build sovint defineixen `NUXT_PUBLIC_SOCKET_URL=http://localhost:3001`.
+ * `resolvePublicOrigin` substitueix el hostname però **conserva el port 3001** → al navegador queda
+ * `https://el-teu-domini:3001` i el WSS falla (el certificat és al 443, no al 3001).
+ * Si la finestra és al mateix host en 80/443 i la URL resolta porta :3001, usem `window.location.origin`
+ * (Nginx ha de fer proxy de `/socket.io/` al Node a 127.0.0.1:3001).
+ *
+ * @param {string} resolvedBase
+ * @returns {string}
+ */
+export function rewriteSocketUrlWhenProxiedSameHost (resolvedBase) {
+  if (typeof window === 'undefined' || !window.location) {
+    return resolvedBase;
+  }
+  if (typeof resolvedBase !== 'string' || resolvedBase.length === 0) {
+    return resolvedBase;
+  }
+  try {
+    const u = new URL(resolvedBase);
+    const loc = window.location;
+    if (u.hostname !== loc.hostname) {
+      return resolvedBase;
+    }
+    if (u.port !== '3001') {
+      return resolvedBase;
+    }
+    let locPort = loc.port;
+    if (locPort === '') {
+      if (loc.protocol === 'https:') {
+        locPort = '443';
+      } else {
+        locPort = '80';
+      }
+    }
+    if (locPort === '443' || locPort === '80') {
+      return loc.origin;
+    }
+  } catch {
+    return resolvedBase;
+  }
+  return resolvedBase;
+}
+
+/**
  * URL base del Socket.IO (NUXT_PUBLIC_SOCKET_URL).
  */
 export function resolvePublicSocketUrl (configuredBase) {
   const r = resolvePublicOrigin(configuredBase, 'http://localhost:3001');
-  return alignUrlProtocolWithSecurePage(r);
+  const aligned = alignUrlProtocolWithSecurePage(r);
+  if (import.meta.client) {
+    return rewriteSocketUrlWhenProxiedSameHost(aligned);
+  }
+  return aligned;
 }
