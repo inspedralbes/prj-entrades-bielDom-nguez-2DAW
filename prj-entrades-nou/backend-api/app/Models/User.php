@@ -33,4 +33,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Text de perfil per a clients que encara esperen el camp `name` a l’API: fallback al nom d’usuari.
+     */
+    public function profileDisplayName(): string
+    {
+        $raw = $this->name;
+        if (is_string($raw)) {
+            $t = trim($raw);
+            if ($t !== '') {
+                return $t;
+            }
+        }
+
+        return $this->username;
+    }
 }

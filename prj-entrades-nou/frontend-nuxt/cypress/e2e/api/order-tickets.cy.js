@@ -19,7 +19,6 @@ describe('API — order confirm → tickets (T025)', () => {
         const username = `cy_t025_${Date.now()}`;
 
         cy.request('POST', `${api}/api/auth/register`, {
-          name: 'Cypress T025',
           username,
           email: `${username}@example.com`,
           password: 'password12345',

@@ -7,7 +7,7 @@
 
 INSERT INTO users (name, username, email, password, created_at, updated_at)
 VALUES (
-    'Admin TR3',
+    NULL,
     'admin',
     'admin@example.com',
     '$2y$10$0k9c3OaQlZKKFJKSur41XOi1Bp3sWr72wwR1uCNcm5qn22IJsCuNG',

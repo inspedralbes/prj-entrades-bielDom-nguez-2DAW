@@ -28,6 +28,26 @@ function resolvePublicOrigin (configuredBase, defaultBase) {
 }
 
 /**
+ * Si la finestra és HTTPS i la URL encara és http, passa a https (Socket.IO farà WSS; evita Mixed Content).
+ * El servidor ha d’oferir TLS al mateix host/port (p. ex. nginx reverse proxy) o la connexió fallarà després.
+ */
+function alignUrlProtocolWithSecurePage (baseUrl) {
+  if (typeof window === 'undefined' || !window.location) {
+    return baseUrl;
+  }
+  if (window.location.protocol !== 'https:') {
+    return baseUrl;
+  }
+  if (typeof baseUrl !== 'string' || baseUrl.length === 0) {
+    return baseUrl;
+  }
+  if (baseUrl.indexOf('http://') !== 0) {
+    return baseUrl;
+  }
+  return 'https://' + baseUrl.slice('http://'.length);
+}
+
+/**
  * URL base de l'API Laravel (NUXT_PUBLIC_API_URL).
  * - Navegador: si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
  * - SSR (Node): opcionalment NUXT_API_INTERNAL_URL (p. ex. http://backend-api:8000 a Docker);
@@ -47,12 +67,14 @@ export function resolveApiBaseUrlForFetch (runtimeConfig) {
 }
 
 export function resolvePublicApiBaseUrl (configuredBase) {
-  return resolvePublicOrigin(configuredBase, 'http://localhost:8000');
+  const r = resolvePublicOrigin(configuredBase, 'http://localhost:8000');
+  return alignUrlProtocolWithSecurePage(r);
 }
 
 /**
  * URL base del Socket.IO (NUXT_PUBLIC_SOCKET_URL).
  */
 export function resolvePublicSocketUrl (configuredBase) {
-  return resolvePublicOrigin(configuredBase, 'http://localhost:3001');
+  const r = resolvePublicOrigin(configuredBase, 'http://localhost:3001');
+  return alignUrlProtocolWithSecurePage(r);
 }

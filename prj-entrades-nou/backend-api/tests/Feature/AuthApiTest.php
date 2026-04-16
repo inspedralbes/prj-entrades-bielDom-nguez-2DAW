@@ -20,7 +20,7 @@ class AuthApiTest extends TestCase
     public function test_register_returns_token_and_me_works(): void
     {
         $response = $this->postJson('/api/auth/register', [
-            'name' => 'Prova',
+            'username' => 'prova_user',
             'email' => 'prova@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',

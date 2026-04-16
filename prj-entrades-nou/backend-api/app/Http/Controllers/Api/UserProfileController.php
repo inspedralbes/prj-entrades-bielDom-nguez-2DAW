@@ -18,7 +18,7 @@ class UserProfileController extends Controller
 
         return response()->json([
             'id' => $user->id,
-            'name' => $user->name,
+            'name' => $user->profileDisplayName(),
             'username' => $user->username,
             'email' => $user->email,
         ]);
@@ -28,8 +28,13 @@ class UserProfileController extends Controller
     {
         $user = $request->user();
 
+        $usernameRaw = $request->input('username');
+        if (is_string($usernameRaw)) {
+            $request->merge(['username' => trim($usernameRaw)]);
+        }
+
         $rules = [
-            'name' => ['sometimes', 'string', 'max:255'],
+            'username' => ['sometimes', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         ];
 
@@ -42,8 +47,8 @@ class UserProfileController extends Controller
 
         $data = $request->validate($rules);
 
-        if (isset($data['name'])) {
-            $user->name = $data['name'];
+        if (isset($data['username'])) {
+            $user->username = trim((string) $data['username']);
         }
         if (isset($data['email'])) {
             $user->email = $data['email'];

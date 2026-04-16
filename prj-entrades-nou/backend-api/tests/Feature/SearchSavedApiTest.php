@@ -39,7 +39,6 @@ class SearchSavedApiTest extends TestCase
     public function test_saved_events_roundtrip(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'U',
             'username' => 'save_u_'.uniqid(),
             'email' => uniqid('s', true).'@example.com',
             'password' => 'password123',

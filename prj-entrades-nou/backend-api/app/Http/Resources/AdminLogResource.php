@@ -17,7 +17,7 @@ class AdminLogResource extends JsonResource
         $at = $this->created_at->timezone($tzName);
         $name = '—';
         if ($this->relationLoaded('adminUser') && $this->adminUser !== null) {
-            $name = (string) $this->adminUser->name;
+            $name = $this->adminUser->profileDisplayName();
         }
 
         return [

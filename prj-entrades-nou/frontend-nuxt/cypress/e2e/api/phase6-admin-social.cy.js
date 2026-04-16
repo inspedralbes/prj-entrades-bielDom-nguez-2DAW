@@ -8,7 +8,6 @@ describe('API — fase 6 admin + social (T035/T036)', () => {
   it('GET /api/admin/summary retorna 403 sense rol admin', () => {
     const username = `cy_adm403_${Date.now()}`;
     cy.request('POST', `${api}/api/auth/register`, {
-      name: 'Cypress',
       username,
       email: `${username}@example.com`,
       password: 'password12345',
@@ -31,7 +30,6 @@ describe('API — fase 6 admin + social (T035/T036)', () => {
     const u2 = `cy_soc_b_${Date.now()}`;
 
     cy.request('POST', `${api}/api/auth/register`, {
-      name: 'A',
       username: u1,
       email: `${u1}@example.com`,
       password: 'password12345',
@@ -41,7 +39,6 @@ describe('API — fase 6 admin + social (T035/T036)', () => {
       const tokenA = a.body.token;
 
       cy.request('POST', `${api}/api/auth/register`, {
-        name: 'B',
         username: u2,
         email: `${u2}@example.com`,
         password: 'password12345',
@@ -99,7 +96,6 @@ describe('API — fase 6 admin + social (T035/T036)', () => {
           const dest = `cy_tr_dst_${Date.now()}`;
 
           cy.request('POST', `${api}/api/auth/register`, {
-            name: 'Owner',
             username: owner,
             email: `${owner}@example.com`,
             password: 'password12345',
@@ -109,7 +105,6 @@ describe('API — fase 6 admin + social (T035/T036)', () => {
             const tokenO = regO.body.token;
 
             cy.request('POST', `${api}/api/auth/register`, {
-              name: 'Dest',
               username: dest,
               email: `${dest}@example.com`,
               password: 'password12345',

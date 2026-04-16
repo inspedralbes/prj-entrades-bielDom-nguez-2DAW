@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 /**
  * Gestió d’usuaris (rol admin).
@@ -23,8 +24,9 @@ class AdminUsersController extends Controller
         if (is_string($search) && trim($search) !== '') {
             $term = '%'.addcslashes(trim($search), '%_\\').'%';
             $q->where(static function ($qq) use ($term) {
-                $qq->whereRaw('LOWER(name) LIKE LOWER(?)', [$term])
-                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', [$term]);
+                $qq->whereRaw('LOWER(username) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('(name IS NOT NULL AND LOWER(name) LIKE LOWER(?))', [$term]);
             });
         }
 
@@ -41,27 +43,26 @@ class AdminUsersController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,username'],
+            'username' => ['required', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
+            'role' => ['sometimes', 'string', 'in:user,admin'],
             'roles' => ['sometimes', 'array'],
             'roles.*' => ['string', 'max:50'],
         ]);
 
-        $username = isset($data['username']) ? trim((string) $data['username']) : '';
-        if ($username === '') {
-            $username = 'u_'.substr(sha1($data['email'].microtime(true)), 0, 12);
-        }
+        $username = trim((string) $data['username']);
 
         $user = new User;
-        $user->name = $data['name'];
+        $user->name = null;
         $user->username = $username;
         $user->email = $data['email'];
         $user->password = Hash::make($data['password']);
         $user->save();
 
-        if (isset($data['roles']) && is_array($data['roles'])) {
+        if (isset($data['role']) && is_string($data['role']) && $data['role'] !== '') {
+            $user->syncRoles([$data['role']]);
+        } elseif (isset($data['roles']) && is_array($data['roles'])) {
             $roles = $data['roles'];
             $n = count($roles);
             for ($i = 0; $i < $n; $i++) {
@@ -82,11 +83,46 @@ class AdminUsersController extends Controller
 
         return response()->json([
             'id' => $user->id,
-            'name' => $user->name,
+            'name' => $user->profileDisplayName(),
             'email' => $user->email,
             'username' => $user->username,
             'roles' => $this->roleNamesForUser($user),
         ], 201);
+    }
+
+    public function update(Request $request, int $userId): JsonResponse
+    {
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            return response()->json(['message' => 'Usuari no trobat'], 404);
+        }
+
+        $data = $request->validate([
+            'username' => ['sometimes', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['sometimes', 'string', 'in:user,admin'],
+        ]);
+
+        if (isset($data['username'])) {
+            $user->username = trim((string) $data['username']);
+        }
+        if (isset($data['email'])) {
+            $user->email = $data['email'];
+        }
+        if (isset($data['role'])) {
+            $user->syncRoles([$data['role']]);
+        }
+
+        $user->save();
+        $user->load('roles');
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->profileDisplayName(),
+            'email' => $user->email,
+            'username' => $user->username,
+            'roles' => $this->roleNamesForUser($user),
+        ]);
     }
 
     public function destroy(Request $request, int $userId): JsonResponse

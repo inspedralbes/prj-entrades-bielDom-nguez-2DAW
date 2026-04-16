@@ -17,7 +17,6 @@ describe('API — GET /api/tickets (T028)', () => {
         const username = `cy_t028_${Date.now()}`;
 
         cy.request('POST', `${api}/api/auth/register`, {
-          name: 'Cypress T028',
           username,
           email: `${username}@example.com`,
           password: 'password12345',

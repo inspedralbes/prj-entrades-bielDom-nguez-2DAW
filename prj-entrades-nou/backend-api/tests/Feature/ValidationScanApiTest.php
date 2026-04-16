@@ -39,7 +39,6 @@ class ValidationScanApiTest extends TestCase
     public function test_scan_forbidden_for_buyer_role(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'buyer_val_'.uniqid(),
             'email' => uniqid('b', true).'@example.com',
             'password' => 'password123',
@@ -94,7 +93,6 @@ class ValidationScanApiTest extends TestCase
     private function createBuyerWithTicketAndValidator(): array
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador V',
             'username' => 'buy_v_'.uniqid(),
             'email' => uniqid('bv', true).'@example.com',
             'password' => 'password123',

@@ -39,7 +39,6 @@ class OrderApiTest extends TestCase
     public function test_create_pending_payment_order_from_hold(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador1',
             'email' => 'c1@example.com',
             'password' => 'password123',
@@ -89,7 +88,6 @@ class OrderApiTest extends TestCase
     public function test_duplicate_order_same_hold_returns_409(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador2',
             'email' => 'c2@example.com',
             'password' => 'password123',
@@ -120,7 +118,6 @@ class OrderApiTest extends TestCase
     public function test_wrong_anonymous_session_returns_403(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador3',
             'email' => 'c3@example.com',
             'password' => 'password123',
@@ -149,7 +146,6 @@ class OrderApiTest extends TestCase
     public function test_confirm_payment_marks_paid_and_seats_sold(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador4',
             'email' => 'c4@example.com',
             'password' => 'password123',
@@ -210,7 +206,6 @@ class OrderApiTest extends TestCase
     public function test_confirm_payment_seat_unavailable_releases_hold_and_exact_message(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador5',
             'email' => 'c5@example.com',
             'password' => 'password123',
@@ -260,7 +255,6 @@ class OrderApiTest extends TestCase
     public function test_confirm_payment_twice_second_invalid_state(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador',
             'username' => 'comprador6',
             'email' => 'c6@example.com',
             'password' => 'password123',

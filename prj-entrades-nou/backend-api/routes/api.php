@@ -98,6 +98,7 @@ Route::middleware(['jwt.auth', 'role:admin'])->prefix('admin')->group(function (
     Route::get('/events/{eventId}/monitor', [AdminMonitorController::class, 'show'])->whereNumber('eventId');
     Route::get('/users', [AdminUsersController::class, 'index']);
     Route::post('/users', [AdminUsersController::class, 'store']);
+    Route::patch('/users/{userId}', [AdminUsersController::class, 'update'])->whereNumber('userId');
     Route::delete('/users/{userId}', [AdminUsersController::class, 'destroy'])->whereNumber('userId');
     Route::get('/users/{userId}/orders', [AdminUsersController::class, 'orders'])->whereNumber('userId');
     Route::get('/reports/sales', [AdminReportsController::class, 'salesSeries']);

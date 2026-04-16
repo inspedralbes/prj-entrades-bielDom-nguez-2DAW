@@ -12,16 +12,16 @@
         </div>
 
         <div class="user-profile-editor__field">
-          <label class="user-profile-editor__label-text" for="profile-name">Nom</label>
+          <label class="user-profile-editor__label-text" for="profile-username">Nom d’usuari</label>
           <div class="user-profile-editor__input-wrap">
-            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">person</span>
+            <span class="material-symbols-outlined user-profile-editor__ico" aria-hidden="true">badge</span>
             <input
-              id="profile-name"
-              v-model="name"
+              id="profile-username"
+              v-model="username"
               type="text"
               class="user-profile-editor__input user-profile-editor__input--ico"
               required
-              autocomplete="name"
+              autocomplete="username"
             >
           </div>
         </div>
@@ -123,7 +123,7 @@
 
       <div class="user-profile-editor__form-footer">
         <p v-if="fieldErrors.general" class="user-profile-editor__err">{{ fieldErrors.general }}</p>
-        <p v-if="fieldErrors.name" class="user-profile-editor__err">{{ fieldErrors.name }}</p>
+        <p v-if="fieldErrors.username" class="user-profile-editor__err">{{ fieldErrors.username }}</p>
         <p v-if="fieldErrors.email" class="user-profile-editor__err">{{ fieldErrors.email }}</p>
         <p v-if="fieldErrors.current_password" class="user-profile-editor__err">{{ fieldErrors.current_password }}</p>
         <p v-if="fieldErrors.password" class="user-profile-editor__err">{{ fieldErrors.password }}</p>
@@ -165,7 +165,7 @@ const loading = ref(true);
 const saving = ref(false);
 const error = ref('');
 const savedMsg = ref('');
-const name = ref('');
+const username = ref('');
 const email = ref('');
 const currentPassword = ref('');
 const currentPasswordVisible = ref(false);
@@ -173,7 +173,7 @@ const newPassword = ref('');
 const newPasswordConfirmation = ref('');
 const fieldErrors = ref({
   general: '',
-  name: '',
+  username: '',
   email: '',
   current_password: '',
   password: '',
@@ -246,7 +246,7 @@ function toggleNewPasswordConfirmVisible () {
 function clearFieldErrors () {
   fieldErrors.value = {
     general: '',
-    name: '',
+    username: '',
     email: '',
     current_password: '',
     password: '',
@@ -278,7 +278,7 @@ async function load () {
   clearFieldErrors();
   try {
     const p = await getJson('/api/user/profile');
-    name.value = p.name || '';
+    username.value = p.username || '';
     email.value = p.email || '';
   } catch (e) {
     if (e?.status === 401) {
@@ -332,7 +332,7 @@ async function saveProfile () {
   }
 
   const body = {
-    name: name.value,
+    username: username.value.trim(),
     email: email.value,
   };
   if (wantsPasswordChange()) {

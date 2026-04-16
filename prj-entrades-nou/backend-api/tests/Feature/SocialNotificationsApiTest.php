@@ -141,7 +141,6 @@ class SocialNotificationsApiTest extends TestCase
     private function registerUser(string $username, string $email): array
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => $username,
             'username' => $username,
             'email' => $email,
             'password' => 'password123',

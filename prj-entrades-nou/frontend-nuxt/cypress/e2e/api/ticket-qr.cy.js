@@ -17,7 +17,6 @@ describe('API — ticket QR SVG (T027)', () => {
         const username = `cy_t027_${Date.now()}`;
 
         cy.request('POST', `${api}/api/auth/register`, {
-          name: 'Cypress T027',
           username,
           email: `${username}@example.com`,
           password: 'password12345',

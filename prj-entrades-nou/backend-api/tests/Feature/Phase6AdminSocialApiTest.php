@@ -33,7 +33,6 @@ class Phase6AdminSocialApiTest extends TestCase
     public function test_admin_summary_forbidden_for_non_admin(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Usuari',
             'username' => 'u_adm_'.uniqid(),
             'email' => uniqid('u', true).'@example.com',
             'password' => 'password123',
@@ -156,7 +155,6 @@ class Phase6AdminSocialApiTest extends TestCase
     public function test_admin_patch_event_forbidden_for_non_admin(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Usuari',
             'username' => 'u_patch_'.uniqid(),
             'email' => uniqid('u_patch', true).'@example.com',
             'password' => 'password123',
@@ -328,7 +326,6 @@ class Phase6AdminSocialApiTest extends TestCase
     private function registerUser(string $username, string $email): array
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => $username,
             'username' => $username,
             'email' => $email,
             'password' => 'password123',

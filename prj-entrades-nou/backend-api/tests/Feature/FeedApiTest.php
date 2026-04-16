@@ -44,7 +44,6 @@ class FeedApiTest extends TestCase
     public function test_for_you_ok_with_token(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'U',
             'username' => 'feed_u_'.uniqid(),
             'email' => uniqid('f', true).'@example.com',
             'password' => 'password123',

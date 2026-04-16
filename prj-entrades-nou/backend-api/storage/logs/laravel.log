@@ -17692,3 +17692,64 @@ LINE 1: select * from \"users\" where \"users\".\"id\" = $1 limit 1
 #9 {main}
 "} 
 [2026-04-15 16:39:47] local.INFO: ticketmaster_event_import {"inserted":0,"skipped_no_venue":0,"skipped_existing":105,"pages_fetched":2,"errors":[]} 
+[2026-04-16 14:49:31] testing.WARNING: socket.internal_emit_skipped_no_url {"room":"event:1","event":"SeatStatusUpdated","hint":"Defineix SOCKET_SERVER_INTERNAL_URL (dins Docker: http://socket-server:3001)"} 
+[2026-04-16 14:49:53] testing.INFO: hold.created {"event_id":1,"hold_id":"69e7d10d-7cd7-4648-a184-c9495d5bf556","seat_count":2} 
+[2026-04-16 14:50:01] testing.WARNING: socket.internal_emit_failed {"room":"anon:anon-b","event":"seat:contention","message":"cURL error 28: Resolving timed out after 3013 milliseconds (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-16 14:50:01] testing.INFO: hold.created {"event_id":1,"hold_id":"00f0b975-b76f-4a8a-b0e6-85d4f252149a","seat_count":1} 
+[2026-04-16 14:50:01] testing.INFO: hold.created {"event_id":1,"hold_id":"bcc3c876-0df2-4f50-8a20-9457c257c21d","seat_count":1} 
+[2026-04-16 14:50:04] testing.WARNING: socket.internal_emit_failed {"room":"event:1","event":"countdown:resync","message":"cURL error 6: Could not resolve host: socket-server (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket-server:3001/internal/emit"} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"567eed2b-3790-4d80-8c70-ffb635aa1326","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"bac098c1-1813-450f-8ff3-8abe5ecbfe24","seat_count":2} 
+[2026-04-16 14:50:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"05e39983-0502-452c-8b1b-f9d7a3db11a1","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"9987691d-f3e7-4af5-ba2c-f8ecdc140aba","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"b2ad64e4-a79d-42e6-a0ea-c9ce23726e02","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"67b74022-0233-4bb7-b5ab-1ba38746d496","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: hold.created {"event_id":1,"hold_id":"21622998-bb1b-4022-a578-7f300477c851","seat_count":1} 
+[2026-04-16 14:50:04] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:04] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.INFO: hold.created {"event_id":1,"hold_id":"dd240f66-0a08-43d5-9237-a2cd5ff87396","seat_count":1} 
+[2026-04-16 14:50:08] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:08] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.INFO: ticket.transferred {"ticket_id":"89afe95f-afc6-48ce-a0a6-7849092ddc1c","from_user_id":1,"to_user_id":2} 
+[2026-04-16 14:50:08] testing.INFO: hold.created {"event_id":1,"hold_id":"da78e096-576f-4b4f-8d34-e02314197de4","seat_count":2} 
+[2026-04-16 14:50:08] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:08] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:2","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.WARNING: socket.internal_emit_failed {"room":"user:1","event":"notification:new","message":"cURL error 6: Could not resolve host: socket.test (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://socket.test/internal/emit"} 
+[2026-04-16 14:50:08] testing.INFO: ticket.transferred {"ticket_id":"275a82d6-2d45-42f6-94ab-14866581b244","from_user_id":1,"to_user_id":2} 
+[2026-04-16 14:50:31] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-16 14:50:31] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":4} 
+[2026-04-16 14:50:31] testing.INFO: order.quantity_pending_payment {"order_id":1,"event_id":1,"quantity":3} 
+[2026-04-16 14:50:31] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"f213216d-3f4d-419a-af15-1ef70dcd26a6","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"dbef40b0-c3e7-4d2a-87de-ab47e501f5dc","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"ae6b996d-8a74-4f26-9088-132a0c1523ec","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"56489a3c-328f-49de-8018-d9ef868fe535","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"ff1260c3-d75b-4a62-bdb9-d4f0de090de5","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: hold.created {"event_id":1,"hold_id":"54224cd4-a049-40b0-b59b-761e6ac1d7fb","seat_count":1} 
+[2026-04-16 14:50:43] testing.INFO: order.pending_payment {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: order.paid {"order_id":1,"event_id":1} 
+[2026-04-16 14:50:43] testing.INFO: ticket.validated {"ticket_id":"c982bdaa-fd0b-4fcb-801c-a5cc189e29d7","validator_id":2,"owner_user_id":1} 

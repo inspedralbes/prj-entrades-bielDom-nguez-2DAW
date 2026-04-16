@@ -38,7 +38,7 @@ describe('Auth UI - Login/Register/Checkout', () => {
     })
 
     it('shows register form fields', () => {
-      cy.get('#register-name').should('be.visible')
+      cy.get('#register-username').should('be.visible')
       cy.get('button[type="submit"]').should('contain', 'Crear compte')
     })
   })

@@ -10,7 +10,7 @@ ON CONFLICT (name, guard_name) DO NOTHING;
 -- Usuari de prova (contrasenya: "password") — hash bcrypt estàndard Laravel
 INSERT INTO users (name, username, email, password, created_at, updated_at)
 VALUES (
-    'Test User',
+    NULL,
     'testuser',
     'test@example.com',
     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
@@ -31,7 +31,7 @@ ON CONFLICT (role_id, model_id, model_type) DO NOTHING;
 -- Mateix contingut que database/docker-dev-ensure-admin.sql (s’executa també a cada arrencada de l’API local).
 INSERT INTO users (name, username, email, password, created_at, updated_at)
 VALUES (
-    'Admin TR3',
+    NULL,
     'admin',
     'admin@example.com',
     '$2y$10$0k9c3OaQlZKKFJKSur41XOi1Bp3sWr72wwR1uCNcm5qn22IJsCuNG',

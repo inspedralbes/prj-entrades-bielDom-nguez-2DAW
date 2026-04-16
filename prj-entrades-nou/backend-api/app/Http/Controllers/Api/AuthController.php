@@ -8,7 +8,7 @@ use App\Services\Auth\JwtTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -37,33 +37,26 @@ class AuthController extends Controller
         };
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,username'],
+            'username' => ['required', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('users', 'username')],
             'email' => ['required', 'string', 'email', 'max:255', $emailUniqueRule],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
-            'name.required' => '(El nom és obligatori.)',
-            'name.max' => '(El nom és massa llarg.)',
+            'username.required' => '(El nom d’usuari és obligatori.)',
+            'username.min' => '(El nom d’usuari ha de tenir com a mínim :min caràcters.)',
+            'username.max' => '(El nom d’usuari és massa llarg.)',
+            'username.regex' => '(El nom d’usuari només pot contenir lletres, números, guions i guions baixos.)',
+            'username.unique' => '(Aquest nom d’usuari ja ha estat registrat.)',
             'email.required' => '(El correu electrònic és obligatori.)',
             'email.email' => '(El correu electrònic no és vàlid.)',
             'password.required' => '(La contrasenya és obligatòria.)',
             'password.min' => '(La contrasenya ha de tenir com a mínim :min caràcters.)',
             'password.confirmed' => '(Les contrasenyes no coincideixen.)',
-            'username.max' => '(El nom d’usuari és massa llarg.)',
-            'username.unique' => '(Aquest nom d’usuari ja ha estat registrat.)',
         ]);
 
-        $usernameInput = $validated['username'] ?? '';
-        if (! is_string($usernameInput)) {
-            $usernameInput = '';
-        }
-        $usernameTrim = trim($usernameInput);
-        if ($usernameTrim === '') {
-            $usernameTrim = $this->generateUniqueUsername($validated['name']);
-        }
+        $usernameTrim = trim((string) $validated['username']);
 
         $user = User::query()->create([
-            'name' => $validated['name'],
+            'name' => null,
             'username' => $usernameTrim,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -132,7 +125,7 @@ class AuthController extends Controller
 
         return [
             'id' => $user->id,
-            'name' => $user->name,
+            'name' => $user->profileDisplayName(),
             'username' => $user->username,
             'email' => $user->email,
             'roles' => $roles,
@@ -140,7 +133,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Treu espais accidentals al correu/nom/contrasenyes abans de validar (evita correu «invàlid» o confirmació desalineada).
+     * Normalitza correu i nom d’usuari abans de validar (sense alterar les contrasenyes).
      */
     private function trimRegistrationStrings(Request $request): void
     {
@@ -148,11 +141,6 @@ class AuthController extends Controller
         if (is_string($email)) {
             $request->merge(['email' => strtolower(trim($email))]);
         }
-        $name = $request->input('name');
-        if (is_string($name)) {
-            $request->merge(['name' => trim($name)]);
-        }
-        // No fer trim de contrasenyes: pot alterar caràcters vàlids; el client ja envia el mateix en ambdós camps.
         $password = $request->input('password');
         if (is_int($password) || is_float($password)) {
             $request->merge(['password' => (string) $password]);
@@ -164,33 +152,6 @@ class AuthController extends Controller
         $username = $request->input('username');
         if (is_string($username)) {
             $request->merge(['username' => trim($username)]);
-        }
-    }
-
-    /**
-     * Nom d’usuari intern (BD) quan el registre només envia el nom visible.
-     */
-    private function generateUniqueUsername(string $name): string
-    {
-        $base = Str::slug($name);
-        if ($base === '') {
-            $base = 'usuari';
-        }
-        if (strlen($base) > 200) {
-            $base = substr($base, 0, 200);
-        }
-        $suffix = '';
-        $n = 0;
-        while (true) {
-            $candidate = $base.$suffix;
-            if (strlen($candidate) > 255) {
-                $candidate = substr($candidate, 0, 255);
-            }
-            if (! User::query()->where('username', $candidate)->exists()) {
-                return $candidate;
-            }
-            $n = $n + 1;
-            $suffix = '_'.(string) $n;
         }
     }
 }

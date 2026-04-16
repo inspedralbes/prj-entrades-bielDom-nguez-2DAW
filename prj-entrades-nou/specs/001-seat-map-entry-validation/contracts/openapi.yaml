@@ -1107,10 +1107,8 @@ components:
   schemas:
     RegisterRequest:
       type: object
-      required: [name, username, email, password, password_confirmation]
+      required: [username, email, password, password_confirmation]
       properties:
-        name:
-          type: string
         username:
           type: string
         email:

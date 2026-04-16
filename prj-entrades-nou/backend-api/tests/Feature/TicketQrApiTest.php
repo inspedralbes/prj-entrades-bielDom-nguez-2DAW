@@ -63,7 +63,6 @@ class TicketQrApiTest extends TestCase
         [$token, $ticketId] = $this->createPaidOrderWithTicket();
 
         $other = $this->postJson('/api/auth/register', [
-            'name' => 'Altre',
             'username' => 'altre_qr',
             'email' => 'altre_qr@example.com',
             'password' => 'password123',
@@ -100,7 +99,6 @@ class TicketQrApiTest extends TestCase
     private function createPaidOrderWithTicket(): array
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Comprador QR',
             'username' => 'comp_qr_'.uniqid(),
             'email' => uniqid('c', true).'@example.com',
             'password' => 'password123',

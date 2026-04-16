@@ -27,23 +27,6 @@
 
         <template v-if="isRegister">
           <div class="login-page__field">
-            <label class="login-page__label" :for="fieldId('name')">Nom</label>
-            <div class="login-page__input-wrap">
-              <span class="material-symbols-outlined login-page__ico" aria-hidden="true">person</span>
-              <input
-                :id="fieldId('name')"
-                v-model="form.name"
-                type="text"
-                autocomplete="name"
-                class="login-page__input"
-                :class="{ 'login-page__input--err': fieldErrorText('name') }"
-                placeholder="El teu nom"
-              />
-            </div>
-            <p v-if="fieldErrorText('name')" class="login-page__err">{{ fieldErrorText('name') }}</p>
-          </div>
-
-          <div class="login-page__field">
             <label class="login-page__label" :for="fieldId('username')">Nom d’usuari</label>
             <div class="login-page__input-wrap">
               <span class="material-symbols-outlined login-page__ico" aria-hidden="true">badge</span>
@@ -54,10 +37,10 @@
                 autocomplete="username"
                 class="login-page__input"
                 :class="{ 'login-page__input--err': fieldErrorText('username') }"
-                placeholder="Opcional; es genera un de únic si el deixes buit"
+                placeholder="Lletres, números, _ i - (mín. 3)"
               />
             </div>
-            <p class="login-page__hint">Opcional. Si el deixes buit, en crearem un a partir del teu nom.</p>
+            <p class="login-page__hint">Mínim 3 caràcters; només lletres, números, guió baix i guió.</p>
             <p v-if="fieldErrorText('username')" class="login-page__err">{{ fieldErrorText('username') }}</p>
           </div>
         </template>
@@ -229,7 +212,6 @@ const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 
 const form = ref({
-  name: '',
   username: '',
   email: '',
   password: '',
@@ -444,15 +426,39 @@ const handleSubmit = async () => {
         loading.value = false
         return
       }
+      const usernameTrim = (form.value.username || '').trim()
+      if (usernameTrim.length < 3) {
+        errors.value = {
+          username: '(El nom d’usuari ha de tenir com a mínim 3 caràcters.)',
+        }
+        loading.value = false
+        return
+      }
+      let okUser = true
+      let ui = 0
+      for (; ui < usernameTrim.length; ui = ui + 1) {
+        const ch = usernameTrim.charAt(ui)
+        const isAz = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+        const is09 = ch >= '0' && ch <= '9'
+        const isUnd = ch === '_'
+        const isDash = ch === '-'
+        if (!isAz && !is09 && !isUnd && !isDash) {
+          okUser = false
+          break
+        }
+      }
+      if (!okUser) {
+        errors.value = {
+          username: '(El nom d’usuari només pot contenir lletres, números, guions i guions baixos.)',
+        }
+        loading.value = false
+        return
+      }
       body = {
-        name: (form.value.name || '').trim(),
+        username: usernameTrim,
         email: (form.value.email || '').trim().toLowerCase(),
         password: pw,
         password_confirmation: pwc,
-      }
-      const usernameTrim = (form.value.username || '').trim()
-      if (usernameTrim.length > 0) {
-        body.username = usernameTrim
       }
     } else {
       body = {

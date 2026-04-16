@@ -19,7 +19,6 @@ describe('API — validation scan (T030)', () => {
   it('retorna 403 si l’usuari no és validador', () => {
     const u = `cy_val_blk_${Date.now()}`;
     cy.request('POST', `${api}/api/auth/register`, {
-      name: 'Cy buyer',
       username: u,
       email: `${u}@example.com`,
       password: 'password12345',

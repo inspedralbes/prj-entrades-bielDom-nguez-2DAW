@@ -33,7 +33,6 @@ class TicketsListApiTest extends TestCase
     public function test_list_empty_for_new_user(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Sense entrades',
             'username' => 'sense_entrades',
             'email' => 'sense@example.com',
             'password' => 'password123',
@@ -52,7 +51,6 @@ class TicketsListApiTest extends TestCase
     public function test_list_returns_ticket_after_paid_order(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Amb entrada',
             'username' => 'amb_entrada',
             'email' => 'amb@example.com',
             'password' => 'password123',
@@ -109,7 +107,6 @@ class TicketsListApiTest extends TestCase
     public function test_list_does_not_include_other_users_tickets(): void
     {
         $reg = $this->postJson('/api/auth/register', [
-            'name' => 'Usuari A',
             'username' => 'user_a_list',
             'email' => 'a_list@example.com',
             'password' => 'password123',
@@ -138,7 +135,6 @@ class TicketsListApiTest extends TestCase
         ])->assertOk();
 
         $regB = $this->postJson('/api/auth/register', [
-            'name' => 'Usuari B',
             'username' => 'user_b_list',
             'email' => 'b_list@example.com',
             'password' => 'password123',

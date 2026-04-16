@@ -63,13 +63,13 @@
         Cerca
       </h2>
       <div class="adm-us__disc-row">
-        <label class="adm-us__sr-only" for="us-q">Cerca per nom o correu</label>
+        <label class="adm-us__sr-only" for="us-q">Cerca per usuari o correu</label>
         <input
           id="us-q"
           v-model="searchQ"
           type="search"
           class="adm-us__disc-input"
-          placeholder="Nom o correu…"
+          placeholder="Usuari o correu…"
           @keydown.enter.prevent="loadUsers"
         >
         <button type="button" class="adm-us__disc-btn" :disabled="listPending" @click="loadUsers">
@@ -115,12 +115,12 @@
                 <div class="adm-us__detail">
                   <div class="adm-us__thumb-wrap">
                     <div class="adm-us__avatar-fallback" aria-hidden="true">
-                      {{ initialsFromName(u.name) }}
+                      {{ initialsFromUser(u) }}
                     </div>
                   </div>
                   <div>
                     <p class="adm-us__ev-name">
-                      {{ u.name }}
+                      {{ userDisplayLabel(u) }}
                     </p>
                     <p class="adm-us__ev-id">
                       ID {{ u.id }} · {{ u.email || '—' }}
@@ -214,8 +214,8 @@
           </p>
           <div class="admin-form-stack">
             <div class="admin-form-field">
-              <label class="admin-form-label" for="create-name">Nom</label>
-              <input id="create-name" v-model="createForm.name" type="text" class="admin-form-input" autocomplete="name">
+              <label class="admin-form-label" for="create-username">Nom d’usuari</label>
+              <input id="create-username" v-model="createForm.username" type="text" class="admin-form-input" autocomplete="username">
             </div>
             <div class="admin-form-field">
               <label class="admin-form-label" for="create-email">Email</label>
@@ -264,8 +264,8 @@
           </p>
           <div class="admin-form-stack">
             <div class="admin-form-field">
-              <label class="admin-form-label" for="edit-name">Nom</label>
-              <input id="edit-name" v-model="editForm.name" type="text" class="admin-form-input" autocomplete="name">
+              <label class="admin-form-label" for="edit-username">Nom d’usuari</label>
+              <input id="edit-username" v-model="editForm.username" type="text" class="admin-form-input" autocomplete="username">
             </div>
             <div class="admin-form-field">
               <label class="admin-form-label" for="edit-email">Email</label>
@@ -395,7 +395,7 @@ const createModalOpen = ref(false);
 const createPending = ref(false);
 const createErr = ref('');
 const createForm = reactive({
-  name: '',
+  username: '',
   email: '',
   password: '',
   role: 'user',
@@ -405,7 +405,7 @@ const editUserId = ref(null);
 const editPending = ref(false);
 const editErr = ref('');
 const editForm = reactive({
-  name: '',
+  username: '',
   email: '',
   role: 'user',
 });
@@ -521,6 +521,29 @@ function initialsFromName (name) {
   return (a + b).toUpperCase();
 }
 
+function userDisplayLabel (u) {
+  if (!u) {
+    return '—';
+  }
+  if (u.username && String(u.username).trim() !== '') {
+    return '@' + String(u.username).trim();
+  }
+  if (u.name && String(u.name).trim() !== '') {
+    return String(u.name).trim();
+  }
+  return '—';
+}
+
+function initialsFromUser (u) {
+  let src = '';
+  if (u && u.username && String(u.username).trim() !== '') {
+    src = String(u.username).trim();
+  } else if (u && u.name && String(u.name).trim() !== '') {
+    src = String(u.name).trim();
+  }
+  return initialsFromName(src);
+}
+
 function formatShortTime (iso) {
   if (!iso) {
     return '';
@@ -617,19 +640,19 @@ function closeCreate () {
 
 async function submitCreate () {
   createErr.value = '';
-  if (!createForm.name.trim() || !createForm.email.trim() || createForm.password.length < 8) {
-    createErr.value = 'Nom, email i contrasenya (mín. 8) obligatoris.';
+  if (!createForm.username.trim() || !createForm.email.trim() || createForm.password.length < 8) {
+    createErr.value = 'Nom d’usuari, email i contrasenya (mín. 8) obligatoris.';
     return;
   }
   createPending.value = true;
   try {
     await postJson('/api/admin/users', {
-      name: createForm.name.trim(),
+      username: createForm.username.trim(),
       email: createForm.email.trim(),
       password: createForm.password,
       role: createForm.role,
     });
-    createForm.name = '';
+    createForm.username = '';
     createForm.email = '';
     createForm.password = '';
     closeCreate();
@@ -650,7 +673,7 @@ function openEdit (u) {
   ordersUserId.value = null;
   editErr.value = '';
   editUserId.value = u.id;
-  editForm.name = u.name || '';
+  editForm.username = u.username || '';
   editForm.email = u.email || '';
   editForm.role = singleRoleFromUser(u);
 }
@@ -662,14 +685,14 @@ function closeEdit () {
 
 async function submitEdit () {
   editErr.value = '';
-  if (!editForm.name.trim() || !editForm.email.trim()) {
-    editErr.value = 'Nom i email obligatoris.';
+  if (!editForm.username.trim() || !editForm.email.trim()) {
+    editErr.value = 'Nom d’usuari i email obligatoris.';
     return;
   }
   editPending.value = true;
   try {
     await patchJson(`/api/admin/users/${editUserId.value}`, {
-      name: editForm.name.trim(),
+      username: editForm.username.trim(),
       email: editForm.email.trim(),
       role: editForm.role,
     });
@@ -706,7 +729,7 @@ async function removeUser (id) {
 
 async function openOrders (u) {
   editUserId.value = null;
-  ordersContextName.value = u.name || '';
+  ordersContextName.value = userDisplayLabel(u);
   ordersContextEmail.value = u.email || '';
   ordersUserId.value = u.id;
   ordersErr.value = '';

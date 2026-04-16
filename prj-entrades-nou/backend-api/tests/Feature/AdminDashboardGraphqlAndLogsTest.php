@@ -104,7 +104,7 @@ class AdminDashboardGraphqlAndLogsTest extends TestCase
 
         $logs->assertOk();
         $logs->assertJsonPath('meta.per_page', 10);
-        $logs->assertJsonPath('data.0.admin_name', $admin->name);
+        $logs->assertJsonPath('data.0.admin_name', $admin->profileDisplayName());
         $logs->assertJsonPath('data.0.summary', fn ($s) => is_string($s) && str_contains($s, 'actualitzat'));
     }
 }

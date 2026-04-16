@@ -9,7 +9,6 @@ describe('API — auth', () => {
       method: 'POST',
       url: api + '/api/auth/register',
       body: {
-        name: 'Cypress',
         username,
         email,
         password: 'password12345',

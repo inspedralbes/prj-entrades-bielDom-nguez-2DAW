@@ -97,7 +97,10 @@
           </dl>
         </section>
 
-        <div class="event-map" v-if="event.venue?.map_lat && event.venue?.map_lng">
+        <div
+          class="event-map"
+          v-if="event.venue && venueHasMapCoords(event.venue)"
+        >
           <p v-if="mapError" class="map-err">{{ mapError }}</p>
           <div class="event-map-stack">
             <div class="event-map-filter">
@@ -138,7 +141,7 @@
               <p v-if="event.venue?.address" class="map-address">{{ event.venue.address }}</p>
               <p v-if="event.venue?.city" class="map-city">{{ event.venue.city }}</p>
               <a
-                v-if="event.venue?.map_lat && event.venue?.map_lng"
+                v-if="event.venue && venueHasMapCoords(event.venue)"
                 :href="googleMapsUrl"
                 target="_blank"
                 rel="noopener"
@@ -193,7 +196,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useGoogleMapsLoader } from '~/composables/useGoogleMapsLoader';
@@ -278,6 +281,8 @@ let miniMap = null;
 let modalMap = null;
 let miniMarker = null;
 let modalMarker = null;
+/** Per tornar a calcular el tile canvas quan el contenidor passa de 0×0 a mida real (SSR / layout). */
+let miniMapResizeObserver = null;
 
 const friendQuery = ref('');
 const shareFriends = ref([]);
@@ -295,8 +300,30 @@ const copyActionLabel = computed(() => {
   return 'Copiar enllaç';
 });
 
+function venueHasMapCoords (venue) {
+  if (!venue) {
+    return false;
+  }
+  const lat = venue.map_lat;
+  const lng = venue.map_lng;
+  if (lat === undefined || lat === null || lng === undefined || lng === null) {
+    return false;
+  }
+  const ls = String(lat).trim();
+  const gs = String(lng).trim();
+  if (ls === '' || gs === '') {
+    return false;
+  }
+  const ln = Number(ls);
+  const gn = Number(gs);
+  if (Number.isNaN(ln) || Number.isNaN(gn)) {
+    return false;
+  }
+  return true;
+}
+
 const googleMapsUrl = computed(() => {
-  if (!event.value?.venue?.map_lat || !event.value?.venue?.map_lng) {
+  if (!event.value?.venue || !venueHasMapCoords(event.value.venue)) {
     return '';
   }
   const { map_lat, map_lng, name } = event.value.venue;
@@ -543,6 +570,60 @@ function venueMarkerIcon () {
   };
 }
 
+function detachMiniMapResizeObserver () {
+  if (miniMapResizeObserver !== null) {
+    miniMapResizeObserver.disconnect();
+    miniMapResizeObserver = null;
+  }
+}
+
+function attachMiniMapResizeObserver () {
+  detachMiniMapResizeObserver();
+  if (typeof ResizeObserver === 'undefined') {
+    return;
+  }
+  if (!miniMapEl.value || !miniMap) {
+    return;
+  }
+  miniMapResizeObserver = new ResizeObserver(() => {
+    if (!miniMap) {
+      return;
+    }
+    window.google.maps.event.trigger(miniMap, 'resize');
+    const p = venuePosition();
+    if (p) {
+      miniMap.setCenter(p);
+    }
+  });
+  miniMapResizeObserver.observe(miniMapEl.value);
+}
+
+function scheduleMiniMapResize () {
+  if (!miniMap) {
+    return;
+  }
+  const p = venuePosition();
+  if (!p) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      if (!miniMap) {
+        return;
+      }
+      window.google.maps.event.trigger(miniMap, 'resize');
+      miniMap.setCenter(p);
+    });
+  });
+  setTimeout(() => {
+    if (!miniMap) {
+      return;
+    }
+    window.google.maps.event.trigger(miniMap, 'resize');
+    miniMap.setCenter(p);
+  }, 280);
+}
+
 async function initMaps () {
   mapError.value = '';
   if (!miniMapEl.value) {
@@ -574,7 +655,8 @@ async function initMaps () {
         icon: venueMarkerIcon(),
       });
     }
-    window.google.maps.event.trigger(miniMap, 'resize');
+    scheduleMiniMapResize();
+    attachMiniMapResizeObserver();
     return;
   }
 
@@ -594,7 +676,8 @@ async function initMaps () {
   });
 
   window.google.maps.event.addListenerOnce(miniMap, 'idle', () => {
-    window.google.maps.event.trigger(miniMap, 'resize');
+    scheduleMiniMapResize();
+    attachMiniMapResizeObserver();
   });
 }
 
@@ -658,11 +741,34 @@ watch(showMapModal, (val) => {
 });
 
 watch(
+  () => [
+    pending.value,
+    event.value && event.value.venue ? event.value.venue.map_lat : null,
+    event.value && event.value.venue ? event.value.venue.map_lng : null,
+  ],
+  () => {
+    if (pending.value) {
+      return;
+    }
+    if (!event.value || !event.value.venue || !venueHasMapCoords(event.value.venue)) {
+      return;
+    }
+    void nextTick(() => {
+      window.requestAnimationFrame(() => {
+        void initMaps();
+      });
+    });
+  },
+  { flush: 'post' },
+);
+
+watch(
   () => (Array.isArray(route.params.eventId) ? route.params.eventId[0] : route.params.eventId),
   async (newId, oldId) => {
     if (!newId || String(newId) === String(oldId)) {
       return;
     }
+    detachMiniMapResizeObserver();
     miniMap = null;
     modalMap = null;
     miniMarker = null;
@@ -672,10 +778,6 @@ watch(
     if (event.value) {
       await applyPendingSaveIfNeeded();
       await syncSavedState();
-      await nextTick();
-      setTimeout(() => {
-        initMaps();
-      }, 150);
     }
   },
 );
@@ -685,11 +787,11 @@ onMounted(async () => {
   if (event.value) {
     await applyPendingSaveIfNeeded();
     await syncSavedState();
-    await nextTick();
-    setTimeout(() => {
-      initMaps();
-    }, 100);
   }
+});
+
+onUnmounted(() => {
+  detachMiniMapResizeObserver();
 });
 </script>
 
