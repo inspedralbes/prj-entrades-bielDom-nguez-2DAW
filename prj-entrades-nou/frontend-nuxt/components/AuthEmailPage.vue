@@ -161,6 +161,7 @@ import { nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js'
+import { rolesIncludeAdmin } from '~/utils/userRoles.js'
 
 const props = defineProps({
   mode: {
@@ -507,38 +508,30 @@ const handleSubmit = async () => {
       if (Array.isArray(redirect)) {
         redirect = redirect[0] || ''
       }
-      if (typeof redirect !== 'string' || redirect.length === 0) {
-        let isAdmin = false
-        const r = res.user && res.user.roles
-        if (r && Array.isArray(r)) {
-          let i = 0
-          for (; i < r.length; i++) {
-            if (r[i] === 'admin') {
-              isAdmin = true
-              break
-            }
-          }
-        }
-        if (isAdmin) {
-          redirect = '/admin'
-        } else {
-          if (isRegister.value) {
-            redirect = '/'
-          } else {
-            redirect = '/tickets'
-          }
-        }
+
+      const isAdminUser = res.user && rolesIncludeAdmin(res.user.roles)
+
+      if (isAdminUser) {
+        redirect = '/admin'
       } else {
-        try {
-          redirect = decodeURIComponent(redirect)
-        } catch {
-          /* URL ja vàlida sense codificar */
-        }
-        if (!isSafeInternalRedirectPath(redirect)) {
+        if (typeof redirect !== 'string' || redirect.length === 0) {
           if (isRegister.value) {
             redirect = '/'
           } else {
             redirect = '/tickets'
+          }
+        } else {
+          try {
+            redirect = decodeURIComponent(redirect)
+          } catch {
+            /* URL ja vàlida sense codificar */
+          }
+          if (!isSafeInternalRedirectPath(redirect)) {
+            if (isRegister.value) {
+              redirect = '/'
+            } else {
+              redirect = '/tickets'
+            }
           }
         }
       }

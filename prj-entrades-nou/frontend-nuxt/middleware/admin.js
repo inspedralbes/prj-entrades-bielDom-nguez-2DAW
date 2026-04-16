@@ -1,21 +1,7 @@
 import { useAuthStore } from '~/stores/auth';
 import { resolveApiBaseUrlForFetch } from '~/utils/apiBase';
 import { getForbiddenRedirectPath } from '~/utils/routeForbiddenRedirect';
-
-/**
- * Comprova si la llista de rols (p. ex. des de /api/auth/me) inclou «admin».
- */
-function rolesIncludeAdmin (roles) {
-  if (!roles || !Array.isArray(roles)) {
-    return false;
-  }
-  for (let i = 0; i < roles.length; i++) {
-    if (roles[i] === 'admin') {
-      return true;
-    }
-  }
-  return false;
-}
+import { rolesIncludeAdmin } from '~/utils/userRoles';
 
 /**
  * Només rols amb «admin» (Spatie) poden accedir a /admin/*.

@@ -84,6 +84,7 @@ import { useRoute } from 'vue-router';
 import SocialToastStack from '~/components/SocialToastStack.vue';
 import { usePrivateTicketSocket } from '~/composables/usePrivateTicketSocket';
 import { useAuthStore } from '~/stores/auth';
+import { rolesIncludeAdmin } from '~/utils/userRoles';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
 import { useSocialThreadMutesStore } from '~/stores/socialThreadMutes';
 
@@ -92,13 +93,7 @@ const socialThreadMutes = useSocialThreadMutesStore();
 usePrivateTicketSocket();
 
 const showAdminLink = computed(() => {
-  const roles = auth.user && Array.isArray(auth.user.roles) ? auth.user.roles : [];
-  for (let i = 0; i < roles.length; i++) {
-    if (roles[i] === 'admin') {
-      return true;
-    }
-  }
-  return false;
+  return rolesIncludeAdmin(auth.user && auth.user.roles ? auth.user.roles : []);
 });
 
 const route = useRoute();

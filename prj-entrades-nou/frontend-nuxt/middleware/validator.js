@@ -1,18 +1,7 @@
 import { useAuthStore } from '~/stores/auth';
 import { resolveApiBaseUrlForFetch } from '~/utils/apiBase';
 import { getForbiddenRedirectPath } from '~/utils/routeForbiddenRedirect';
-
-function rolesIncludeValidator (roles) {
-  if (!roles || !Array.isArray(roles)) {
-    return false;
-  }
-  for (let i = 0; i < roles.length; i++) {
-    if (roles[i] === 'validator') {
-      return true;
-    }
-  }
-  return false;
-}
+import { rolesIncludeValidator } from '~/utils/userRoles';
 
 /**
  * Rutes de validació d’entrades: cal rol «validator».
