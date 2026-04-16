@@ -21,20 +21,36 @@ class AuthController extends Controller
     {
         $this->trimRegistrationStrings($request);
 
+        // Unicitat de correu insensible a majúscules (coherent amb el login per LOWER(email)).
+        $emailUniqueRule = function (string $attribute, mixed $value, \Closure $fail): void {
+            if (! is_string($value)) {
+                return;
+            }
+            $needle = strtolower(trim($value));
+            if ($needle === '') {
+                return;
+            }
+            $exists = User::query()->whereRaw('LOWER(email) = ?', [$needle])->exists();
+            if ($exists) {
+                $fail('(Aquest correu ja ha estat registrat.)');
+            }
+        };
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,username'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email', 'max:255', $emailUniqueRule],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
-            'name.required' => 'El nom és obligatori.',
-            'email.required' => 'El correu electrònic és obligatori.',
-            'email.email' => 'El correu electrònic no és vàlid.',
-            'email.unique' => 'Aquest correu ja està registrat.',
-            'password.required' => 'La contrasenya és obligatòria.',
-            'password.min' => 'La contrasenya ha de tenir com a mínim :min caràcters.',
-            'password.confirmed' => 'La confirmació de la contrasenya no coincideix.',
-            'username.unique' => 'Aquest nom d’usuari ja està en ús.',
+            'name.required' => '(El nom és obligatori.)',
+            'name.max' => '(El nom és massa llarg.)',
+            'email.required' => '(El correu electrònic és obligatori.)',
+            'email.email' => '(El correu electrònic no és vàlid.)',
+            'password.required' => '(La contrasenya és obligatòria.)',
+            'password.min' => '(La contrasenya ha de tenir com a mínim :min caràcters.)',
+            'password.confirmed' => '(Les contrasenyes no coincideixen.)',
+            'username.max' => '(El nom d’usuari és massa llarg.)',
+            'username.unique' => '(Aquest nom d’usuari ja ha estat registrat.)',
         ]);
 
         $usernameInput = $validated['username'] ?? '';
@@ -130,7 +146,7 @@ class AuthController extends Controller
     {
         $email = $request->input('email');
         if (is_string($email)) {
-            $request->merge(['email' => trim($email)]);
+            $request->merge(['email' => strtolower(trim($email))]);
         }
         $name = $request->input('name');
         if (is_string($name)) {

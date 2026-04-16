@@ -54,37 +54,23 @@ const savedEventsStore = useSavedEventsStore();
 const loading = ref(true);
 const error = ref('');
 const featured = ref([]);
-/* Fins al client (post-init), mateix text que SSR: evita mismatch d’hidratació si la cookie JWT arriba només al navegador. */
-const homeUiReady = ref(false);
+
+const authTokenCookie = useCookie('auth_token');
+const hasAuthCookie = computed(() => {
+  const v = authTokenCookie.value;
+  return typeof v === 'string' && v.trim().length > 0;
+});
 
 const homeTitle = computed(() => {
-  if (!homeUiReady.value) {
-    return 'Esdeveniments';
-  }
-  if (auth.token) {
-    return 'Destacats';
-  }
-  return 'Esdeveniments';
+  return hasAuthCookie.value ? 'Destacats' : 'Esdeveniments';
 });
 
 const homeLeadIsFeatured = computed(() => {
-  if (!homeUiReady.value) {
-    return false;
-  }
-  if (auth.token) {
-    return true;
-  }
-  return false;
+  return hasAuthCookie.value;
 });
 
 const homeListSr = computed(() => {
-  if (!homeUiReady.value) {
-    return 'Llista d’esdeveniments';
-  }
-  if (auth.token) {
-    return 'Llista de destacats';
-  }
-  return 'Llista d’esdeveniments';
+  return hasAuthCookie.value ? 'Llista de destacats' : 'Llista d\'esdeveniments';
 });
 
 async function loadSaved () {
@@ -114,7 +100,6 @@ async function fetchFeatured () {
 
 onMounted(async () => {
   auth.init();
-  homeUiReady.value = true;
   loading.value = true;
   error.value = '';
   try {

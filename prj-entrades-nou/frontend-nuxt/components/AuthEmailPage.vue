@@ -36,11 +36,29 @@
                 type="text"
                 autocomplete="name"
                 class="login-page__input"
-                :class="{ 'login-page__input--err': errors.name }"
+                :class="{ 'login-page__input--err': fieldErrorText('name') }"
                 placeholder="El teu nom"
               />
             </div>
-            <p v-if="errors.name" class="login-page__err">{{ errors.name }}</p>
+            <p v-if="fieldErrorText('name')" class="login-page__err">{{ fieldErrorText('name') }}</p>
+          </div>
+
+          <div class="login-page__field">
+            <label class="login-page__label" :for="fieldId('username')">Nom d’usuari</label>
+            <div class="login-page__input-wrap">
+              <span class="material-symbols-outlined login-page__ico" aria-hidden="true">badge</span>
+              <input
+                :id="fieldId('username')"
+                v-model="form.username"
+                type="text"
+                autocomplete="username"
+                class="login-page__input"
+                :class="{ 'login-page__input--err': fieldErrorText('username') }"
+                placeholder="Opcional; es genera un de únic si el deixes buit"
+              />
+            </div>
+            <p class="login-page__hint">Opcional. Si el deixes buit, en crearem un a partir del teu nom.</p>
+            <p v-if="fieldErrorText('username')" class="login-page__err">{{ fieldErrorText('username') }}</p>
           </div>
         </template>
 
@@ -54,11 +72,11 @@
               type="email"
               autocomplete="email"
               class="login-page__input"
-              :class="{ 'login-page__input--err': errors.email }"
+              :class="{ 'login-page__input--err': fieldErrorText('email') }"
               placeholder="nom@domini.com"
             />
           </div>
-          <p v-if="errors.email" class="login-page__err">{{ errors.email }}</p>
+          <p v-if="fieldErrorText('email')" class="login-page__err">{{ fieldErrorText('email') }}</p>
         </div>
 
         <div class="login-page__field">
@@ -73,7 +91,7 @@
               :autocomplete="isRegister ? 'new-password' : 'current-password'"
               :minlength="isRegister ? 8 : undefined"
               class="login-page__input login-page__input--pwd"
-              :class="{ 'login-page__input--err': errors.password }"
+              :class="{ 'login-page__input--err': fieldErrorText('password') }"
               placeholder="••••••••"
             />
             <button
@@ -86,7 +104,7 @@
             </button>
           </div>
           <p v-if="isRegister" class="login-page__hint">Mínim 8 caràcters.</p>
-          <p v-if="errors.password" class="login-page__err">{{ errors.password }}</p>
+          <p v-if="fieldErrorText('password')" class="login-page__err">{{ fieldErrorText('password') }}</p>
         </div>
 
         <template v-if="isRegister">
@@ -102,7 +120,7 @@
                 autocomplete="new-password"
                 minlength="8"
                 class="login-page__input login-page__input--pwd"
-                :class="{ 'login-page__input--err': errors.password_confirmation }"
+                :class="{ 'login-page__input--err': fieldErrorText('password_confirmation') }"
                 placeholder="••••••••"
               />
               <button
@@ -114,7 +132,7 @@
                 <span class="material-symbols-outlined" aria-hidden="true">{{ showPasswordConfirmIcon }}</span>
               </button>
             </div>
-            <p v-if="errors.password_confirmation" class="login-page__err">{{ errors.password_confirmation }}</p>
+            <p v-if="fieldErrorText('password_confirmation')" class="login-page__err">{{ fieldErrorText('password_confirmation') }}</p>
           </div>
         </template>
 
@@ -212,6 +230,7 @@ const showPasswordConfirm = ref(false)
 
 const form = ref({
   name: '',
+  username: '',
   email: '',
   password: '',
   password_confirmation: '',
@@ -242,34 +261,116 @@ const submitLabel = computed(() => {
 })
 
 /**
- * Laravel retorna errors per camp com a array de strings; la plantilla necessita un string per missatge.
+ * Converteix qualsevol valor d’error de Laravel (string, array, objecte anidat) en una sola línia de text per mostrar-la sota el camp.
+ */
+function fieldErrorToString (v) {
+  if (v === null || v === undefined) {
+    return ''
+  }
+  if (typeof v === 'string') {
+    const t = v.trim()
+    return t
+  }
+  if (typeof v === 'number' || typeof v === 'boolean') {
+    return String(v)
+  }
+  if (Array.isArray(v)) {
+    let i = 0
+    for (; i < v.length; i = i + 1) {
+      const s = fieldErrorToString(v[i])
+      if (s.length > 0) {
+        return s
+      }
+    }
+    return ''
+  }
+  if (typeof v === 'object') {
+    if (typeof v.message === 'string' && v.message.trim().length > 0) {
+      return v.message.trim()
+    }
+    const keys = Object.keys(v)
+    let j = 0
+    for (; j < keys.length; j = j + 1) {
+      const s = fieldErrorToString(v[keys[j]])
+      if (s.length > 0) {
+        return s
+      }
+    }
+    return ''
+  }
+  return ''
+}
+
+/**
+ * Laravel envia `errors` com a objecte de claus → arrays de missatges; normalitzem a un string per clau.
  */
 function normalizeLaravelErrors (raw) {
   const out = {}
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return out
   }
   const keys = Object.keys(raw)
   for (let i = 0; i < keys.length; i = i + 1) {
     const k = keys[i]
-    const v = raw[k]
-    if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'string') {
-      out[k] = v[0]
-      continue
-    }
-    if (typeof v === 'string') {
-      out[k] = v
+    const line = fieldErrorToString(raw[k])
+    if (line.length > 0) {
+      out[k] = line
     }
   }
   return out
 }
 
-function extract422Payload (err) {
-  if (err && err.data && typeof err.data === 'object') {
-    return err.data
+function fieldErrorText (key) {
+  return fieldErrorToString(errors.value[key])
+}
+
+function tryParseJsonBody (body) {
+  if (typeof body !== 'string') {
+    return null
   }
-  if (err && err.response && err.response._data && typeof err.response._data === 'object') {
-    return err.response._data
+  const t = body.trim()
+  if (t.length === 0) {
+    return null
+  }
+  const c0 = t.charAt(0)
+  if (c0 !== '{' && c0 !== '[') {
+    return null
+  }
+  try {
+    const parsed = JSON.parse(t)
+    if (parsed && typeof parsed === 'object') {
+      return parsed
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+function extract422Payload (err) {
+  if (!err) {
+    return null
+  }
+  const candidates = []
+  if (typeof err.data !== 'undefined') {
+    candidates.push(err.data)
+  }
+  if (err.response && typeof err.response._data !== 'undefined') {
+    candidates.push(err.response._data)
+  }
+  if (typeof err._data !== 'undefined') {
+    candidates.push(err._data)
+  }
+  let idx = 0
+  for (; idx < candidates.length; idx = idx + 1) {
+    const c = candidates[idx]
+    if (typeof c === 'object' && c !== null && !Array.isArray(c)) {
+      return c
+    }
+    const parsed = tryParseJsonBody(c)
+    if (parsed !== null) {
+      return parsed
+    }
   }
   return null
 }
@@ -324,34 +425,38 @@ const handleSubmit = async () => {
       const pwc = String(form.value.password_confirmation ?? '')
       if (pw.length < 8) {
         errors.value = {
-          password: 'La contrasenya ha de tenir com a mínim 8 caràcters.',
+          password: '(La contrasenya ha de tenir com a mínim 8 caràcters.)',
         }
         loading.value = false
         return
       }
       if (pwc.length < 8) {
         errors.value = {
-          password_confirmation: 'La confirmació ha de tenir com a mínim 8 caràcters.',
+          password_confirmation: '(La confirmació ha de tenir com a mínim 8 caràcters.)',
         }
         loading.value = false
         return
       }
       if (pw !== pwc) {
         errors.value = {
-          password_confirmation: 'La confirmació de la contrasenya no coincideix.',
+          password_confirmation: '(Les contrasenyes no coincideixen.)',
         }
         loading.value = false
         return
       }
       body = {
         name: (form.value.name || '').trim(),
-        email: (form.value.email || '').trim(),
+        email: (form.value.email || '').trim().toLowerCase(),
         password: pw,
         password_confirmation: pwc,
       }
+      const usernameTrim = (form.value.username || '').trim()
+      if (usernameTrim.length > 0) {
+        body.username = usernameTrim
+      }
     } else {
       body = {
-        email: (form.value.email || '').trim(),
+        email: (form.value.email || '').trim().toLowerCase(),
         password: String(form.value.password ?? '').trim(),
       }
     }
@@ -402,13 +507,18 @@ const handleSubmit = async () => {
     }
   } catch (err) {
     const payload = extract422Payload(err)
-    if (payload && payload.errors) {
+    error.value = ''
+    if (payload && payload.errors && typeof payload.errors === 'object' && !Array.isArray(payload.errors)) {
       errors.value = normalizeLaravelErrors(payload.errors)
       const ek = Object.keys(errors.value)
-      if (ek.length === 0 && payload.message && typeof payload.message === 'string') {
-        error.value = payload.message
+      if (ek.length === 0) {
+        if (payload.message && typeof payload.message === 'string') {
+          error.value = payload.message
+        } else {
+          error.value = 'No s’han pogut mostrar els errors del formulari. Torna a intentar.'
+        }
       }
-    } else if (payload && payload.message) {
+    } else if (payload && payload.message && typeof payload.message === 'string') {
       error.value = payload.message
     } else {
       error.value = 'Error de connexió. Torna a intentar.'
