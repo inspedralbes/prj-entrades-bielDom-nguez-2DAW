@@ -158,6 +158,7 @@
 
 <script setup>
 import { nextTick, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js'
 
@@ -172,6 +173,7 @@ const props = defineProps({
 })
 
 const route = useRoute()
+const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 const apiUrl = computed(() => {
   return resolvePublicApiBaseUrl(runtimeConfig.public.apiUrl).replace(/\/$/, '')
@@ -197,6 +199,20 @@ useHead({
 const isRegister = computed(() => {
   return props.mode === 'register'
 })
+
+/** Evita redireccions obertes (p. ex. `//fora.com`). */
+function isSafeInternalRedirectPath (s) {
+  if (typeof s !== 'string' || s.length < 1) {
+    return false
+  }
+  if (s.charAt(0) !== '/') {
+    return false
+  }
+  if (s.length > 1 && s.charAt(1) === '/') {
+    return false
+  }
+  return true
+}
 
 function fieldId (suffix) {
   if (props.mode === 'register') {
@@ -475,9 +491,17 @@ const handleSubmit = async () => {
       },
     })
 
-    if (res.token) {
+    let sessionToken = ''
+    if (res && typeof res === 'object') {
+      const t = res.token
+      if (typeof t === 'string') {
+        sessionToken = t.trim()
+      }
+    }
+
+    if (sessionToken.length > 0) {
       const auth = useAuthStore()
-      auth.setSession({ token: res.token, user: res.user })
+      auth.setSession({ token: sessionToken, user: res.user })
 
       let redirect = route.query.redirect
       if (Array.isArray(redirect)) {
@@ -498,7 +522,11 @@ const handleSubmit = async () => {
         if (isAdmin) {
           redirect = '/admin'
         } else {
-          redirect = '/tickets'
+          if (isRegister.value) {
+            redirect = '/'
+          } else {
+            redirect = '/tickets'
+          }
         }
       } else {
         try {
@@ -506,10 +534,22 @@ const handleSubmit = async () => {
         } catch {
           /* URL ja vàlida sense codificar */
         }
+        if (!isSafeInternalRedirectPath(redirect)) {
+          if (isRegister.value) {
+            redirect = '/'
+          } else {
+            redirect = '/tickets'
+          }
+        }
       }
 
       await nextTick()
-      await navigateTo(redirect, { replace: true })
+      const navResult = await navigateTo(redirect, { replace: true })
+      if (navResult === false) {
+        await router.replace(redirect)
+      }
+    } else {
+      error.value = 'Resposta del servidor sense token de sessió. Torna a intentar o contacta suport.'
     }
   } catch (err) {
     const payload = extract422Payload(err)

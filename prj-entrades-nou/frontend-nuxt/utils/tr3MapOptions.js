@@ -111,36 +111,52 @@ export function buildTr3GoogleMapOptions (center, zoom, options) {
     };
   }
 
-  let zoomPos = g.maps.ControlPosition.RIGHT_BOTTOM;
+  /* Fallback si l’API encara no ha exposat enums (carrera amb loading=async). */
+  let zoomPos = null;
+  if (g.maps.ControlPosition && g.maps.ControlPosition.RIGHT_BOTTOM !== undefined) {
+    zoomPos = g.maps.ControlPosition.RIGHT_BOTTOM;
+  }
+
+  let mapTypeRoadmap = 'roadmap';
+  if (g.maps.MapTypeId && g.maps.MapTypeId.ROADMAP !== undefined) {
+    mapTypeRoadmap = g.maps.MapTypeId.ROADMAP;
+  }
+
+  let mapTypeHybrid = 'hybrid';
+  if (g.maps.MapTypeId && g.maps.MapTypeId.HYBRID !== undefined) {
+    mapTypeHybrid = g.maps.MapTypeId.HYBRID;
+  }
 
   if (variant === 'searchMonochrome') {
-    return {
+    const mono = {
       center,
       zoom,
-      mapTypeId: g.maps.MapTypeId.ROADMAP,
+      mapTypeId: mapTypeRoadmap,
       styles: buildTr3SearchMapGrayscaleStyles(),
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
       backgroundColor: '#0e0e0e',
       zoomControl: true,
-      zoomControlOptions: {
-        position: zoomPos,
-      },
     };
+    if (zoomPos !== null) {
+      mono.zoomControlOptions = { position: zoomPos };
+    }
+    return mono;
   }
 
-  return {
+  const hybridOpts = {
     center,
     zoom,
-    mapTypeId: g.maps.MapTypeId.HYBRID,
+    mapTypeId: mapTypeHybrid,
     mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: false,
     backgroundColor: '#131313',
     zoomControl: true,
-    zoomControlOptions: {
-      position: zoomPos,
-    },
   };
+  if (zoomPos !== null) {
+    hybridOpts.zoomControlOptions = { position: zoomPos };
+  }
+  return hybridOpts;
 }

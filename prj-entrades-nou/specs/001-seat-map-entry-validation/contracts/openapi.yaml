@@ -502,6 +502,23 @@ paths:
         '200':
           description: Llista ordenada per data desc
 
+  /api/notifications/mark-all-read:
+    post:
+      summary: Marcar totes les notificacions socials com a llegides (badge)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Files actualitzades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  marked:
+                    type: integer
+
   /api/notifications/{id}:
     patch:
       summary: Marcar notificació com a llegida

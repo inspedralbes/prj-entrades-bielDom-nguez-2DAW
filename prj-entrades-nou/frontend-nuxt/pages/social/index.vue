@@ -400,7 +400,17 @@ async function markSocialNotificationsSeen () {
   try {
     await postJson('/api/notifications/mark-all-read', {});
   } catch (e) {
-    console.error(e);
+    let status = 0;
+    if (e && typeof e === 'object') {
+      if (e.statusCode !== undefined && e.statusCode !== null) {
+        status = Number(e.statusCode);
+      } else if (e.status !== undefined && e.status !== null) {
+        status = Number(e.status);
+      }
+    }
+    if (status !== 404) {
+      console.error(e);
+    }
   }
   await loadNotifications();
 }

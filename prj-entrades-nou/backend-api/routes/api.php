@@ -73,6 +73,7 @@ Route::middleware('jwt.auth')->post('/tickets/{ticketId}/transfer', [TicketTrans
     ->whereUuid('ticketId');
 
 Route::middleware('jwt.auth')->get('/notifications', [NotificationController::class, 'index']);
+Route::middleware('jwt.auth')->post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
 Route::middleware('jwt.auth')->patch('/notifications/{id}', [NotificationController::class, 'update'])->whereNumber('id');
 
 Route::middleware('jwt.auth')->get('/social/friends', [SocialController::class, 'friends']);
