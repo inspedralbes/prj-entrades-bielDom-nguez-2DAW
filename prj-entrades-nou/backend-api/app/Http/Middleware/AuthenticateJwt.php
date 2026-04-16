@@ -2,12 +2,18 @@
 
 namespace App\Http\Middleware;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
 use App\Services\Auth\JwtTokenService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class AuthenticateJwt
 {

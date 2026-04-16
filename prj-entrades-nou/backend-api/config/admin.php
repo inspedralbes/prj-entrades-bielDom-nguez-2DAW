@@ -1,5 +1,12 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+// Configuració Laravel: retorn d’array (sense imports).
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 return [
 
     /*

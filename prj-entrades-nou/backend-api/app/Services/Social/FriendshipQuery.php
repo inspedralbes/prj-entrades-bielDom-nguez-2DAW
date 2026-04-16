@@ -2,8 +2,14 @@
 
 namespace App\Services\Social;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\FriendInvite;
 use App\Models\User;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Consultes d’amistat acceptada (T036) per transferències i llistats.
@@ -43,7 +49,12 @@ class FriendshipQuery
 
         $ids = [];
         foreach ($invites as $inv) {
-            $other = (int) $inv->sender_id === $me ? (int) $inv->receiver_id : (int) $inv->sender_id;
+            $other = 0;
+            if ((int) $inv->sender_id === $me) {
+                $other = (int) $inv->receiver_id;
+            } else {
+                $other = (int) $inv->sender_id;
+            }
             if ($other > 0) {
                 $ids[$other] = true;
             }
@@ -53,17 +64,21 @@ class FriendshipQuery
             return [];
         }
 
-        return User::query()
+        $users = User::query()
             ->whereIn('id', array_keys($ids))
             ->orderBy('username')
-            ->get(['id', 'username', 'name'])
-            ->map(static fn (User $u) => [
+            ->get(['id', 'username', 'name']);
+
+        $out = [];
+        foreach ($users as $u) {
+            $out[] = [
                 'id' => (int) $u->id,
                 'username' => (string) $u->username,
                 'name' => (string) $u->name,
-            ])
-            ->values()
-            ->all();
+            ];
+        }
+
+        return $out;
     }
 
     /**

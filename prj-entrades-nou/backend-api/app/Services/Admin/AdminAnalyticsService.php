@@ -2,11 +2,18 @@
 
 namespace App\Services\Admin;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\Seat;
 use App\Models\Ticket;
 use Carbon\Carbon;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Agregacions per a la pàgina d’analítiques admin (període global).

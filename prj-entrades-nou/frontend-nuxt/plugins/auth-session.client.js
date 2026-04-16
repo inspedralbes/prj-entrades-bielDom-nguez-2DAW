@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { useAuthStore } from '~/stores/auth';
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase';
 

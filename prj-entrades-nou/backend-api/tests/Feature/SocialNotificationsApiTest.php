@@ -2,12 +2,18 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\SocialNotification;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SocialNotificationsApiTest extends TestCase
 {

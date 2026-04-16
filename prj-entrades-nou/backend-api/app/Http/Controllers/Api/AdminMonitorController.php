@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
@@ -11,6 +13,11 @@ use App\Services\Seatmap\EventSeatHoldService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Mètriques temps real per esdeveniment (admin): venuts, aforament, recaptació, holds Redis.

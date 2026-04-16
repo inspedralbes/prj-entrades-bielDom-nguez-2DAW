@@ -1,8 +1,14 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 return new class extends Migration
 {

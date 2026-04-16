@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Services\Seatmap\EventSeatHoldService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class InternalSeatHoldController extends Controller
 {

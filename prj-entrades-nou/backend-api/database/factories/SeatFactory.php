@@ -2,8 +2,14 @@
 
 namespace Database\Factories;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Seat;
 use Illuminate\Database\Eloquent\Factories\Factory;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Cal passar sempre `event_id` i `zone_id` coherents (mateix esdeveniment).

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Venue;
 use Illuminate\Support\Facades\DB;

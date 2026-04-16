@@ -2,8 +2,14 @@
 
 namespace App\Models;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SavedEvent extends Model
 {

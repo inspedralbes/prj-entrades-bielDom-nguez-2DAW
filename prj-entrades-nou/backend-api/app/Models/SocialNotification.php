@@ -2,8 +2,14 @@
 
 namespace App\Models;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Feed social (G/H): notificacions persistides; taula {@code social_notifications} per no col·lidir amb Notifiable de Laravel.

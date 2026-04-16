@@ -2,10 +2,16 @@
 
 namespace Database\Factories;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * @extends Factory<User>

@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminLogResource;
 use App\Models\AdminLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class AdminLogController extends Controller
 {

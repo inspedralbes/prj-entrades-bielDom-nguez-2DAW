@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\SavedEvent;
 use App\Models\Venue;
@@ -9,6 +11,10 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SearchSavedApiTest extends TestCase
 {

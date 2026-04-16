@@ -2,8 +2,15 @@
 
 namespace App\Services\Payment;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Order;
 use Illuminate\Support\Str;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Passarel·la de pagament simulada (mode dev / proves) per a T020.

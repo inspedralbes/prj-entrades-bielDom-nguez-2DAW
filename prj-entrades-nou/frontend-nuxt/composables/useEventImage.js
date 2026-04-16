@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; helper pur per a <img> i placeholders.)
+
 /**
  * URLs d’imatge des de l’API (`image_url` des de Ticketmaster CDN, HTTPS).
  * Només es retorna string vàlida per a <img src>; la resta → null (placeholder).

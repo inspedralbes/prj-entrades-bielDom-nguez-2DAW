@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; generació data URL SVG per a markers.)
+
 /**
  * Icona de marcador TR3 (pastilla groga + punt) per Google Maps Marker.
  * Retorna data URL SVG (sense .map() / ternaris als consumidors).

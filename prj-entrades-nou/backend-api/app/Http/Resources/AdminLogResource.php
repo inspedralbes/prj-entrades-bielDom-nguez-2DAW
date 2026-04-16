@@ -2,9 +2,15 @@
 
 namespace App\Http\Resources;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Config;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class AdminLogResource extends JsonResource
 {

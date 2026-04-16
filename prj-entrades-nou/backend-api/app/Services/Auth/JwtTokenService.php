@@ -2,10 +2,17 @@
 
 namespace App\Services\Auth;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Support\Facades\Config;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class JwtTokenService
 {

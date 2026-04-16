@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 // use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class ExampleTest extends TestCase
 {

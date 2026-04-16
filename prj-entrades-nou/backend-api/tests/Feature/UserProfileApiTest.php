@@ -2,10 +2,16 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Cache;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class UserProfileApiTest extends TestCase
 {

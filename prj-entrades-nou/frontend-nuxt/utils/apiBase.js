@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; utilitats d’URL públiques API/socket.)
+
 /**
  * URL base pública (navegador): si cal, substituïm el hostname per coincidir amb la finestra (mòbil / LAN).
  *

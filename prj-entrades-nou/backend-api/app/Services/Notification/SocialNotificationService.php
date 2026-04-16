@@ -2,12 +2,19 @@
 
 namespace App\Services\Notification;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\FriendInvite;
 use App\Models\SocialNotification;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Socket\InternalSocketNotifier;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Crea registres de social_notifications i avisa per Socket.IO (room user:{id}).

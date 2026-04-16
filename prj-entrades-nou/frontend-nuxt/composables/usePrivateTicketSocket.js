@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { io } from 'socket.io-client';
 import { onMounted, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '~/stores/auth';

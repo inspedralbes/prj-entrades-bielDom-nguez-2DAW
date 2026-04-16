@@ -9,7 +9,7 @@ Font de veritat de l’**esquema relacional** per a PostgreSQL:
 
 **Docker (`docker/dev/docker-compose.yml`)**: els scripts es muntan a `postgres:/docker-entrypoint-initdb.d/` i s’executen **només en crear el volum de dades buit**. Si cal regenerar l’esquema des de zero: `docker compose -f docker/dev/docker-compose.yml down -v` (esborra dades) i tornar a aixecar el servei.
 
-**Bases ja existents (sense recrear volum)**: si s’afegeixen columnes noves, vegeu `upgrade-*.sql` a l’arrel de `database/` (p. ex. sincronització Ticketmaster).
+**Bases ja existents (sense recrear volum)**: els canvis d’esquema es porten a **`init.sql`** (i dades de dev a **`inserts.sql`**). Per alinear un volum antic amb el repositori: `docker compose -f docker/dev/docker-compose.yml down -v` i tornar a aixecar, o bé el comando idempotent `php artisan db:patch-ticketmaster-schema` al contenidor API (columnes TM / índexs que ja figuren a `init.sql`).
 
 **Laravel**: no s’usen migracions PHP per a l’esquema (`backend-api/database/migrations/` buit, vegeu el README d’allà). El model Eloquent continua alineat amb aquestes taules.
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Admin\AdminDashboardMetricsService;
@@ -9,6 +11,11 @@ use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Ping de presència: ZSET Redis + emissió Socket cap al panell admin (temps real).

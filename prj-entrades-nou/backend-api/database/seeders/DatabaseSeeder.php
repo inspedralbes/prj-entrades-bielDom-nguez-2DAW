@@ -2,9 +2,15 @@
 
 namespace Database\Seeders;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class DatabaseSeeder extends Seeder
 {

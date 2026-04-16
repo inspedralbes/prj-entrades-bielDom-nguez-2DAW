@@ -2,8 +2,15 @@
 
 namespace App\Services\Ticketmaster;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Client HTTP Discovery API v2: llista d'esdeveniments per sincronitzar la taula `events`.

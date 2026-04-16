@@ -2,6 +2,12 @@
 
 namespace App\Seatmap;
 
+//================================ NAMESPACES / IMPORTS ============
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 /**
  * Geometria fixa del mapa tipus cinema: graella 10×10 (columnes 1–10).
  * El passadís entre blocs esquerre/dret és només visual al client (entre cols 5 i 6).

@@ -2,8 +2,14 @@
 
 namespace App\Console\Commands;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Illuminate\Console\Command;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SyncTicketmasterEventsCommand extends Command
 {

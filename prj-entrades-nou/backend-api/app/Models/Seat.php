@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Database\Factories\SeatFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class Seat extends Model
 {

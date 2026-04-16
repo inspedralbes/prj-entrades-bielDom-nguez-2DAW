@@ -2,12 +2,19 @@
 
 namespace App\Services\Admin;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Order;
 use Carbon\Carbon;
 use DateTimeZone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Redis;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Mètriques agregades per al dashboard d’administració (font: PostgreSQL via Eloquent).

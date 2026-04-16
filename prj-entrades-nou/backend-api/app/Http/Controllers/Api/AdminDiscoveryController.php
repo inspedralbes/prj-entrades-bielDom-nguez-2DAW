@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Services\Ticketmaster\TicketmasterDiscoveryEventsClient;
 use App\Services\Ticketmaster\TicketmasterEventImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Cerca i import puntual Ticketmaster Discovery (panell admin).

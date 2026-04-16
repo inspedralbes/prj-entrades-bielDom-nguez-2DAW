@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports ESM; script Google injectat al `window`.)
+
 /**
  * Carrega l’API JavaScript de Google Maps una sola vegada (T048).
  */

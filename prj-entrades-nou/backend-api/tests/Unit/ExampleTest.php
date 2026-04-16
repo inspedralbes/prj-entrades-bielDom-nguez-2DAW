@@ -2,7 +2,13 @@
 
 namespace Tests\Unit;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use PHPUnit\Framework\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class ExampleTest extends TestCase
 {

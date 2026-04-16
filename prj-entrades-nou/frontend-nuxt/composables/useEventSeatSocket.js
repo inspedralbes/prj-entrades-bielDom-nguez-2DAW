@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { unref } from 'vue';
 import { io } from 'socket.io-client';
 import { resolvePublicSocketUrl } from '~/utils/apiBase';

@@ -2,9 +2,15 @@
 
 namespace App\Console\Commands;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
 use Illuminate\Console\Command;
 use Spatie\Permission\PermissionRegistrar;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Garanteix que l’usuari de desenvolupament admin@example.com tingui rols «admin» i «user».

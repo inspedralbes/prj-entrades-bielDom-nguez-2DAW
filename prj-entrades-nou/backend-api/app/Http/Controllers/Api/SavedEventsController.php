@@ -2,14 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\SavedEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 class SavedEventsController extends Controller
 {
+    /**
+     * A. Usuari autenticat (JWT).
+     * B. Consulta `saved_events` amb `event` i `venue`.
+     * C. Resposta JSON sense `map`/`filter` de col·lecció (bucles explícits).
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -19,26 +30,46 @@ class SavedEventsController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $events = $rows->map(fn (SavedEvent $s) => $s->event)->filter();
-
-        return response()->json([
-            'events' => $events->map(fn (Event $e) => [
+        $eventsJson = [];
+        foreach ($rows as $s) {
+            $e = $s->event;
+            if ($e === null) {
+                continue;
+            }
+            $starts = null;
+            if ($e->starts_at !== null) {
+                $starts = $e->starts_at->toIso8601String();
+            }
+            $venuePayload = null;
+            if ($e->venue !== null) {
+                $venuePayload = [
+                    'id' => $e->venue->id,
+                    'name' => $e->venue->name,
+                    'city' => $e->venue->city,
+                ];
+            }
+            $eventsJson[] = [
                 'id' => $e->id,
                 'name' => $e->name,
-                'starts_at' => $e->starts_at?->toIso8601String(),
+                'starts_at' => $starts,
                 'category' => $e->category,
                 'image_url' => $e->image_url,
                 'tm_url' => $e->tm_url,
                 'price' => $e->price,
-                'venue' => $e->venue ? [
-                    'id' => $e->venue->id,
-                    'name' => $e->venue->name,
-                    'city' => $e->venue->city,
-                ] : null,
-            ])->values()->all(),
+                'venue' => $venuePayload,
+            ];
+        }
+
+        return response()->json([
+            'events' => $eventsJson,
         ]);
     }
 
+    /**
+     * A. Validació `event_id`.
+     * B. `firstOrCreate` a `saved_events`.
+     * C. JSON 201.
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -59,6 +90,11 @@ class SavedEventsController extends Controller
         return response()->json(['saved' => true, 'event_id' => $event->id], 201);
     }
 
+    /**
+     * A. Usuari autenticat.
+     * B. Esborrat per `user_id` + `event_id`.
+     * C. JSON confirmació.
+     */
     public function destroy(Request $request, int $eventId): JsonResponse
     {
         $user = $request->user();

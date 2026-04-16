@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\OrderLine;
 use App\Models\Seat;
@@ -13,6 +15,10 @@ use App\Services\Ticket\SocketTicketSvgClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class TicketController extends Controller
 {
@@ -43,12 +49,25 @@ class TicketController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $payload = $tickets->map(function (Ticket $ticket) {
+        $payload = [];
+        foreach ($tickets as $ticket) {
             $line = $ticket->orderLine;
-            $order = $line?->order;
-            $event = $order?->event;
-            $seat = $line?->seat;
-            $venue = $event?->venue;
+            $order = null;
+            if ($line !== null) {
+                $order = $line->order;
+            }
+            $event = null;
+            if ($order !== null) {
+                $event = $order->event;
+            }
+            $seat = null;
+            if ($line !== null) {
+                $seat = $line->seat;
+            }
+            $venue = null;
+            if ($event !== null) {
+                $venue = $event->venue;
+            }
 
             $seatPresentation = $this->seatPresentationFromLine($line, $seat);
 
@@ -60,27 +79,48 @@ class TicketController extends Controller
                         'name' => $venue->name,
                     ];
                 }
+                $startsAt = null;
+                if ($event->starts_at !== null) {
+                    $startsAt = $event->starts_at->toIso8601String();
+                }
                 $eventPayload = [
                     'id' => $event->id,
                     'name' => $event->name,
-                    'starts_at' => $event->starts_at?->toIso8601String(),
+                    'starts_at' => $startsAt,
                     'image_url' => $event->image_url,
                     'venue' => $venuePayload,
                 ];
             }
 
-            return [
+            $jwtExpires = null;
+            if ($ticket->jwt_expires_at !== null) {
+                $jwtExpires = $ticket->jwt_expires_at->toIso8601String();
+            }
+            $usedAt = null;
+            if ($ticket->used_at !== null) {
+                $usedAt = $ticket->used_at->toIso8601String();
+            }
+            $createdAt = null;
+            if ($ticket->created_at !== null) {
+                $createdAt = $ticket->created_at->toIso8601String();
+            }
+            $orderId = null;
+            if ($order !== null) {
+                $orderId = $order->id;
+            }
+
+            $payload[] = [
                 'id' => $ticket->id,
                 'public_uuid' => $ticket->public_uuid,
                 'status' => $ticket->status,
-                'jwt_expires_at' => $ticket->jwt_expires_at?->toIso8601String(),
-                'used_at' => $ticket->used_at?->toIso8601String(),
-                'order_id' => $order?->id,
+                'jwt_expires_at' => $jwtExpires,
+                'used_at' => $usedAt,
+                'order_id' => $orderId,
                 'event' => $eventPayload,
                 'seat' => $seatPresentation,
-                'created_at' => $ticket->created_at?->toIso8601String(),
+                'created_at' => $createdAt,
             ];
-        })->values()->all();
+        }
 
         return response()->json(['tickets' => $payload]);
     }
@@ -140,6 +180,8 @@ class TicketController extends Controller
      *
      * @return array{id: ?int, key: ?string, row: ?int, col: ?int, label: ?string}|null
      */
+    //================================ LÒGICA PRIVADA ================
+
     private function seatPresentationFromLine(?OrderLine $line, ?Seat $seat): ?array
     {
         if ($line === null) {
@@ -170,8 +212,13 @@ class TicketController extends Controller
             $label = 'Fila '.$row.', seient '.$col;
         }
 
+        $seatId = null;
+        if ($seat !== null) {
+            $seatId = (int) $seat->id;
+        }
+
         return [
-            'id' => $seat !== null ? (int) $seat->id : null,
+            'id' => $seatId,
             'key' => $key,
             'row' => $row,
             'col' => $col,

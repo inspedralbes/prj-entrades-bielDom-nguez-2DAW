@@ -52,11 +52,14 @@ fi
 
 php artisan config:clear
 
-# Volums Postgres antics: els scripts initdb només corren el primer cop; això alinea admin@example.com
-# amb inserts.sql (hash Admin1234) i el rol admin sense caler esborrar pgdata.
-if [ "${APP_ENV:-local}" = "local" ] && [ -f /var/www/database/docker-dev-ensure-admin.sql ]; then
-  echo "Sincronitzant usuari admin de desenvolupament (docker-dev-ensure-admin.sql) ..."
-  run_psql -f /var/www/database/docker-dev-ensure-admin.sql
+# Volums Postgres antics: els scripts initdb només corren el primer cop; a cada arrencada local
+# tornem a aplicar inserts.sql (idempotent: ON CONFLICT / NOT EXISTS) per alinear admin@example.com i demo.
+if [ "${APP_ENV:-local}" = "local" ] && [ -f /var/www/database/inserts.sql ]; then
+  USERS_TABLE_EXISTS=$(run_psql -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users'" 2>/dev/null || echo "0")
+  if [ "$USERS_TABLE_EXISTS" = "1" ]; then
+    echo "Sincronitzant dades de desenvolupament (inserts.sql) ..."
+    run_psql -f /var/www/database/inserts.sql
+  fi
 fi
 
 # Si admin@example.com es va registrar abans via API, només tenia rol «user»; cal «admin» per /api/admin/* i /admin.

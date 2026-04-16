@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { useAuthStore } from '~/stores/auth';
 import { resolveApiBaseUrlForFetch } from '~/utils/apiBase';
 import { getForbiddenRedirectPath } from '~/utils/routeForbiddenRedirect';

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\JwtTokenService;
@@ -10,6 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class AuthController extends Controller
 {
@@ -87,7 +93,10 @@ class AuthController extends Controller
         // Cerca insensible a majúscules (Postgres compara VARCHAR de forma sensible per defecte).
         $user = User::query()->whereRaw('LOWER(email) = ?', [$validated['email']])->first();
 
-        $hashFromDb = $user !== null ? $user->getRawOriginal('password') : '';
+        $hashFromDb = '';
+        if ($user !== null) {
+            $hashFromDb = $user->getRawOriginal('password');
+        }
         if ($user === null || $hashFromDb === '' || ! Hash::check($validated['password'], $hashFromDb)) {
             throw ValidationException::withMessages([
                 'email' => ['Credencials incorrectes.'],
@@ -112,6 +121,8 @@ class AuthController extends Controller
 
         return response()->json($this->userProfile($user));
     }
+
+    //================================ LÒGICA PRIVADA ================
 
     /**
      * @return array<string, mixed>

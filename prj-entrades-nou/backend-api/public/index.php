@@ -1,7 +1,13 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 define('LARAVEL_START', microtime(true));
 

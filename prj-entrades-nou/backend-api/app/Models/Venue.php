@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Database\Factories\VenueFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class Venue extends Model
 {

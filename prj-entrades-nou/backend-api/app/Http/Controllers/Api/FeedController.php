@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\UserSetting;
@@ -10,8 +12,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 class FeedController extends Controller
 {
+    /**
+     * A. Sense autenticació.
+     * B. Consulta esdeveniments visibles amb venue mínim.
+     * C. JSON `featured` (bucle explícit, sense `map` de col·lecció).
+     */
     public function featured(): JsonResponse
     {
         $events = Event::query()
@@ -21,12 +32,22 @@ class FeedController extends Controller
             ->limit(24)
             ->get();
 
+        $payloads = [];
+        foreach ($events as $e) {
+            $payloads[] = $this->eventPayload($e);
+        }
+
         return response()->json([
             'section' => 'featured',
-            'events' => $events->map(fn (Event $e) => $this->eventPayload($e))->values()->all(),
+            'events' => $payloads,
         ]);
     }
 
+    /**
+     * A. Usuari autenticat + ajustos de proximitat opcionals.
+     * B. Consulta cronològica o PostGIS segons configuració.
+     * C. JSON `for_you`.
+     */
     public function forYou(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -52,10 +73,15 @@ class FeedController extends Controller
             $source = 'chronological';
         }
 
+        $payloadsForYou = [];
+        foreach ($events as $e) {
+            $payloadsForYou[] = $this->eventPayload($e);
+        }
+
         return response()->json([
             'section' => 'for_you',
             'source' => $source,
-            'events' => $events->map(fn (Event $e) => $this->eventPayload($e))->values()->all(),
+            'events' => $payloadsForYou,
         ]);
     }
 
@@ -105,7 +131,10 @@ class FeedController extends Controller
              LIMIT 16',
             [$lng, $lat]
         );
-        $ids = array_map(fn ($r) => (int) $r->id, $rows);
+        $ids = [];
+        foreach ($rows as $r) {
+            $ids[] = (int) $r->id;
+        }
 
         return $this->eventsByIdsPreservingOrder($ids);
     }
@@ -125,21 +154,32 @@ class FeedController extends Controller
     /**
      * @return array<string, mixed>
      */
+    //================================ LÒGICA PRIVADA ================
+
     private function eventPayload(Event $e): array
     {
+        $starts = null;
+        if ($e->starts_at !== null) {
+            $starts = $e->starts_at->toIso8601String();
+        }
+        $venuePayload = null;
+        if ($e->venue !== null) {
+            $venuePayload = [
+                'id' => $e->venue->id,
+                'name' => $e->venue->name,
+                'city' => $e->venue->city,
+            ];
+        }
+
         return [
             'id' => $e->id,
             'name' => $e->name,
-            'starts_at' => $e->starts_at?->toIso8601String(),
+            'starts_at' => $starts,
             'category' => $e->category,
             'image_url' => $e->image_url,
             'tm_url' => $e->tm_url,
             'price' => $e->price,
-            'venue' => $e->venue ? [
-                'id' => $e->venue->id,
-                'name' => $e->venue->name,
-                'city' => $e->venue->city,
-            ] : null,
+            'venue' => $venuePayload,
         ];
     }
 }

@@ -1,6 +1,12 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Str;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 return [
 

@@ -2,9 +2,15 @@
 
 namespace Tests\Unit;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Garanteix que la notificació HTTP cap al socket-server envia JSON (el node fa JSON.parse del cos).

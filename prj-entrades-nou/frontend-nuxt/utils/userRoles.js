@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; helpers de rol Spatie / string.)
+
 /**
  * Normalitza una entrada de rol (string o objecte Spatie { name }) a nom de rol.
  * @param {unknown} entry

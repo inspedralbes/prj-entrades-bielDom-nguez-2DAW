@@ -2,6 +2,8 @@
 
 namespace App\Services\Order;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\OrderLine;
@@ -10,6 +12,10 @@ use App\Models\User;
 use App\Services\Hold\SeatHoldService;
 use App\Services\Payment\PaymentStubService;
 use Illuminate\Support\Facades\DB;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class PendingPaymentOrderService
 {
@@ -49,7 +55,10 @@ class PendingPaymentOrderService
                     throw new \RuntimeException('order_already_exists');
                 }
 
-                $seatIdsPayload = array_map('intval', $payload['seat_ids']);
+                $seatIdsPayload = [];
+                foreach ($payload['seat_ids'] as $sid) {
+                    $seatIdsPayload[] = (int) $sid;
+                }
 
                 $seats = Seat::query()
                     ->where('current_hold_id', $holdUuid)
@@ -58,7 +67,11 @@ class PendingPaymentOrderService
                     ->lockForUpdate()
                     ->get();
 
-                $idsDb = $seats->pluck('id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+                $idsDb = [];
+                foreach ($seats as $seat) {
+                    $idsDb[] = (int) $seat->id;
+                }
+                sort($idsDb);
                 $idsSorted = $seatIdsPayload;
                 sort($idsSorted);
 

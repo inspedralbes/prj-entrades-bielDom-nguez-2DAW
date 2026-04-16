@@ -4,7 +4,12 @@
  *
  * Nota: el pla citava generateTicketSvg.ts; aquest mòdul és l’equivalent ESM sense build TS.
  */
+
+//================================ NAMESPACES / IMPORTS ============
+
 import QRCode from 'qrcode';
+
+//================================ FUNCIONS PÚBLIQUES ============
 
 /**
  * @param {string} text Contingut a codificar (p. ex. JWT de ticket)
@@ -16,13 +21,28 @@ export async function generateTicketSvg (text, options = {}) {
     throw new TypeError('generateTicketSvg: text no vàlid');
   }
 
-  const width = options.width !== undefined ? Number(options.width) : 256;
-  const margin = options.margin !== undefined ? Number(options.margin) : 2;
+  let width = 256;
+  if (options.width !== undefined) {
+    width = Number(options.width);
+  }
+  let margin = 2;
+  if (options.margin !== undefined) {
+    margin = Number(options.margin);
+  }
+
+  let w = 256;
+  if (Number.isFinite(width) && width > 0) {
+    w = width;
+  }
+  let m = 2;
+  if (Number.isFinite(margin) && margin >= 0) {
+    m = margin;
+  }
 
   return QRCode.toString(text, {
     type: 'svg',
-    width: Number.isFinite(width) && width > 0 ? width : 256,
-    margin: Number.isFinite(margin) && margin >= 0 ? margin : 2,
+    width: w,
+    margin: m,
     errorCorrectionLevel: 'M',
     color: {
       dark: '#000000ff',

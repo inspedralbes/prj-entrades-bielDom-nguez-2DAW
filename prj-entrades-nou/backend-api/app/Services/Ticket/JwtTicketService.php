@@ -2,11 +2,18 @@
 
 namespace App\Services\Ticket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Ticket;
 use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Support\Facades\Config;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class JwtTicketService
 {

@@ -2,11 +2,18 @@
 
 namespace App\Services\Ticket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class TicketScanValidationService
 {

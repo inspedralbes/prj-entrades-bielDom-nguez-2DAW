@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Services\Admin;
+
+//================================ NAMESPACES / IMPORTS ============
+
+use App\Models\Order;
+use App\Models\TicketTransfer;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
+/**
+ * Llista, creació, edició i comandes d’usuaris des del panell admin.
+ */
+class AdminUserDirectoryService
+{
+    public function paginatedUsers(Request $request): LengthAwarePaginator
+    {
+        $q = User::query()->with('roles');
+
+        $search = $request->query('q');
+        if (is_string($search) && trim($search) !== '') {
+            $term = '%'.addcslashes(trim($search), '%_\\').'%';
+            $q->where(static function ($qq) use ($term) {
+                $qq->whereRaw('LOWER(username) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('(name IS NOT NULL AND LOWER(name) LIKE LOWER(?))', [$term]);
+            });
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        if ($perPage < 1 || $perPage > 100) {
+            $perPage = 25;
+        }
+
+        return $q->orderBy('id', 'desc')->paginate($perPage);
+    }
+
+    /**
+     * @return array{id: int, name: string, email: string, username: string, roles: array<int, string>}
+     */
+    public function createUser(Request $request): array
+    {
+        $data = $request->validate([
+            'username' => ['required', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', 'unique:users,username'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'role' => ['sometimes', 'string', 'in:user,admin'],
+            'roles' => ['sometimes', 'array'],
+            'roles.*' => ['string', 'max:50'],
+        ]);
+
+        $username = trim((string) $data['username']);
+
+        $user = new User;
+        $user->name = null;
+        $user->username = $username;
+        $user->email = $data['email'];
+        $user->password = Hash::make($data['password']);
+        $user->save();
+
+        if (isset($data['role']) && is_string($data['role']) && $data['role'] !== '') {
+            $user->syncRoles([$data['role']]);
+        } elseif (isset($data['roles']) && is_array($data['roles'])) {
+            $roles = $data['roles'];
+            $n = count($roles);
+            for ($i = 0; $i < $n; $i++) {
+                $rn = $roles[$i];
+                if (! is_string($rn)) {
+                    continue;
+                }
+                if ($rn === '') {
+                    continue;
+                }
+                $user->assignRole($rn);
+            }
+        } else {
+            $user->assignRole('user');
+        }
+
+        $user->load('roles');
+
+        return [
+            'id' => $user->id,
+            'name' => $user->profileDisplayName(),
+            'email' => $user->email,
+            'username' => $user->username,
+            'roles' => $this->roleNamesForUser($user),
+        ];
+    }
+
+    /**
+     * @return array{ok: true, body: array<string, mixed>}|array{ok: false, status: int, body: array<string, mixed>}
+     */
+    public function updateUser(Request $request, int $userId): array
+    {
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            return ['ok' => false, 'status' => 404, 'body' => ['message' => 'Usuari no trobat']];
+        }
+
+        $data = $request->validate([
+            'username' => ['sometimes', 'string', 'min:3', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['sometimes', 'string', 'in:user,admin'],
+        ]);
+
+        if (isset($data['username'])) {
+            $user->username = trim((string) $data['username']);
+        }
+        if (isset($data['email'])) {
+            $user->email = $data['email'];
+        }
+        if (isset($data['role'])) {
+            $user->syncRoles([$data['role']]);
+        }
+
+        $user->save();
+        $user->load('roles');
+
+        return [
+            'ok' => true,
+            'body' => [
+                'id' => $user->id,
+                'name' => $user->profileDisplayName(),
+                'email' => $user->email,
+                'username' => $user->username,
+                'roles' => $this->roleNamesForUser($user),
+            ],
+        ];
+    }
+
+    /**
+     * @return array{ok: true, body: array<string, mixed>}|array{ok: false, status: int, body: array<string, mixed>}
+     */
+    public function deleteUser(User $actor, int $userId): array
+    {
+        if ((int) $actor->id === $userId) {
+            return ['ok' => false, 'status' => 403, 'body' => ['message' => 'No pots eliminar el teu propi usuari des del panell.']];
+        }
+
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            return ['ok' => false, 'status' => 404, 'body' => ['message' => 'Usuari no trobat']];
+        }
+
+        if ($user->hasRole('admin')) {
+            $adminCount = User::query()->role('admin')->count();
+            if ($adminCount <= 1) {
+                return ['ok' => false, 'status' => 422, 'body' => ['message' => 'No es pot eliminar l’últim administrador.']];
+            }
+        }
+
+        $user->delete();
+
+        return ['ok' => true, 'body' => ['message' => 'Usuari eliminat']];
+    }
+
+    /**
+     * @return array{ok: true, body: array<string, mixed>}|array{ok: false, status: int, body: array<string, mixed>}
+     */
+    public function ordersPayloadForUser(int $userId): array
+    {
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            return ['ok' => false, 'status' => 404, 'body' => ['message' => 'Usuari no trobat']];
+        }
+
+        $orders = Order::query()
+            ->where('user_id', $user->id)
+            ->with(['event', 'orderLines.ticket', 'orderLines.seat'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $outOrders = [];
+        $oi = 0;
+        for (; $oi < count($orders); $oi++) {
+            $order = $orders[$oi];
+            $linesOut = [];
+            $orderLines = $order->orderLines;
+            $li = 0;
+            for (; $li < count($orderLines); $li++) {
+                $line = $orderLines[$li];
+                $ticket = $line->ticket;
+                $validated = false;
+                if ($ticket !== null && $ticket->used_at !== null) {
+                    $validated = true;
+                }
+                $transferOut = null;
+                if ($ticket !== null) {
+                    $transferOut = $this->lastTransferForTicket((string) $ticket->id);
+                }
+                $lineRow = [
+                    'order_line_id' => $line->id,
+                    'seat_id' => $line->seat_id,
+                    'unit_price' => (string) $line->unit_price,
+                    'ticket' => null,
+                ];
+                if ($ticket !== null) {
+                    $lineRow['ticket'] = [
+                        'id' => $ticket->id,
+                        'status' => $ticket->status,
+                        'validated' => $validated,
+                        'used_at' => $ticket->used_at?->toIso8601String(),
+                        'transfer' => $transferOut,
+                    ];
+                }
+                $linesOut[] = $lineRow;
+            }
+            $ev = $order->event;
+            $eventPayload = null;
+            if ($ev !== null) {
+                $eventPayload = [
+                    'id' => $ev->id,
+                    'name' => $ev->name,
+                    'starts_at' => $ev->starts_at?->toIso8601String(),
+                ];
+            }
+            $outOrders[] = [
+                'id' => $order->id,
+                'state' => $order->state,
+                'total_amount' => (string) $order->total_amount,
+                'currency' => $order->currency,
+                'updated_at' => $order->updated_at?->toIso8601String(),
+                'event' => $eventPayload,
+                'lines' => $linesOut,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'body' => [
+                'user_id' => $user->id,
+                'orders' => $outOrders,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function roleNamesForUser(User $user): array
+    {
+        $out = [];
+        $roles = $user->roles;
+        $i = 0;
+        for (; $i < count($roles); $i++) {
+            $out[] = $roles[$i]->name;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function lastTransferForTicket(string $ticketId): ?array
+    {
+        $tr = TicketTransfer::query()
+            ->where('ticket_id', $ticketId)
+            ->orderByDesc('created_at')
+            ->first();
+        if ($tr === null) {
+            return null;
+        }
+
+        return [
+            'from_user_id' => $tr->from_user_id,
+            'to_user_id' => $tr->to_user_id,
+            'status' => $tr->status,
+            'created_at' => $tr->created_at?->toIso8601String(),
+        ];
+    }
+}

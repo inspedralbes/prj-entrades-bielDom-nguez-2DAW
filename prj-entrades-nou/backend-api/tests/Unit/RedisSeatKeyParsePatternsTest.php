@@ -2,7 +2,13 @@
 
 namespace Tests\Unit;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use PHPUnit\Framework\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Les claus retornades per Redis (KEYS) poden incloure el prefix de Laravel (config database.redis.options.prefix).

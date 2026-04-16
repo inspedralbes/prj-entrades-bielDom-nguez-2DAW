@@ -107,6 +107,7 @@ ALTER TABLE venues ADD COLUMN location geography (POINT, 4326);
 
 CREATE UNIQUE INDEX venues_external_tm_id_unique ON venues (external_tm_id) WHERE external_tm_id IS NOT NULL;
 
+-- Esdeveniments: sincronització Ticketmaster (TM) i catàleg (filtres per categoria / esdeveniment gran).
 CREATE TABLE events (
     id BIGSERIAL PRIMARY KEY,
     external_tm_id VARCHAR(255),
@@ -119,6 +120,9 @@ CREATE TABLE events (
     seat_layout JSONB,
     tm_sync_paused BOOLEAN NOT NULL DEFAULT FALSE,
     tm_url VARCHAR(1024),
+    -- Categoria TM i flag de volum (feed / cerca); alineat amb PatchTicketmasterSchema i schema SQLite de tests.
+    tm_category VARCHAR(100),
+    is_large_event BOOLEAN NOT NULL DEFAULT FALSE,
     price DECIMAL(10, 2),
     image_url VARCHAR(1024),
     description TEXT,
@@ -127,6 +131,8 @@ CREATE TABLE events (
 );
 
 CREATE INDEX events_external_tm_id_index ON events (external_tm_id);
+CREATE INDEX events_tm_category_index ON events (tm_category);
+CREATE INDEX events_is_large_event_index ON events (is_large_event);
 
 CREATE TABLE zones (
     id BIGSERIAL PRIMARY KEY,
@@ -154,6 +160,7 @@ CREATE TABLE seats (
 CREATE INDEX seats_status_index ON seats (status);
 CREATE INDEX seats_event_id_status_index ON seats (event_id, status);
 
+-- Comandes: quantitat d’entrades quan la venda és per quantitat (sense una línia per seient).
 CREATE TABLE orders (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -162,11 +169,13 @@ CREATE TABLE orders (
     state VARCHAR(255) NOT NULL,
     currency CHAR(3) NOT NULL DEFAULT 'EUR',
     total_amount DECIMAL(12, 2),
+    quantity INTEGER,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
 
 CREATE INDEX orders_state_index ON orders (state);
+CREATE INDEX orders_quantity_index ON orders (quantity);
 
 CREATE TABLE order_lines (
     id BIGSERIAL PRIMARY KEY,

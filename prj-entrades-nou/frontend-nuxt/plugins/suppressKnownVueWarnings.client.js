@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports ESM inicials; intercepta console.warn.)
+
 /**
  * Redueix soroll a la consola (Vue 3 / Nuxt): avís experimental de <Suspense>,
  * deprecació de google.maps.Marker (encara vàlid; migració opcional).

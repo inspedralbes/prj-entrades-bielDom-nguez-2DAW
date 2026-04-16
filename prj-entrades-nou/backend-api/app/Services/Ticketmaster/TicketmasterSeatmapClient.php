@@ -2,8 +2,15 @@
 
 namespace App\Services\Ticketmaster;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Client HTTP cap a Discovery API (esdeveniment) per extreure URL d’imatge del mapa si Ticketmaster la proporciona.

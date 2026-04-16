@@ -2,9 +2,15 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Services\Ticket\SocketTicketSvgClient;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SocketTicketSvgClientTest extends TestCase
 {

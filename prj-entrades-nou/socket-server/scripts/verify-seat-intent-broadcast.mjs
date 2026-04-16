@@ -7,6 +7,9 @@
  * Ús: JWT_SECRET=... node scripts/verify-seat-intent-broadcast.mjs [http://127.0.0.1:3001]
  * Requisit: socket-server en marxa amb JWT_SECRET no buit (sinó jwtSub és null i l’intent s’ignora).
  */
+
+//================================ NAMESPACES / IMPORTS ============
+
 import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import { io } from 'socket.io-client';

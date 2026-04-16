@@ -79,6 +79,8 @@
 </template>
 
 <script setup>
+//================================ IMPORTS ============
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import SocialToastStack from '~/components/SocialToastStack.vue';

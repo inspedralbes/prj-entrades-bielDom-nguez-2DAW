@@ -118,6 +118,8 @@ CREATE TABLE events (
 );
 
 CREATE INDEX events_external_tm_id_index ON events (external_tm_id);
+CREATE INDEX events_tm_category_index ON events (tm_category);
+CREATE INDEX events_is_large_event_index ON events (is_large_event);
 
 CREATE TABLE zones (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -165,6 +167,7 @@ CREATE TABLE orders (
 );
 
 CREATE INDEX orders_state_index ON orders (state);
+CREATE INDEX orders_quantity_index ON orders (quantity);
 
 CREATE TABLE order_lines (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

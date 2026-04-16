@@ -2,6 +2,8 @@
 
 namespace App\Services\Order;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\OrderLine;
@@ -10,6 +12,10 @@ use App\Seatmap\CinemaVenueLayout;
 use App\Services\Payment\PaymentStubService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Comanda pendent amb seients del mapa cinema (claus section_1-row_*-seat_*), sense files a la taula `seats`.

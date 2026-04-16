@@ -1,3 +1,9 @@
+-- =============================================================================
+-- INSERCIONS DE DADES (DML) — desenvolupament (Agent PostgreSQL / TR3)
+-- Propòsit: rols Spatie, usuaris de prova, esdeveniment demo. Relacions via FK
+-- definides a l’esquema principal (vegeu migracions / init del projecte).
+-- =============================================================================
+
 -- Dades inicials de desenvolupament (després de l'esquema).
 -- Rols Spatie (guard web; alineat amb database/seeders/RoleSeeder.php).
 
@@ -28,7 +34,7 @@ ON CONFLICT (role_id, model_id, model_type) DO NOTHING;
 
 -- Administrador de desenvolupament (contrasenya: "Admin1234", mínim 8 caràcters) — bcrypt
 -- ON CONFLICT DO UPDATE: si el volum de Postgres ja existia amb una fila antiga, s’actualitza el hash.
--- Mateix contingut que database/docker-dev-ensure-admin.sql (s’executa també a cada arrencada de l’API local).
+-- A l’API local (Docker), `inserts.sql` es pot tornar a executar a l’arrencada per mantenir l’admin alineat (vegeu docker/dev/entrypoint-api.sh).
 INSERT INTO users (name, username, email, password, created_at, updated_at)
 VALUES (
     NULL,

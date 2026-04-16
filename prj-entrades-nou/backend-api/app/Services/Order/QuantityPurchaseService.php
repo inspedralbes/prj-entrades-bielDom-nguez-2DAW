@@ -2,12 +2,19 @@
 
 namespace App\Services\Order;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\OrderLine;
 use App\Models\User;
 use App\Services\Payment\PaymentStubService;
 use Illuminate\Support\Facades\DB;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class QuantityPurchaseService
 {

@@ -1,9 +1,15 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schedule;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

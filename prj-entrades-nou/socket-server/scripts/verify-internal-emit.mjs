@@ -4,6 +4,9 @@
  *
  * Ús: node scripts/verify-internal-emit.mjs [http://127.0.0.1:3001]
  */
+
+//================================ NAMESPACES / IMPORTS ============
+
 import 'dotenv/config';
 import { io } from 'socket.io-client';
 
@@ -58,7 +61,11 @@ socket.on('SeatStatusUpdated', (payload) => {
 
 socket.on('connect_error', (err) => {
   clearTimeout(timer);
-  fail('connect_error: ' + (err && err.message ? err.message : String(err)));
+  let msg = String(err);
+  if (err && err.message) {
+    msg = err.message;
+  }
+  fail('connect_error: ' + msg);
 });
 
 async function postEmit (payload) {
@@ -103,6 +110,10 @@ socket.on('connect', async () => {
     });
   } catch (e) {
     clearTimeout(timer);
-    fail('fetch error: ' + (e && e.message ? e.message : String(e)));
+    let em = String(e);
+    if (e && e.message) {
+      em = e.message;
+    }
+    fail('fetch error: ' + em);
   }
 });

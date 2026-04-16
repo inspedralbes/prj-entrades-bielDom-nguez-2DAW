@@ -2,8 +2,15 @@
 
 namespace App\Services\Ticket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Demana al socket-server la generació del SVG del QR (HTTP intern, T026).

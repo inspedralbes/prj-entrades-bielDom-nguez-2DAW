@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; navegació segura en 403 lògics.)
+
 /**
  * Ruta segura quan l’usuari autentificat no té permís per a `to`:
  * tornar a la vista anterior (from) si és vàlida; si no, fallback (per defecte «/»).

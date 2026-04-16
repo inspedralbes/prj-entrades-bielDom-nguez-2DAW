@@ -2,8 +2,14 @@
 
 namespace App\Console\Commands;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Bases creades abans d’afegir columnes TM (volums Docker antics) no re-execucionen init.sql.
@@ -23,7 +29,7 @@ class PatchTicketmasterSchemaCommand extends Command
             'ALTER TABLE events ADD COLUMN IF NOT EXISTS external_tm_id VARCHAR(255)',
             'CREATE INDEX IF NOT EXISTS events_external_tm_id_index ON events (external_tm_id)',
             'ALTER TABLE events ADD COLUMN IF NOT EXISTS tm_sync_paused BOOLEAN NOT NULL DEFAULT FALSE',
-            /* upgrade-spain-catalog-fields.sql — volums Docker creats abans d’aquest script */
+            /* Catàleg ES / TM: tm_url, tm_category, is_large_event, image_url — BD antiga sense init.sql complet */
             'ALTER TABLE events ADD COLUMN IF NOT EXISTS tm_url VARCHAR(500)',
             'ALTER TABLE events ADD COLUMN IF NOT EXISTS tm_category VARCHAR(100)',
             'ALTER TABLE events ADD COLUMN IF NOT EXISTS is_large_event BOOLEAN DEFAULT FALSE',

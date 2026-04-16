@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+
+//================================ NAMESPACES / IMPORTS ============
+
 use Nuwave\Lighthouse\Schema\Directives\ConvertEmptyStringsToNullDirective;
 use Nuwave\Lighthouse\Schema\Directives\DropArgsDirective;
 use Nuwave\Lighthouse\Schema\Directives\RenameArgsDirective;
@@ -21,6 +24,10 @@ $lighthouseSchemaCacheEnable = filter_var(env('LIGHTHOUSE_SCHEMA_CACHE_ENABLE', 
 
 // webonyx/graphql-php: DisableIntrospection espera int (DISABLED=0, ENABLED=1), no bool.
 $lighthouseDisableIntrospection = (int) filter_var(env('LIGHTHOUSE_SECURITY_DISABLE_INTROSPECTION', false), FILTER_VALIDATE_BOOLEAN);
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 return [
     /*

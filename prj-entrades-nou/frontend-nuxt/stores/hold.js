@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { defineStore } from 'pinia';
 
 const MAX_SEATS = 6;

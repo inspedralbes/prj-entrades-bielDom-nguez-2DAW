@@ -2,7 +2,14 @@
 
 namespace App\Services\Admin;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\AdminLog;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Registre d’accions d’administrador sobre la BD (auditoria llegible).

@@ -2,9 +2,15 @@
 
 namespace App\Http\Middleware;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Rutes internes cridades pel socket-server (mateix patró que X-Internal-Secret al Node).

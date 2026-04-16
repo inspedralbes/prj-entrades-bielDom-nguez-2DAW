@@ -2,9 +2,15 @@
 
 namespace Tests\Concerns;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Mateix comportament que RefreshDatabase però l'esquema ve de database/testing/schema.sqlite.sql

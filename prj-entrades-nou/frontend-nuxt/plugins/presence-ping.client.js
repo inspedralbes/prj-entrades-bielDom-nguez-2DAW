@@ -1,3 +1,5 @@
+//================================ IMPORTS ============
+
 import { watch } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { resolvePublicApiBaseUrl } from '~/utils/apiBase.js';

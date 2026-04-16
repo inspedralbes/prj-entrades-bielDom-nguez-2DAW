@@ -1,7 +1,13 @@
+//================================ IMPORTS ============
+
 import { defineStore } from 'pinia';
 import { useCookie } from '#app';
 import { resolvePublicSocketUrl } from '~/utils/apiBase';
 
+/**
+ * Store Pinia: client Socket.IO públic (rooms `event:{id}`).
+ * Reconnexió: torna a fer `join` de totes les sales pendents amb bucles explícits (sense forEach/filter).
+ */
 export const useSocketStore = defineStore('socket', {
   state: () => ({
     socket: null,
@@ -10,12 +16,14 @@ export const useSocketStore = defineStore('socket', {
   }),
 
   actions: {
-    connect() {
-      if (typeof window === 'undefined' || this.socket) return;
-      
+    connect () {
+      if (typeof window === 'undefined' || this.socket) {
+        return;
+      }
+
       const config = useRuntimeConfig();
       const socketUrl = resolvePublicSocketUrl(config.public.socketUrl);
-      
+
       try {
         this.socket = window.io(socketUrl, {
           transports: ['websocket', 'polling'],
@@ -25,10 +33,13 @@ export const useSocketStore = defineStore('socket', {
         this.socket.on('connect', () => {
           this.connected = true;
           console.log('[socket] connected');
-          
-          this.eventRooms.forEach(room => {
-            this.socket.emit('join', room);
-          });
+
+          // A. Re-subscriure sales ja registrades abans de connectar.
+          const rooms = this.eventRooms;
+          let i = 0;
+          for (; i < rooms.length; i += 1) {
+            this.socket.emit('join', rooms[i]);
+          }
         });
 
         this.socket.on('disconnect', () => {
@@ -44,7 +55,7 @@ export const useSocketStore = defineStore('socket', {
       }
     },
 
-    disconnect() {
+    disconnect () {
       if (this.socket) {
         this.socket.disconnect();
         this.socket = null;
@@ -52,7 +63,7 @@ export const useSocketStore = defineStore('socket', {
       }
     },
 
-    joinEventRoom(eventId) {
+    joinEventRoom (eventId) {
       if (!this.socket) {
         this.connect();
       }
@@ -65,21 +76,30 @@ export const useSocketStore = defineStore('socket', {
       }
     },
 
-    leaveEventRoom(eventId) {
+    leaveEventRoom (eventId) {
       const room = `event:${eventId}`;
-      this.eventRooms = this.eventRooms.filter(r => r !== room);
+      const rooms = this.eventRooms;
+      const remaining = [];
+      let i = 0;
+      for (; i < rooms.length; i += 1) {
+        const r = rooms[i];
+        if (r !== room) {
+          remaining.push(r);
+        }
+      }
+      this.eventRooms = remaining;
       if (this.socket && this.connected) {
         this.socket.emit('leave', room);
       }
     },
 
-    on(event, callback) {
+    on (event, callback) {
       if (this.socket) {
         this.socket.on(event, callback);
       }
     },
 
-    off(event, callback) {
+    off (event, callback) {
       if (this.socket) {
         this.socket.off(event, callback);
       }

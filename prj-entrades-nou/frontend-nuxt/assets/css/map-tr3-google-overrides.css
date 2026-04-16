@@ -1,0 +1,194 @@
+/* Popup InfoWindow TR3 + overrides Google Maps (fora del scoped de la pàgina). */
+.map-tr3-iw {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 188px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(74, 71, 51, 0.1);
+  font-family: Inter, system-ui, sans-serif;
+  color: #e5e2e1;
+  background: #1c1b1b;
+}
+
+.map-tr3-iw__media-wrap {
+  position: relative;
+  width: 100%;
+  height: 6.5rem;
+  overflow: hidden;
+  background: #222;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.map-tr3-iw__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.map-tr3-iw__ph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #666;
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+}
+
+.map-tr3-iw__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  left: auto;
+  z-index: 3;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #000000;
+  border: 1.5px solid #f7e628;
+  color: #f7e628;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.map-tr3-iw__close:hover,
+.map-tr3-iw__close:focus-visible {
+  background: #f7e628;
+  border-color: #131313;
+  color: #131313;
+  outline: none;
+}
+
+.map-tr3-iw__close-ico {
+  font-size: 0.72rem;
+  line-height: 1;
+  color: currentColor;
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+}
+
+.map-tr3-iw__body {
+  padding: 0.55rem 0.65rem 0.65rem;
+  text-align: left;
+}
+
+.map-tr3-iw__row-kicker {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.map-tr3-iw__kicker {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f7e628;
+  line-height: 1.2;
+}
+
+.map-tr3-iw__row-kicker .map-tr3-iw__price {
+  flex-shrink: 0;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 0.78rem;
+  color: #f7e628;
+}
+
+.map-tr3-iw__title {
+  margin: 0 0 0.35rem;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  word-break: break-word;
+}
+
+.map-tr3-iw__when {
+  margin: 0 0 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #ccc7ac;
+  line-height: 1.35;
+}
+
+.map-tr3-iw__action-wrap {
+  margin-top: 0.45rem;
+  text-align: center;
+}
+
+.map-tr3-iw__a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 1.65rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 9999px;
+  font-family: Epilogue, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  color: #000;
+  background: #f7e628;
+  border: none;
+  transition: opacity 0.2s ease;
+}
+
+.map-tr3-iw__a:hover {
+  opacity: 0.92;
+}
+
+.gm-style .gm-style-iw-chr {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.gm-style .gm-style-iw-tc {
+  padding-top: 0 !important;
+}
+
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 1rem !important;
+  background: #1c1b1b !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  max-height: none !important;
+}
+
+.gm-style .gm-style-iw-tc::after {
+  display: none !important;
+}

@@ -2,12 +2,18 @@
 
 namespace App\Services\Socket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 /**
- * Notifica el socket-server (HTTP intern) per retransmetre esdeveniments a rooms (T018).
+ * Pont Laravel → socket-server (HTTP POST). Equivalent a pub/sub cap al Node sense dependre de Redis PUBLISH per aquest canal.
  */
 class InternalSocketNotifier
 {
@@ -50,6 +56,13 @@ class InternalSocketNotifier
         ]);
     }
 
+    //================================ LÒGICA PRIVADA ================
+
+    /**
+     * A. Llegeix URL i secret intern (`SOCKET_SERVER_INTERNAL_URL`, `SOCKET_INTERNAL_SECRET`).
+     * B. POST JSON a `/internal/emit` (cos amb `room`, `event`, `payload`).
+     * C. Registre d’errors HTTP o excepcions sense trencar la transacció Laravel.
+     */
     private function emit(string $room, string $eventName, array $payload): void
     {
         $base = Config::get('services.socket.internal_url');

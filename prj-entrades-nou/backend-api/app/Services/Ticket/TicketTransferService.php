@@ -2,6 +2,8 @@
 
 namespace App\Services\Ticket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Order;
 use App\Models\OrderLine;
 use App\Models\Ticket;
@@ -11,6 +13,11 @@ use App\Services\Notification\SocialNotificationService;
 use App\Services\Social\FriendshipQuery;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 class TicketTransferService
 {

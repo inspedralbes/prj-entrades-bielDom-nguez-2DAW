@@ -95,9 +95,11 @@ async function main() {
   }
 
   console.log('\n=== Results ===');
-  results.forEach(r => {
+  let ri = 0;
+  for (; ri < results.length; ri += 1) {
+    const r = results[ri];
     console.log(`${r.connections} connections in ${r.elapsed}ms`);
-  });
+  }
 }
 
 main();

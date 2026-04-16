@@ -2,9 +2,15 @@
 
 namespace App\Services\Seatmap;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\Zone;
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Fallback quan Ticketmaster no retorna mapa: zones/seients des de PostgreSQL.

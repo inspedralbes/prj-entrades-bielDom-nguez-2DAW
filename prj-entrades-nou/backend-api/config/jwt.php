@@ -1,5 +1,12 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+// Configuració Laravel: retorn d’array (sense imports).
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 return [
 
     // Preferible definir JWT_SECRET al .env; si no existeix, es reutilitza APP_KEY (només dev / proves).

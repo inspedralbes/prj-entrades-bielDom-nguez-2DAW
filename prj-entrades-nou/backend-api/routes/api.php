@@ -1,5 +1,7 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminDiscoveryController;
@@ -25,6 +27,10 @@ use App\Http\Controllers\Api\TicketTransferController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\ValidationController;
 use Illuminate\Support\Facades\Route;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 Route::get('/health', [HealthController::class, 'show']);
 

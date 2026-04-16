@@ -1,5 +1,7 @@
+//================================ IMPORTS ============
+
 import { defineStore } from 'pinia';
-import { useCookie } from '#app'
+import { useCookie } from '#app';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

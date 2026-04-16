@@ -2,8 +2,14 @@
 
 namespace Database\Seeders;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class RoleSeeder extends Seeder
 {

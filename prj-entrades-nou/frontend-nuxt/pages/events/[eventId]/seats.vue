@@ -1,14 +1,6 @@
 <template>
   <main class="seats-page" data-seatmap-route="interactive-v2">
-    <header class="seats-header">
-      <NuxtLink
-        :to="detailBackHref"
-        class="seats-back-btn"
-        aria-label="Tornar a l'esdeveniment"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-      </NuxtLink>
-    </header>
+    <SeatsPageHeader :to="detailBackHref" />
 
     <div v-if="pending" class="loading">Carregant mapa…</div>
     <div v-else-if="error" class="error">{{ error }}</div>
@@ -18,7 +10,6 @@
         <p class="event-meta">{{ formatDate(event.starts_at) }} · {{ event.venue?.name }}</p>
       </div>
 
-      <!-- Mapa D3: només client (evita desalineació SSR/hidratació). -->
       <div class="seats-map-grow">
         <ClientOnly>
           <InteractiveSeatMap :event-id="eventId" @seat-click="onSeatClick" />
@@ -30,29 +21,16 @@
 
       <p v-if="holdMessage" class="seats-toast">{{ holdMessage }}</p>
 
-      <footer v-if="event" class="ticket-footer" aria-label="Resum de compra">
-        <div class="ticket-footer__left">
-          <p v-if="unitPrice > 0" class="ticket-footer__muted">
-            Preu per entrada: €{{ unitPrice.toFixed(2) }}
-          </p>
-          <p class="ticket-footer__count">
-            {{ selectedCount }} {{ selectedCount === 1 ? 'entrada' : 'entrades' }}
-            <span v-if="selectedCount > 0" class="ticket-footer__hint"> (màx. {{ maxSeats }} per persona)</span>
-          </p>
-          <p class="ticket-footer__total">
-            Total: €{{ totalPrice.toFixed(2) }}
-          </p>
-        </div>
-        <button
-          type="button"
-          class="ticket-footer__cta"
-          :disabled="selectedCount === 0 || pendingSeatSyncCount > 0 || checkoutPending"
-          @click="goToCheckout"
-        >
-          <span v-if="checkoutPending">Preparant compra…</span>
-          <span v-else>Comprar · €{{ totalPrice.toFixed(2) }}</span>
-        </button>
-      </footer>
+      <SeatsPurchaseFooter
+        v-if="event"
+        :unit-price="unitPrice"
+        :selected-count="selectedCount"
+        :max-seats="maxSeats"
+        :total-price="totalPrice"
+        :checkout-pending="checkoutPending"
+        :pending-seat-sync-count="pendingSeatSyncCount"
+        @checkout="goToCheckout"
+      />
     </template>
   </main>
 </template>
@@ -61,7 +39,10 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import InteractiveSeatMap from '~/components/InteractiveSeatMap.vue';
+import SeatsPageHeader from '~/components/seatmap/SeatsPageHeader.vue';
+import SeatsPurchaseFooter from '~/components/seatmap/SeatsPurchaseFooter.vue';
 import { useAuthorizedApi } from '~/composables/useAuthorizedApi';
+import { useCinemaSeatCheckoutFlow } from '~/composables/useCinemaSeatCheckoutFlow';
 import { usePrivateSeatmapSocket } from '~/composables/usePrivateSeatmapSocket';
 import { useAuthStore } from '~/stores/auth';
 import { useInteractiveSeatmapStore } from '~/stores/interactiveSeatmap';
@@ -89,7 +70,6 @@ const eventId = computed(() => {
   return rawId;
 });
 
-/** Conserva ?from= per al detall i el tab del footer. */
 const detailBackHref = computed(() => {
   const path = `/events/${eventId.value}`;
   const fr = route.query.from;
@@ -103,7 +83,6 @@ const detailBackHref = computed(() => {
   return { path, query: { from: s } };
 });
 
-/** Esdeveniment del mapa (fix per onUnmounted: route.params ja pot ser la ruta nova). */
 const releaseTargetEventId = ref('');
 
 watch(
@@ -119,22 +98,21 @@ watch(
 const pending = ref(true);
 const error = ref('');
 const event = ref(null);
-const holdMessage = ref('');
-const checkoutPending = ref(false);
-/** Seients amb POST pendent (evita doble clic i bloqueja compra fins sincronitzar). */
-const pendingSeatSync = ref({});
 const maxSeats = 6;
 
-const pendingSeatSyncCount = computed(() => {
-  const o = pendingSeatSync.value;
-  const keys = Object.keys(o);
-  let n = 0;
-  for (let i = 0; i < keys.length; i++) {
-    if (o[keys[i]] === true) {
-      n += 1;
-    }
-  }
-  return n;
+const {
+  holdMessage,
+  checkoutPending,
+  pendingSeatSyncCount,
+  onSeatClick,
+  goToCheckout,
+} = useCinemaSeatCheckoutFlow({
+  eventId,
+  router,
+  postJson,
+  emitSeatHoldIntent,
+  emitSeatHoldRollback,
+  maxSeats,
 });
 
 const selectedCount = computed(() => {
@@ -166,10 +144,6 @@ function formatDate (iso) {
   }
 }
 
-/**
- * Carrega esdeveniment + seatmap (SoT: PG + holds Redis).
- * silent: sense spinner (tornada a la pestanya / keep-alive) per no amagar el mapa ja pintat.
- */
 async function fetchData (opts) {
   let silent = false;
   if (opts !== undefined && opts !== null && opts.silent === true) {
@@ -216,14 +190,9 @@ function onVisibilityChange () {
   if (id === undefined || id === null || id === '') {
     return;
   }
-  /* Qualsevol reserva mentre la pestanya estava en segon pla: tornem a llegir Redis+PG */
   fetchData({ silent: true });
 }
 
-/**
- * Navegador “enrere/avant” (bfcache): la pàgina es restaura sense tornar a executar setup;
- * cal tornar a llegir el seatmap o els holds d’altres usuaris no apareixen.
- */
 function onPageShow (e) {
   if (!e || !e.persisted) {
     return;
@@ -235,117 +204,6 @@ function onPageShow (e) {
   fetchData({ silent: true });
 }
 
-function setPendingSeat (seatId, v) {
-  const next = {};
-  const keys = Object.keys(pendingSeatSync.value);
-  for (let i = 0; i < keys.length; i++) {
-    next[keys[i]] = pendingSeatSync.value[keys[i]];
-  }
-  if (v) {
-    next[seatId] = true;
-  } else {
-    delete next[seatId];
-  }
-  pendingSeatSync.value = next;
-}
-
-async function onSeatClick ({ seatId }) {
-  holdMessage.value = '';
-  if (pendingSeatSync.value[seatId]) {
-    return;
-  }
-  if (seatmapStore.soldBySeatId[seatId]) {
-    return;
-  }
-
-  const uid = auth.user && auth.user.id !== undefined ? String(auth.user.id) : '';
-
-  if (seatmapStore.selectedSeatIds.indexOf(seatId) >= 0) {
-    setPendingSeat(seatId, true);
-    seatmapStore.optimisticRelease(seatId);
-    try {
-      await postJson(`/api/events/${eventId.value}/seat-holds/release`, { seat_id: seatId });
-    } catch (err) {
-      seatmapStore.restoreAfterFailedRelease(seatId, uid);
-      const msg = err && err.data && err.data.message;
-      holdMessage.value = msg || 'No s\'ha pogut alliberar el seient.';
-    } finally {
-      setPendingSeat(seatId, false);
-    }
-    return;
-  }
-
-  if (seatmapStore.selectedSeatIds.length >= maxSeats) {
-    holdMessage.value = `Màxim ${maxSeats} entrades per persona.`;
-    return;
-  }
-
-  const held = seatmapStore.heldBySeatId[seatId];
-  if (held !== undefined && held !== '' && held !== uid) {
-    holdMessage.value = 'Aquest seient està reservat per un altre usuari.';
-    return;
-  }
-
-  setPendingSeat(seatId, true);
-  seatmapStore.optimisticReserve(seatId, uid);
-  emitSeatHoldIntent(seatId);
-  try {
-    await postJson(`/api/events/${eventId.value}/seat-holds`, { seat_id: seatId });
-  } catch (err) {
-    emitSeatHoldRollback(seatId);
-    seatmapStore.revertOptimisticReserve(seatId);
-    const msg = err && err.data && err.data.message;
-    holdMessage.value = msg || 'No s\'ha pogut reservar el seient.';
-  } finally {
-    setPendingSeat(seatId, false);
-  }
-}
-
-async function goToCheckout () {
-  if (seatmapStore.selectedSeatIds.length === 0) {
-    return;
-  }
-  if (checkoutPending.value) {
-    return;
-  }
-  holdMessage.value = '';
-  checkoutPending.value = true;
-  const keys = [];
-  const sel = seatmapStore.selectedSeatIds;
-  for (let i = 0; i < sel.length; i++) {
-    keys.push(sel[i]);
-  }
-  try {
-    const evNum = parseInt(String(eventId.value), 10);
-    if (Number.isNaN(evNum)) {
-      holdMessage.value = 'Esdeveniment invàlid.';
-      return;
-    }
-    const created = await postJson('/api/orders/cinema-seats', {
-      event_id: evNum,
-      seat_keys: keys,
-    });
-    await postJson(`/api/orders/${created.order_id}/confirm-payment`, {});
-    await router.push({
-      path: '/tickets',
-      query: {
-        eventId: String(eventId.value),
-        orderId: String(created.order_id),
-        new: '1',
-      },
-    });
-  } catch (err) {
-    let msg = 'No s\'ha pogut iniciar la compra.';
-    if (err && err.data && err.data.message) {
-      msg = err.data.message;
-    }
-    holdMessage.value = msg;
-  } finally {
-    checkoutPending.value = false;
-  }
-}
-
-/* fullPath: tornar a aquesta URL (mateix eventId) torna a sincronitzar; només eventId no disparava si ja era el mateix */
 watch(
   () => route.fullPath,
   () => {
@@ -354,11 +212,6 @@ watch(
   { immediate: true },
 );
 
-/**
- * Allibera tots els holds Redis d’aquest esdeveniment (mateix usuari).
- * Cridat en sortir del mapa: més fiable que només el socket-server → Laravel intern
- * (el fetch des del contenidor Node pot fallar sense que el client ho vegi).
- */
 function releaseAllHoldsForThisEvent () {
   if (!import.meta.client) {
     return;
@@ -411,35 +264,6 @@ onUnmounted(() => {
   min-height: 0;
   width: 100%;
 }
-.seats-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.65rem;
-}
-
-/* Mateix patró que `map-tr3__back` (cerca mapa): botó rodó, només icona. */
-.seats-back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 9999px;
-  background: rgba(42, 42, 42, 0.9);
-  border: 1px solid rgba(74, 71, 51, 0.35);
-  color: #ffee32;
-  text-decoration: none;
-  transition: opacity 0.2s ease;
-}
-
-.seats-back-btn:hover {
-  opacity: 0.88;
-}
-
-.seats-back-btn .material-symbols-outlined {
-  font-size: 1.35rem;
-  line-height: 1;
-}
 .loading,
 .error {
   text-align: center;
@@ -470,29 +294,8 @@ onUnmounted(() => {
   font-size: 0.9rem;
   margin-top: 0.75rem;
 }
-.ticket-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  z-index: 45;
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  background: #0d0d0d;
-  border-top: 1px solid #333;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
-  bottom: 0;
-}
 
-/* Barra de compra just a sobre del menú inferior fix (mòbil). */
 @media (max-width: 899px) {
-  .ticket-footer {
-    bottom: var(--footer-stack);
-  }
-
   .seats-page {
     padding: 0.5rem 0.75rem 0.25rem;
     padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
@@ -510,7 +313,6 @@ onUnmounted(() => {
     gap: 0.45rem;
   }
 
-  /* Graella 10×10: omple l’alçària útil; sense scroll horitzontal. */
   .seats-map-grow :deep(.ism-map-root) {
     flex: 1 1 auto;
     min-height: 0;
@@ -527,10 +329,6 @@ onUnmounted(() => {
     height: auto;
   }
 
-  .seats-header {
-    margin-bottom: 0.5rem;
-  }
-
   .event-info-bar {
     margin-bottom: 0.5rem;
     padding: 0.55rem 0.65rem;
@@ -541,54 +339,5 @@ onUnmounted(() => {
   .seats-page {
     padding-bottom: 6rem;
   }
-}
-.ticket-footer__left {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.15rem;
-}
-.ticket-footer__muted {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #888;
-}
-.ticket-footer__count {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #e5e5e5;
-}
-.ticket-footer__hint {
-  font-size: 0.75rem;
-  color: #666;
-}
-.ticket-footer__total {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #fff;
-}
-.ticket-footer__cta {
-  align-self: center;
-  flex-shrink: 0;
-  padding: 0.85rem 1.25rem;
-  background: var(--accent);
-  color: var(--accent-on);
-  border: none;
-  border-radius: 9999px;
-  font-family: Epilogue, system-ui, sans-serif;
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.ticket-footer__cta:disabled {
-  background: #444;
-  cursor: not-allowed;
-}
-.ticket-footer__cta:not(:disabled):hover {
-  background: var(--accent-dim);
 }
 </style>

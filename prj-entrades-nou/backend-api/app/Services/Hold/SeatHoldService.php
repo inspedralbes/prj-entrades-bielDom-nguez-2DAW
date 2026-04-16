@@ -2,35 +2,35 @@
 
 namespace App\Services\Hold;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Seat;
 use App\Services\Socket\InternalSocketNotifier;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class SeatHoldService
 {
     public function __construct(
         private readonly InternalSocketNotifier $socketNotifier,
+        private readonly SeatHoldCacheRepository $holdCache,
+        private readonly SeatHoldDatabaseSynchronizer $seatDb,
     ) {}
 
     public function cacheKeyForHold(string $holdUuid): string
     {
-        return 'hold:byid:'.$holdUuid;
+        return $this->holdCache->cacheKeyForHold($holdUuid);
     }
 
     public function releaseExpiredSeatLocks(): void
     {
-        Seat::query()
-            ->whereNotNull('held_until')
-            ->where('held_until', '<', now())
-            ->update([
-                'status' => 'available',
-                'current_hold_id' => null,
-                'held_until' => null,
-            ]);
+        $this->seatDb->releaseExpiredSeatLocks();
     }
 
     /**
@@ -139,9 +139,8 @@ class SeatHoldService
             'expires_at' => $expiresAt->toIso8601String(),
         ];
 
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
         $ttlCache = max(1, $expiresAt->timestamp - now()->timestamp);
-        Cache::put($cacheKey, json_encode($payload), $ttlCache);
+        $this->holdCache->putRaw($holdUuid, json_encode($payload), $ttlCache);
 
         return [
             'ok' => true,
@@ -157,8 +156,7 @@ class SeatHoldService
      */
     public function applyLoginGrace(string $holdUuid, string $anonymousSessionId): array
     {
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
-        $raw = Cache::get($cacheKey);
+        $raw = $this->holdCache->getRaw($holdUuid);
         if ($raw === null) {
             return ['ok' => false, 'reason' => 'hold_not_found'];
         }
@@ -188,7 +186,7 @@ class SeatHoldService
         $payload['expires_at'] = $newExpires->toIso8601String();
 
         $remaining = max(1, $newExpires->timestamp - now()->timestamp);
-        Cache::put($cacheKey, json_encode($payload), $remaining);
+        $this->holdCache->putRaw($holdUuid, json_encode($payload), $remaining);
 
         Seat::query()
             ->where('current_hold_id', $holdUuid)
@@ -210,18 +208,17 @@ class SeatHoldService
      */
     public function releaseHold(string $holdUuid, string $anonymousSessionId, ?int $userId): array
     {
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
-        $raw = Cache::get($cacheKey);
+        $raw = $this->holdCache->getRaw($holdUuid);
         if ($raw === null) {
-            $this->releaseSeatsInDb($holdUuid);
+            $this->seatDb->releaseSeatsByHoldUuid($holdUuid);
 
             return ['ok' => true];
         }
 
         $payload = json_decode((string) $raw, true);
         if (! is_array($payload)) {
-            Cache::forget($cacheKey);
-            $this->releaseSeatsInDb($holdUuid);
+            $this->holdCache->forget($holdUuid);
+            $this->seatDb->releaseSeatsByHoldUuid($holdUuid);
 
             return ['ok' => true];
         }
@@ -236,8 +233,8 @@ class SeatHoldService
             return ['ok' => false, 'reason' => 'forbidden'];
         }
 
-        Cache::forget($cacheKey);
-        $this->releaseSeatsInDb($holdUuid);
+        $this->holdCache->forget($holdUuid);
+        $this->seatDb->releaseSeatsByHoldUuid($holdUuid);
 
         return ['ok' => true];
     }
@@ -247,24 +244,13 @@ class SeatHoldService
      */
     public function forceReleaseHold(string $holdUuid): void
     {
-        Cache::forget($this->cacheKeyForHold($holdUuid));
-        $this->releaseSeatsInDb($holdUuid);
+        $this->holdCache->forget($holdUuid);
+        $this->seatDb->releaseSeatsByHoldUuid($holdUuid);
     }
 
     public function forgetHoldCache(string $holdUuid): void
     {
-        Cache::forget($this->cacheKeyForHold($holdUuid));
-    }
-
-    private function releaseSeatsInDb(string $holdUuid): void
-    {
-        Seat::query()
-            ->where('current_hold_id', $holdUuid)
-            ->update([
-                'status' => 'available',
-                'current_hold_id' => null,
-                'held_until' => null,
-            ]);
+        $this->holdCache->forget($holdUuid);
     }
 
     /**
@@ -272,8 +258,7 @@ class SeatHoldService
      */
     public function getHoldTime(string $holdUuid): ?array
     {
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
-        $raw = Cache::get($cacheKey);
+        $raw = $this->holdCache->getRaw($holdUuid);
         if ($raw === null) {
             return null;
         }
@@ -301,8 +286,7 @@ class SeatHoldService
      */
     public function prepareHoldForOrder(string $holdUuid, int $userId, string $anonymousSessionId): array
     {
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
-        $raw = Cache::get($cacheKey);
+        $raw = $this->holdCache->getRaw($holdUuid);
         if ($raw === null) {
             return ['ok' => false, 'reason' => 'hold_not_found'];
         }
@@ -343,7 +327,6 @@ class SeatHoldService
         $payload['user_id'] = $userId;
         $expiresAt = Carbon::parse((string) $payload['expires_at']);
         $remaining = max(1, $expiresAt->timestamp - now()->timestamp);
-        $cacheKey = $this->cacheKeyForHold($holdUuid);
-        Cache::put($cacheKey, json_encode($payload), $remaining);
+        $this->holdCache->putRaw($holdUuid, json_encode($payload), $remaining);
     }
 }

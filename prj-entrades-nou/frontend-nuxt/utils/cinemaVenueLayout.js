@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; graella cinema alineada amb el backend Laravel.)
+
 /**
  * Geometria del mapa tipus cinema (ha de coincidir amb App\Seatmap\CinemaVenueLayout al backend).
  * Graella 10×10; el passadís és només visual (entre columnes 5 i 6).

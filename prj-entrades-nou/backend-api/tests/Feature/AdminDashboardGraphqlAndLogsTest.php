@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Venue;
@@ -10,6 +12,10 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\RefreshDatabaseFromSql;
 use Tests\TestCase;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class AdminDashboardGraphqlAndLogsTest extends TestCase
 {

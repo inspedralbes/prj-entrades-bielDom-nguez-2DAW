@@ -1,6 +1,12 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\User;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 return [
 

@@ -2,11 +2,17 @@
 
 namespace App\Services\Ticket;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Reserva: QR com a SVG sense dependre del socket-server (mateix contracte que node-qrcode al Node).

@@ -2,9 +2,15 @@
 
 namespace App\Observers;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Order;
 use App\Services\Admin\AdminDashboardMetricsService;
 use App\Services\Socket\InternalSocketNotifier;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 class OrderObserver
 {

@@ -2,9 +2,15 @@
 
 namespace Database\Factories;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Models\Zone;
 use Illuminate\Database\Eloquent\Factories\Factory;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * @extends Factory<Zone>

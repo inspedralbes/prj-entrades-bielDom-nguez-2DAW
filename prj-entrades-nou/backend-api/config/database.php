@@ -1,7 +1,13 @@
 <?php
 
+//================================ NAMESPACES / IMPORTS ============
+
 use Illuminate\Support\Str;
 use Pdo\Mysql;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 return [
 

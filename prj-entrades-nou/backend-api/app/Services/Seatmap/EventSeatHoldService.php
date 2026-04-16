@@ -2,10 +2,15 @@
 
 namespace App\Services\Seatmap;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Models\Event;
 use App\Seatmap\CinemaVenueLayout;
-use App\Services\Socket\InternalSocketNotifier;
 use Illuminate\Support\Facades\Redis;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
 
 /**
  * Bloquejos temporals de seients (Redis) vs vendes a events.seat_layout (JSONB).
@@ -13,12 +18,14 @@ use Illuminate\Support\Facades\Redis;
 class EventSeatHoldService
 {
     public function __construct(
-        private readonly InternalSocketNotifier $socketNotifier,
+        private readonly EventSeatRedisKeyFactory $redisKeys,
+        private readonly EventSeatStatusEmitter $statusEmitter,
+        private readonly EventSeatHoldRedisScanner $holdScanner,
     ) {}
 
     public function redisSeatKey(int|string $eventId, string $seatId): string
     {
-        return 'event:'.(string) $eventId.':seat:'.$seatId;
+        return $this->redisKeys->redisSeatKey($eventId, $seatId);
     }
 
     /**
@@ -26,7 +33,7 @@ class EventSeatHoldService
      */
     public function userEventHoldsKey(int $userId, int|string $eventId): string
     {
-        return 'user:'.(string) $userId.':event:'.(string) $eventId.':held_seats';
+        return $this->redisKeys->userEventHoldsKey($userId, $eventId);
     }
 
     /**
@@ -47,7 +54,7 @@ class EventSeatHoldService
             return ['ok' => false, 'reason' => 'sold', 'message' => 'Aquest seient ja està venut'];
         }
 
-        $key = $this->redisSeatKey($event->id, $seatId);
+        $key = $this->redisKeys->redisSeatKey($event->id, $seatId);
         $conn = Redis::connection();
 
         $existing = $conn->get($key);
@@ -64,11 +71,11 @@ class EventSeatHoldService
 
         $conn->setex($key, 120, (string) $userId);
 
-        $indexKey = $this->userEventHoldsKey($userId, $event->id);
+        $indexKey = $this->redisKeys->userEventHoldsKey($userId, $event->id);
         $conn->sadd($indexKey, $seatId);
         $conn->expire($indexKey, 180);
 
-        $this->emitSeatStatus($event->id, $seatId, 'held', $userId);
+        $this->statusEmitter->emit($event->id, $seatId, 'held', $userId);
 
         return ['ok' => true];
     }
@@ -107,9 +114,9 @@ class EventSeatHoldService
             $m = count($seatIds);
             for ($j = 0; $j < $m; $j++) {
                 $sid = (string) $seatIds[$j];
-                $conn->del($this->redisSeatKey($evId, $sid));
+                $conn->del($this->redisKeys->redisSeatKey($evId, $sid));
                 $released[] = $sid;
-                $this->emitSeatStatus($evId, $sid, 'available', null);
+                $this->statusEmitter->emit($evId, $sid, 'available', null);
             }
             $conn->del($indexKey);
         }
@@ -125,13 +132,13 @@ class EventSeatHoldService
     public function finalizeCinemaSeatsAsSold(int|string $eventId, int $userId, array $seatKeys): void
     {
         $conn = Redis::connection();
-        $indexKey = $this->userEventHoldsKey($userId, (int) $eventId);
+        $indexKey = $this->redisKeys->userEventHoldsKey($userId, (int) $eventId);
         $nk = count($seatKeys);
         for ($i = 0; $i < $nk; $i++) {
             $sk = (string) $seatKeys[$i];
-            $conn->del($this->redisSeatKey($eventId, $sk));
+            $conn->del($this->redisKeys->redisSeatKey($eventId, $sk));
             $conn->srem($indexKey, $sk);
-            $this->emitSeatStatus($eventId, $sk, 'sold', null);
+            $this->statusEmitter->emit($eventId, $sk, 'sold', null);
         }
     }
 
@@ -141,16 +148,16 @@ class EventSeatHoldService
     public function releaseUserSeatHold(Event $event, string $seatId, int $userId): bool
     {
         $conn = Redis::connection();
-        $key = $this->redisSeatKey($event->id, $seatId);
+        $key = $this->redisKeys->redisSeatKey($event->id, $seatId);
         $val = $conn->get($key);
         if ($val === null || $val === false || (string) $val !== (string) $userId) {
             return false;
         }
 
         $conn->del($key);
-        $indexKey = $this->userEventHoldsKey($userId, (int) $event->id);
+        $indexKey = $this->redisKeys->userEventHoldsKey($userId, (int) $event->id);
         $conn->srem($indexKey, $seatId);
-        $this->emitSeatStatus($event->id, $seatId, 'available', null);
+        $this->statusEmitter->emit($event->id, $seatId, 'available', null);
 
         return true;
     }
@@ -160,80 +167,7 @@ class EventSeatHoldService
      */
     public function getHoldsForEvent(int|string $eventId): array
     {
-        $out = [];
-
-        try {
-            $conn = Redis::connection();
-            $pattern = 'event:'.(string) $eventId.':seat:*';
-            $keys = $conn->keys($pattern);
-            if (! is_array($keys)) {
-                return $out;
-            }
-
-            $n = count($keys);
-            for ($i = 0; $i < $n; $i++) {
-                $k = $keys[$i];
-                $seatId = $this->parseSeatIdFromRedisKey((string) $k);
-                if ($seatId === null) {
-                    continue;
-                }
-                // Mateixa clau lògica que setex a holdSeat(). get($k) amb el nom retornat per KEYS
-                // pot fallar segons client Redis + REDIS_PREFIX (doble prefix / format físic), i llavors
-                // redis_holds surt buit en GET /seatmap tot i tenir holds a Redis.
-                $logicalKey = $this->redisSeatKey($eventId, $seatId);
-                $val = $conn->get($logicalKey);
-                if ($val === null || $val === false || $val === '') {
-                    continue;
-                }
-                $out[$seatId] = (string) $val;
-            }
-        } catch (\Throwable $e) {
-            // Sense Redis (p. ex. PHPUnit local / CI sense servei): mapa sense holds en temps real.
-            return [];
-        }
-
-        return $out;
-    }
-
-    private function releaseHoldsForUserEvent($conn, int $userId, int $eventId): array
-    {
-        $indexKey = $this->userEventHoldsKey($userId, $eventId);
-        $seatIds = $conn->smembers($indexKey);
-        $released = [];
-        if (! is_array($seatIds)) {
-            return $released;
-        }
-
-        $m = count($seatIds);
-        for ($j = 0; $j < $m; $j++) {
-            $sid = (string) $seatIds[$j];
-            $conn->del($this->redisSeatKey($eventId, $sid));
-            $released[] = $sid;
-            $this->emitSeatStatus($eventId, $sid, 'available', null);
-        }
-        $conn->del($indexKey);
-
-        return $released;
-    }
-
-    private function parseEventIdFromUserIndexKey(string $key): ?int
-    {
-        // Sense ancoratge ^: Predis/phpredis poden retornar el nom físic amb prefix Laravel (p. ex. app-database-user:…).
-        if (preg_match('/user:\d+:event:(\d+):held_seats$/', $key, $m)) {
-            return (int) $m[1];
-        }
-
-        return null;
-    }
-
-    private function parseSeatIdFromRedisKey(string $key): ?string
-    {
-        // Sense ^ inicial: la clau real a Redis inclou el prefix de config/database.php (REDIS_PREFIX).
-        if (preg_match('/event:\d+:seat:(.+)$/', $key, $m)) {
-            return $m[1];
-        }
-
-        return null;
+        return $this->holdScanner->getHoldsForEvent($eventId);
     }
 
     /**
@@ -257,15 +191,37 @@ class EventSeatHoldService
         return false;
     }
 
-    private function emitSeatStatus(int|string $eventId, string $seatId, string $status, ?int $holderUserId): void
+    /**
+     * @param  \Illuminate\Redis\Connections\Connection  $conn
+     * @return list<string>
+     */
+    private function releaseHoldsForUserEvent($conn, int $userId, int $eventId): array
     {
-        $payload = [
-            'eventId' => (string) $eventId,
-            'seatId' => $seatId,
-            'status' => $status,
-            'userId' => $holderUserId !== null ? (string) $holderUserId : null,
-        ];
+        $indexKey = $this->redisKeys->userEventHoldsKey($userId, $eventId);
+        $seatIds = $conn->smembers($indexKey);
+        $released = [];
+        if (! is_array($seatIds)) {
+            return $released;
+        }
 
-        $this->socketNotifier->emitToEventRoom((string) $eventId, 'SeatStatusUpdated', $payload);
+        $m = count($seatIds);
+        for ($j = 0; $j < $m; $j++) {
+            $sid = (string) $seatIds[$j];
+            $conn->del($this->redisKeys->redisSeatKey($eventId, $sid));
+            $released[] = $sid;
+            $this->statusEmitter->emit($eventId, $sid, 'available', null);
+        }
+        $conn->del($indexKey);
+
+        return $released;
+    }
+
+    private function parseEventIdFromUserIndexKey(string $key): ?int
+    {
+        if (preg_match('/user:\d+:event:(\d+):held_seats$/', $key, $m)) {
+            return (int) $m[1];
+        }
+
+        return null;
     }
 }

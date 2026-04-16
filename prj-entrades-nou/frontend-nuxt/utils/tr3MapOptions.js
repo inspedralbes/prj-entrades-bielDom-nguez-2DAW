@@ -1,3 +1,6 @@
+//================================ IMPORTS ============
+// (Sense imports; constants Google Maps TR3.)
+
 /**
  * Opcions compartides del mapa TR3.
  *

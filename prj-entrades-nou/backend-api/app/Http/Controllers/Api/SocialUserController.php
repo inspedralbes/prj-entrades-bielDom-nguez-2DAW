@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+//================================ NAMESPACES / IMPORTS ============
+
 use App\Http\Controllers\Controller;
 use App\Models\FriendInvite;
 use App\Models\SocialNotification;
@@ -10,6 +12,11 @@ use App\Models\User;
 use App\Services\Social\FriendshipQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+//================================ PROPIETATS / ATRIBUTS ==========
+
+//================================ MÈTODES / FUNCIONS ===========
+
 
 /**
  * Cerca d’usuaris registrats i perfil públic per convidar (sense exposar email).
